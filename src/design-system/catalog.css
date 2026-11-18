@@ -144,6 +144,9 @@
 .ds-task-directions strong { font-size: 14px; line-height: 22px; font-weight: 600; }
 .ds-task-directions small { font-size: 12px; line-height: 20px; color: var(--ds-secondary); }
 .ds-hub-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 20px; }
+.ds-capability-hub { scroll-margin-block-start: 16px; }
+/* Keep short final pages tall enough to align the Hub below the 60px toolbar. */
+.ds-capability-hub:has(.ds-pagination) { min-block-size: calc(100dvh - 76px); }
 .ds-capability-store .sp-filter-bar { margin-bottom: 24px; }
 .ds-hub-heading h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; }
 .ds-result-caption { flex: none; margin: 0; font-size: 12px; line-height: 20px; color: var(--ds-secondary); }

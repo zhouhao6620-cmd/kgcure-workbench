@@ -87,6 +87,8 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
   });
   const [review, setReview] = useState(false);
   const grid = useRef(null);
+  const hub = useRef(null);
+  const returnToHub = useRef(false);
   const [columns, setColumns] = useState(1);
   const categories = ['全部', ...new Set(items.map(item => item.group || item.category))];
   const demoCount = filtered.filter(item => item.demo).length;
@@ -108,6 +110,13 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
     return () => window.removeEventListener('resize', updateColumns);
   }, [kind]);
 
+  useLayoutEffect(() => {
+    if (!returnToHub.current) return;
+    returnToHub.current = false;
+    hub.current.querySelector('h2').focus({ preventScroll: true });
+    hub.current.scrollIntoView({ block: 'start' });
+  }, [current]);
+
   useEffect(() => {
     sessionStorage.setItem(`kgcure-store-page-${kind}`, String(current));
   }, [current, kind]);
@@ -119,6 +128,12 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
   function updateFilter(setFilter, value) {
     setFilter(value);
     setPage(1);
+  }
+
+  function changePage(nextPage) {
+    if (nextPage === current) return;
+    returnToHub.current = true;
+    setPage(nextPage);
   }
 
   return <div className="sp-sheet ds-capability-store"><div className="sp-gallery-section">
@@ -139,10 +154,10 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
       <div className="ds-section-title"><h2>按科研任务查找</h2><span>从研究目标出发，找到适合的 Agent</span></div>
       <div>{TASKS.map(task => <button type="button" key={task.name} onClick={() => onRecommend?.(task)}><task.icon className="ds-task-direction-icon" data-tone={task.tone} size={22} strokeWidth={1.8} aria-hidden="true"/><strong>{task.name}</strong><small>{task.description}</small><ArrowUpRight size={16}/></button>)}</div>
     </section>}
-    <section aria-labelledby={`ds-${kind}-hub`}>
+    <section ref={hub} className="ds-capability-hub" aria-labelledby={`ds-${kind}-hub`}>
       <CapabilityFilters categories={categories} category={category} onCategory={value => updateFilter(setCategory, value)}
         source={source} onSource={value => updateFilter(setSource, value)} showSources={isSkill}
-        heading={<h2 id={`ds-${kind}-hub`}>{type} Hub</h2>}
+        heading={<h2 id={`ds-${kind}-hub`} tabIndex={-1}>{type} Hub</h2>}
         count={<p className="ds-result-caption" aria-live="polite">{catalogCount > 0 || demoCount === 0 ? <>{query.trim() ? '找到' : '共'} <strong>{catalogCount}</strong> 项 {type}{demoCount > 0 && ' · '}</> : null}{demoCount > 0 && <span>{demoCount} 项演示</span>}</p>}/>
       <div ref={grid} className={isSkill ? 'sp-skill-grid' : 'sp-agent-grid'}>
         {visible.map(item => <Card key={item.id} item={item} onDetail={() => onNavigate(capabilityPath(item))}/>)}
@@ -153,7 +168,7 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
           onReset={() => { reset(); setPage(1); }}>
           {source === '独立测评' ? '暂无评测记录' : source === '开源社区' ? '没有匹配的社区贡献' : '没有匹配的科研能力'}
         </EmptyState>}
-      <Pagination page={current} total={pageCount} onChange={setPage} label="能力列表分页"/>
+      <Pagination page={current} total={pageCount} onChange={changePage} label="能力列表分页"/>
     </section>
   </div>{review && <Modal title="数愈科研专业评测" onClose={() => setReview(false)}><div className="ds-prose"><p>科研能力的收录、专业评测与线上可用是三个独立状态。</p><h3>评测关注的问题</h3><ul><li>研究方法是否适用于所给任务和材料？</li><li>结果、证据和关键步骤能否复核？</li><li>交付是否完整，适用条件和限制是否清楚？</li></ul><p>当前目录暂无可核验的正式评测报告。</p><Button onClick={() => { setReview(false); updateFilter(setSource, '独立测评'); }}>查看已评测能力</Button></div></Modal>}</div>;
 }
