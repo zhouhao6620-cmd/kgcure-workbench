@@ -32,7 +32,7 @@
 .business-workspace .avatar-big { overflow:hidden; }
 .business-workspace .avatar-big img { width:100%; height:100%; object-fit:cover; object-position:center 18%; }
 .business-workspace .chat-head { border:0; height:60px; }
-.business-workspace .chat-head h1 { font-size:14px; line-height:22px; font-weight:600; }
+.business-workspace .chat-head h1 { font-size:var(--ds-chat-title-size); line-height:22px; font-weight:600; }
 .business-workspace .chat-col { width:752px; max-width:calc(100% - 48px); }
 .business-workspace .chat-scroll { scrollbar-gutter:stable both-edges; }
 .business-workspace .bubble { background:var(--ds-message); border-radius:18px; font-size:16px; line-height:28px; }

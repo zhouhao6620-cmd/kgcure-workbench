@@ -603,6 +603,7 @@
 .sp-history-row.is-active .sp-history-link { font-weight: 600; }
 .sp-new-task { font-size: 14px !important; font-weight: 600; }
 .sp-topbar-title { font-size: 14px; font-weight: 600; color: #23272f; }
+.ds-spec-preview.ds-is-chat .sp-topbar-title { font-size: var(--ds-chat-title-size); line-height: 22px; }
 .sp-view-switch button, .sp-mobile-view { font-weight: 600; }
 .sp-tool-select, .sp-model-select { font-size: 14px !important; }
 .sp-tool-select > svg:first-child { width: 18px; height: 18px; }
@@ -661,7 +662,7 @@
 .sp-sidebar-scroll .sp-history-list { overflow: visible; }
 
 .sp-brand { width: 154px; flex-basis: 154px; }
-.sp-brand img { width: 174px; left: -15.4px; top: -5px; }
+.sp-brand img { width: 156.6px; left: -13.8px; top: -2px; }
 .sp-floating-brand img { width: 172px; left: -15.2px; top: -16px; }
 @media(max-width:699px) { .sp-floating-brand img { width: 138px; left: -12.2px; top: -12.8px; } }
 
