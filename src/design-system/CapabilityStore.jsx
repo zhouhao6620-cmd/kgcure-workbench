@@ -1,5 +1,5 @@
 import { sitePath } from "../site-path.js";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ArrowRight, ArrowUpRight, BookOpen, ChartNoAxesCombined, ChevronLeft, ChevronRight,
   ClipboardCheck, FileText, FlaskConical, Handshake, ListChecks, Search, ShieldCheck, X,
@@ -21,6 +21,7 @@ const TASKS = [
   { name: '完成论文与申报', description: '把研究资料转化为完整成果', icon: FileText, tone: 'orange', category: '论文写作与投稿' },
 ];
 const FEATURE_ICONS = { skill: ClipboardCheck, agent: ListChecks };
+const STORE_ROWS_PER_PAGE = 6;
 const STORE_SKILLS = BUSINESS_SKILLS.flatMap((item, index) => {
   const example = index < 6 && index % 2 === 1 ? COMMUNITY_SKILL_EXAMPLES[(index - 1) / 2] : null;
   return example ? [item, example] : [item];
@@ -85,14 +86,27 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
     catch { return 1; }
   });
   const [review, setReview] = useState(false);
+  const grid = useRef(null);
+  const [columns, setColumns] = useState(1);
   const categories = ['全部', ...new Set(items.map(item => item.group || item.category))];
   const demoCount = filtered.filter(item => item.demo).length;
   const catalogCount = filtered.length - demoCount;
-  const pageSize = isSkill ? 12 : 6;
+  const pageSize = STORE_ROWS_PER_PAGE * columns;
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const current = Math.min(page, pageCount);
   const visible = filtered.slice((current - 1) * pageSize, current * pageSize);
   const Card = isSkill ? SkillCard : AgentCard;
+
+  useLayoutEffect(() => {
+    const layout = grid.current;
+    const updateColumns = () => {
+      const tracks = getComputedStyle(layout).gridTemplateColumns;
+      setColumns(tracks.trim().split(/\s+/).length);
+    };
+    updateColumns();
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
+  }, [kind]);
 
   useEffect(() => {
     sessionStorage.setItem(`kgcure-store-page-${kind}`, String(current));
@@ -130,7 +144,10 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
         source={source} onSource={value => updateFilter(setSource, value)} showSources={isSkill}
         heading={<h2 id={`ds-${kind}-hub`}>{type} Hub</h2>}
         count={<p className="ds-result-caption" aria-live="polite">{catalogCount > 0 || demoCount === 0 ? <>{query.trim() ? '找到' : '共'} <strong>{catalogCount}</strong> 项 {type}{demoCount > 0 && ' · '}</> : null}{demoCount > 0 && <span>{demoCount} 项演示</span>}</p>}/>
-      {filtered.length ? <div className={isSkill ? 'sp-skill-grid' : 'sp-agent-grid'}>{visible.map(item => <Card key={item.id} item={item} onDetail={() => onNavigate(capabilityPath(item))}/>)}</div> :
+      <div ref={grid} className={isSkill ? 'sp-skill-grid' : 'sp-agent-grid'}>
+        {visible.map(item => <Card key={item.id} item={item} onDetail={() => onNavigate(capabilityPath(item))}/>)}
+      </div>
+      {!filtered.length &&
         <EmptyState icon={source === '独立测评' ? DocumentEmptyIllustration : Search}
           description={source === '独立测评' ? '可切换分类查看。' : '试试其他关键词或分类。'}
           onReset={() => { reset(); setPage(1); }}>
