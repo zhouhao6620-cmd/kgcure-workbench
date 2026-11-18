@@ -1,0 +1,8 @@
+.ds-language-options{z-index:100;box-sizing:border-box;width:208px;padding:10px;background:#fff;border:1px solid #dedfe3;border-radius:16px;box-shadow:0 12px 36px #17191e12;}
+.ds-language-options button{display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:#17191e;font:inherit;font-size:16px;line-height:24px;font-weight:400;white-space:nowrap;text-align:left;}
+.ds-language-options button:hover,.ds-language-options button:focus-visible{background:#f5f6f8;outline:none;}
+.ds-language-options button svg{flex-shrink:0;color:#17191e;}
+.sp-account-languages.ds-language-options{position:fixed;margin:0;}
+.sp-account-menu-item[aria-expanded=true]{background:#f5f6f8;}
+.ds-public-language{position:relative;}
+.ds-public-language .ds-language-options{position:absolute;right:0;top:calc(100% + 10px);}

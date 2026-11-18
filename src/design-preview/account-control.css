@@ -1,0 +1,30 @@
+.sp-account-control { position:relative; width:100%; color:#17191e; }
+.sp-account-trigger { min-height:48px; gap:9px; }
+.sp-account-trigger[aria-expanded=true] { background:#eceef2; }
+.sp-account-trigger > .sp-account-nickname { flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:14px; line-height:22px; font-weight:500; }
+.sp-account-trigger > svg { color:#8a909a; }
+.sp-photo-avatar { overflow:hidden; width:32px; height:32px; }
+.sp-photo-avatar img { width:100%; height:100%; object-fit:cover; object-position:center 18%; }
+.sp-membership-badge { display:inline-flex; align-items:center; flex-shrink:0; height:22px; padding:0 7px; border-radius:var(--ds-radius-tag); font-size:12px; line-height:20px; font-weight:400; white-space:nowrap; }
+.sp-membership-free { background:#eceef2; color:#626873; }
+.sp-membership-basic { background:#fbf4e6; color:#926b2d; }
+.sp-membership-plus { background:#f2edfb; color:#7b50b3; }
+.sp-membership-pro { background:#1c1c1d; color:#d5b87d; border:1px solid #51432e; }
+.sp-account-popover { position:absolute; z-index:80; left:0; bottom:calc(100% + 8px); width:100%; max-height:calc(100dvh - 88px); overflow:auto; overscroll-behavior:contain; padding:8px; border:1px solid #e9ecf1; border-radius:12px; background:#fff; box-shadow:0 8px 32px #18233714,0 2px 6px #18233705; scrollbar-width:thin; }
+.sp-membership-upgrade { display:flex; align-items:center; gap:9px; min-height:44px; width:100%; padding:10px 12px; border:0; border-radius:8px; background:#fbf4e6; color:#7d5b27; font-size:14px; line-height:22px; font-weight:600; text-align:left; }
+.sp-membership-upgrade:hover { background:#f7ecd6; }
+.sp-membership-upgrade > span { flex:1; }
+.sp-account-quota { padding:12px 12px 14px; }
+.sp-account-quota > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px; line-height:20px; font-weight:400; color:#737d8b; }
+.sp-account-quota [role=progressbar] { margin-top:8px; height:4px; border-radius:4px; overflow:hidden; background:#edf0f4; }
+.sp-account-quota [role=progressbar] > span { display:block; height:100%; background:#3964fe; border-radius:inherit; }
+.sp-account-menu-group { border-top:1px solid #f0f2f5; padding:4px 0; }
+.sp-account-menu-group:last-child { padding-bottom:0; }
+.sp-account-menu-item { display:flex; align-items:center; gap:10px; min-height:36px; width:100%; padding:7px 12px; border:0; border-radius:6px; background:transparent; color:#252b34; text-align:left; font-size:14px; line-height:22px; font-weight:400; }
+.sp-account-menu-item > span { flex:1; }
+.sp-account-menu-item > svg { color:#717b88; }
+.sp-account-menu-item > small { color:#8a929e; font-size:12px; font-weight:400; }
+.sp-account-menu-item:hover,.sp-account-languages button:hover { background:#f5f6f8; }
+.sp-account-menu-item.is-danger,.sp-account-menu-item.is-danger > svg { color:#cf3740; }
+.sp-account-menu-item.is-danger:hover { background:#fff3f3; }
+@media(pointer:coarse) { .sp-account-menu-item,.sp-account-languages button { min-height:40px; } }

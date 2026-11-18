@@ -1,0 +1,31 @@
+.ds-chat-prompts { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.ds-chat-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  width: fit-content;
+  max-width: min(480px, calc(100% - 16px));
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-card);
+  background: #f5f6f8;
+  color: var(--ds-ink);
+  text-align: left;
+  font-size: 14px;
+  line-height: 22px;
+}
+.ds-chat-prompt.is-outlined { background: #fff; border-color: var(--ds-line); }
+button.ds-chat-prompt:hover:not(:disabled) { background: var(--ds-nav-selected); }
+.ds-chat-prompt.is-selected { border-color: var(--ds-primary); background: #edf2ff; }
+.ds-chat-prompt-copy { display: grid; min-width: 0; }
+.ds-chat-prompt-title, .ds-chat-prompt-description { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-chat-prompt-title { font-size: 14px; line-height: 22px; }
+.ds-chat-prompt-title b { font-weight: 600; }
+div.ds-chat-prompt .ds-chat-prompt-title { font-weight: 600; }
+.ds-chat-prompt-description { color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
+.ds-chat-prompt-badge { justify-self: start; margin-bottom: 4px; padding: 0 6px; border-radius: var(--ds-radius-tag); background: #f1f5f9; color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
+.ds-chat-prompt > svg { flex: none; color: var(--ds-secondary); }
+.ds-chat-followups { margin: 20px 0 12px; }
+.ds-followup-heading { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; color: var(--ds-ink); font-size: 16px; line-height: 26px; font-weight: 600; }
+.ds-followup-heading > svg { flex: none; }

@@ -1,0 +1,90 @@
+.landing.sp-design-app { display:block; height:auto; min-height:100dvh; overflow:visible; background:#fff; }
+.ds-public .land-head { height:76px; padding:0 max(24px,calc((100vw - 1120px)/2)); border-bottom:1px solid var(--ds-card-line); gap:40px; background:#ffffffed; }
+.ds-public .land-logo { align-items:center; width:156px; flex-shrink:0; }
+.ds-public .land-logo img { display:block; width:100%; height:auto; }
+.ds-public .land-head-actions { gap:16px; }
+.ds-public .land-nav { gap:28px; }
+.ds-public .land-nav button { font-size:14px; font-weight:400; }
+.ds-public .lang-switch { font-size:14px; }
+.ds-public .land-hero { position:relative;isolation:isolate;padding:88px 24px 64px; background:radial-gradient(ellipse 70% 60% at 50% 0%,#eef4ff 0%,#fff 70%); }
+.ds-public .land-hero h1 { margin:0 auto; max-width:900px; font-size:48px; line-height:64px; font-weight:600; letter-spacing:-1px; color:#0f1115; }
+.ds-public .land-hero > p { margin:20px auto 0; max-width:1000px; font-size:16px; line-height:26px; color:#737d8b; }
+.ds-public .land-golden-composer { width:min(776px,100%); margin:32px auto 0; }
+.ds-public .land-examples { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; margin-top:24px; max-width:776px; }
+.ds-public .land-examples button { display:flex;align-items:center;gap:8px;min-height:40px;height:auto; padding:8px 12px; border:1px solid var(--ds-card-line); border-radius:999px; color:#626873; font-size:12px; line-height:20px; text-align:left; }
+.ds-public .land-examples button svg {flex-shrink:0;color:#7184a4;}
+.ds-public .land-examples button:hover { background:#f7f8fa; border-color:var(--ds-card-hover); color:#17191e; }
+.ds-public .land-stats { max-width:880px; margin-top:48px; padding-top:24px; border-top:1px solid var(--ds-card-line); }
+.ds-public .land-stats strong { font-size:28px; line-height:40px; font-weight:600; color:var(--ds-primary); }
+.ds-public .land-stats span { font-size:12px; line-height:20px; color:#8b94a1; }
+.ds-public .land-section { width:min(1120px,calc(100% - 48px)); margin:0 auto; padding:64px 0; border-color:var(--ds-card-line); scroll-margin-top:76px; }
+.ds-public .land-section h2 { max-width:900px; font-size:32px; line-height:44px; font-weight:600; letter-spacing:0; }
+.ds-public .land-lead { margin:12px auto 0; max-width:776px; font-size:14px; line-height:24px; color:#737d8b; }
+.ds-public .land-capability-heading { display:flex; align-items:center; gap:8px; margin:32px 0 16px; font-size:16px; line-height:24px; font-weight:600; }
+.ds-public .land-capability-heading img { width:28px; height:32px; object-fit:contain; }
+.ds-public .land-sample-note { margin-top:12px; font-size:12px; line-height:20px; color:#8b94a1; }
+.ds-public .sp-cases { margin-top:48px; margin-bottom:0; border:0; padding-bottom:0; }
+.ds-public .sp-cases > .sp-section-heading { margin-bottom:16px; }
+.ds-public .sp-cases > .sp-section-heading h2 { text-align:left; font-size:16px; line-height:24px; font-weight:400; }
+.ds-public .sp-cases .sp-subtle { display:none; }
+.ds-public .trust-grid { max-width:none; gap:16px; margin-top:32px; }
+.ds-public .trust-card { padding:24px; border-color:var(--ds-card-line); border-radius:10px; }
+.ds-public .trust-feature-icon { display:flex; align-items:center; justify-content:center; width:40px; height:40px; margin-bottom:16px; border-radius:10px; color:#3964fe; background:#edf3fe; }
+.ds-public .trust-card:nth-child(2) .trust-feature-icon { color:#178b75; background:#eaf7f3; }
+.ds-public .trust-card:nth-child(3) .trust-feature-icon { color:#8554ca; background:#f3edfb; }
+.ds-public .trust-card:nth-child(4) .trust-feature-icon { color:#926b2d; background:#fbf4e6; }
+.ds-public .trust-card h3 { font-size:18px; line-height:28px; font-weight:600; }
+.ds-public .trust-card p { margin-top:8px; font-size:14px; line-height:24px; }
+.ds-public :is(.trust-chips,.role-chips) span { font-size:12px; line-height:20px; font-weight:400; border-radius:4px; background:#f5f6f8; }
+.ds-public .partner-rows { margin-top:32px; gap:8px; overflow:visible; }
+.ds-public .partner-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; animation:none; }
+.ds-public .partner-chip { display:block; min-width:0; padding:12px; overflow:hidden; text-overflow:ellipsis; font-size:12px; line-height:20px; border-color:var(--ds-card-line); border-radius:6px; background:#fafbfc; }
+.ds-public .land-case-grid { max-width:none; margin-top:32px; }
+.ds-public .land-case { background:#fff; border-color:var(--ds-card-line); border-radius:10px; padding:20px; }
+.ds-public .land-case-tag { font-size:12px; font-weight:400; color:#926b2d; background:#fbf4e6; border-radius:4px; padding:3px 7px; }
+.ds-public .land-case h3 { font-size:14px; line-height:24px; margin-top:14px; font-weight:600; }
+.ds-public .land-case p { font-size:12px; line-height:20px; margin-top:8px; }
+.ds-public .role-cards { max-width:none; gap:16px; margin-top:32px; }
+.ds-public .role-card { border-color:var(--ds-card-line); border-radius:10px; padding:24px; }
+.ds-public .role-card h3 { margin-top:12px; font-size:18px; line-height:28px; }
+.ds-public .role-line { font-size:16px; line-height:24px; margin-top:10px; }
+.ds-public .role-desc { margin-top:10px; font-size:14px; line-height:24px; }
+.ds-public .land-contact { padding:48px max(24px,calc((100vw - 1120px)/2)) 24px; border-color:var(--ds-card-line); background:#fafbfc; }
+.ds-public .contact-services { max-width:none; }
+.ds-public .contact-item { border-color:var(--ds-card-line); border-radius:10px; }
+.ds-public .contact-item h3 { font-size:14px; line-height:22px; margin-top:8px; }
+.ds-public .contact-item p { font-size:12px; line-height:20px; margin-top:4px; }
+.ds-public .contact-main { max-width:none; }
+.ds-public .land-legal { max-width:none; font-size:12px; line-height:20px; border-color:var(--ds-card-line); }
+.land-hero-decoration{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
+.land-hero-art{position:absolute;width:clamp(160px,20vw,300px);height:auto;stroke:#b5cae4;stroke-width:1;opacity:.5;}
+.land-hero-art.is-left{left:-5%;top:15%;transform:rotate(-8deg);}
+.land-hero-art.is-right{right:-5%;top:3%;transform:rotate(6deg);}
+.land-hero-art circle{fill:#fff;stroke:#9bbce6;stroke-width:1.4;}
+.ds-public .trust-section{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:64px;align-items:start;}
+.ds-public .land-trust-intro h2,.ds-public .land-trust-intro .land-lead{text-align:left;}
+.ds-public .land-trust-intro h2{font-size:28px;line-height:40px;}
+.ds-public .trust-grid{display:flex;flex-direction:column;gap:0;margin-top:0;}
+.ds-public .trust-card{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:16px;border:0;border-bottom:1px solid #eef0f4;border-radius:0;padding:24px 0;}
+.ds-public .trust-card:first-child{padding-top:0;}
+.ds-public .trust-card:last-child{border-bottom:0;padding-bottom:0;}
+.ds-public .trust-feature-icon{grid-row:1/4;width:44px;height:44px;margin:0;border:1px solid #e2e5eb;border-radius:50%;background:#fff!important;color:var(--ds-primary)!important;}
+.ds-public .trust-card h3,.ds-public .trust-card p,.ds-public .trust-chips{grid-column:2;}
+.ds-public .trust-chips span{padding:0;background:none;color:#7184a4;}
+.ds-public .trust-chips{gap:8px 16px;}
+.ds-public .role-card{display:flex;flex-direction:column;align-items:center;padding:28px 24px;background:#fffaf5;border:1px solid #f3e0cf;border-radius:14px;}
+.ds-public .role-card:nth-child(2){background:#f7faff;border-color:#dae5f6;}
+.ds-public .role-card:nth-child(3){background:#fbf8ff;border-color:#e6dcf3;}
+.ds-public .role-icon{width:100px;height:100px;background:none;border-radius:0;}
+.ds-public .role-icon img{width:100%;height:100%;object-fit:contain;}
+.ds-public .role-card h3{margin-top:8px;}
+.ds-public .role-line{text-align:center;min-height:48px;}
+.ds-public .role-desc{align-self:stretch;margin-block:16px 20px;}
+.ds-public .role-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;margin-top:auto;}
+.ds-public .role-chips span{display:flex;align-items:center;gap:8px;padding:0;background:none;}
+.ds-public .role-chips svg{color:#7184a4;flex-shrink:0;}
+@media(max-width:1023px) { .ds-public .land-head { padding-inline:24px; gap:16px; } .ds-public .land-hero { padding-top:64px; } .ds-public .land-hero h1 { font-size:40px; line-height:52px; } .ds-public .partner-row { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:699px) { .ds-public .land-head { height:64px; padding-inline:16px; } .ds-public .land-logo { width:132px; } .ds-public .lang-switch { display:none; } .ds-public .land-head-actions { gap:8px; } .ds-public .land-head .sp-button { padding-inline:10px; } .ds-public .land-hero { padding:48px 16px; } .ds-public .land-hero h1 { font-size:32px; line-height:44px; letter-spacing:0; } .ds-public .land-hero > p { font-size:14px; line-height:24px; } .ds-public .land-section { width:calc(100% - 32px); padding-block:40px; } .ds-public .land-section h2 { font-size:24px; line-height:34px; } .ds-public .land-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; } .ds-public .trust-grid,.ds-public .land-case-grid,.ds-public .role-cards,.ds-public .contact-services { grid-template-columns:minmax(0,1fr); } .ds-public .land-contact { padding:32px 16px 24px; } .ds-public .land-legal { gap:8px; } }
+@media(prefers-reduced-motion:reduce) { .ds-public * { scroll-behavior:auto!important; animation:none!important; transition:none!important; } }
+@media(max-width:1023px){.ds-public .trust-section{grid-template-columns:1fr;gap:32px}.ds-public .land-trust-intro h2,.ds-public .land-trust-intro .land-lead{text-align:center}.ds-public .land-trust-intro h2{font-size:32px;line-height:44px}}
+@media(max-width:699px){.ds-public .lang-switch{display:inline-flex;padding-inline:4px;gap:4px}.ds-public .lang-switch>span,.ds-public .lang-switch>svg:last-child{display:none}.ds-public .land-logo{width:116px}.ds-public .land-examples{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ds-public .land-examples button{border-radius:12px;align-items:flex-start;min-height:60px;padding:10px}.ds-public .land-hero-art{opacity:.3}.ds-public .land-hero-art.is-left{left:-120px}.ds-public .land-hero-art.is-right{right:-120px}.ds-public .land-trust-intro h2{font-size:24px;line-height:34px}.ds-public .trust-card{column-gap:12px;grid-template-columns:36px minmax(0,1fr)}.ds-public .trust-feature-icon{width:36px;height:36px}.ds-public .trust-card h3{font-size:16px;line-height:26px}.ds-public .role-line{min-height:0}.ds-public .ds-language-options{right:-70px;max-width:calc(100vw - 32px)}}

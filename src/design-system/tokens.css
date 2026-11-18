@@ -1,0 +1,34 @@
+:root {
+ --ds-primary:#3964fe;
+ --ds-primary-hover:#2f55e7;
+ --ds-ink:#0f1115;
+ --ds-secondary:#626873;
+ --ds-line:#e2e5eb;
+ --ds-card-line:#eef0f4;
+ --ds-card-hover:#d5ddeb;
+ --ds-sidebar:#f9fafb;
+ --ds-nav-selected:#f0f2f5;
+ --ds-message:#edf3fe;
+ --ds-button-height:38px;
+ --ds-button-compact:34px;
+ --ds-delivery-card-height:80px;
+ --ds-radius-control:6px;
+ --ds-radius-tag:4px;
+ --ds-radius-card:10px;
+ --ds-first-level-width:1000px;
+ --ds-first-level-title-size:34px;
+ --ds-first-level-title-line:46px;
+ --ds-first-level-top-space:96px;
+ --ds-entry-gutter:32px;
+ --ds-composer-underlay-inset:40px;
+ --ds-entry-top:clamp(96px,16dvh,160px);
+ --ds-capability-block-padding:12px;
+ --ds-capability-inline-padding:14px;
+ --ds-capability-group-gap:8px;
+ --ds-secondary-title-size:28px;
+ --ds-secondary-title-line:40px;
+}
+@media(max-width:1023px){:root{--ds-entry-gutter:24px;--ds-entry-top:88px;}}
+@media(max-width:699px){:root{--ds-entry-gutter:16px;--ds-composer-underlay-inset:24px;--ds-secondary-title-size:24px;--ds-secondary-title-line:34px;}}
+@media(max-width:374px){:root{--ds-entry-gutter:12px;}}
+:root { --sp-blue:var(--ds-primary); --sp-blue-hover:var(--ds-primary-hover); --sp-line:var(--ds-line); --sp-ink:var(--ds-ink); --sp-secondary:var(--ds-secondary); }

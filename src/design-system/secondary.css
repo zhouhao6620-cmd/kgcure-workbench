@@ -1,0 +1,18 @@
+.ds-secondary-shell{display:flex;flex-direction:column;flex:1;min-height:0;width:100%;}
+.ds-secondary-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;height:60px;padding:0 24px;background:#fffffff5;z-index:35;}
+.ds-secondary-back{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;border-radius:8px;color:#626873;padding:8px;font:inherit;font-size:14px;line-height:22px;flex-shrink:0;}
+.ds-secondary-back:hover{background:#f0f2f5;color:#17191e;}
+.ds-secondary-bar-actions,.ds-secondary-context-actions{display:flex;align-items:center;gap:10px;min-width:0;}
+.ds-secondary-context-actions:empty{display:none;}
+.ds-secondary-context-actions :is(.sp-button, .btn, .workFavorite) { gap: 6px; font-weight: 600; }
+.business-workspace .ds-secondary-bar .ds-detail-actions{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;padding:0;width:auto;}
+.business-workspace .ds-secondary-bar .ds-detail-actions>div{display:flex;gap:8px;}
+.business-workspace .ds-secondary-scroll{flex:1;min-height:0;}
+.business-workspace .ds-secondary-scroll>:is(.view,.page,.sp-sheet){width:100%;max-width:var(--ds-first-level-width);padding-top:36px;}
+.ds-secondary-scroll>.view>.ds-back,.ds-secondary-scroll>.view>.crumb{display:none;}
+.business-workspace:has(.ds-secondary-shell) .ds-floating-tools{display:none;}
+.business-workspace.sp-nav-collapsed:has(.ds-secondary-shell) .ds-floating-tools{display:block;}
+.business-workspace.sp-nav-collapsed .ds-secondary-bar{padding-left:181px;}
+.ds-secondary-bar .sp-button,.ds-secondary-bar .btn{white-space:nowrap;}
+@media(max-width:1023px){.business-workspace:has(.ds-secondary-shell) .ds-floating-tools{display:block}.ds-secondary-bar,.business-workspace.sp-nav-collapsed .ds-secondary-bar{padding-left:60px;padding-right:16px}.business-workspace .ds-secondary-scroll>:is(.view,.page,.sp-sheet){padding-top:28px}}
+@media(max-width:699px){.ds-secondary-bar{gap:6px;padding-right:12px}.ds-secondary-back{gap:4px;padding:6px}.ds-secondary-back>span{display:none}.ds-secondary-bar-actions,.ds-secondary-context-actions{gap:6px}.ds-secondary-bar :is(.sp-button,.btn){font-size:12px;padding-inline:8px;min-height:34px}.ds-secondary-bar .ds-detail-actions>div{gap:4px}.ds-secondary-bar .ds-detail-actions .sp-button>svg{display:none}.ds-secondary-bar .ds-detail-actions .sp-button{gap:4px}.ds-secondary-scroll .ds-space-heading:has(>div:only-child){margin-bottom:24px}}

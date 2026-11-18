@@ -1,0 +1,24 @@
+.sp-icon-spec-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.sp-icon-spec-card { border:1px solid var(--ds-card-line); border-radius:10px; padding:16px; min-width:0; background:#fff; }
+.sp-icon-spec-examples { display:flex; align-items:center; gap:12px; min-height:52px; margin-bottom:14px; color:#727b88; }
+.sp-icon-spec-examples > svg { width:24px; height:24px; stroke-width:1.8; }
+.sp-icon-spec-card h3 { font-size:14px; line-height:22px; font-weight:600; color:#17191e; }
+.sp-icon-spec-card p { font-size:12px; line-height:20px; font-weight:400; color:#737d8b; margin-top:6px; }
+.sp-icon-spec-card > small { display:block; margin-top:14px; font-size:12px; line-height:20px; color:#8b94a1; }
+.sp-icon-swatch { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:9px; }
+.sp-icon-swatch svg { width:22px; height:22px; stroke-width:1.8; }
+.sp-icon-swatch.is-blue { background:#edf3fe; color:#3964fe; }
+.sp-icon-swatch.is-green { background:#eaf7f3; color:#178b75; }
+.sp-icon-swatch.is-purple { background:#f3edfb; color:#8554ca; }
+.sp-icon-swatch.is-red { background:#fceff2; color:#cf5363; }
+.sp-icon-accent-check { display:flex; align-items:center; justify-content:center; width:22px; height:22px; border:1.8px solid #343a44; color:var(--ds-primary); }
+.sp-icon-accent-check svg { width:24px; height:24px; margin:0 -5px 4px 0; }
+.sp-icon-accent-chart { color:#343a44; }
+.sp-icon-accent-chart svg path:not(:last-child) { stroke:var(--ds-primary); }
+.sp-icon-spec-brand > img { width:44px; height:44px; object-fit:contain; }
+.sp-icon-brand-purple { color:#8554ca; }
+.sp-delivery-icon-spec { margin-top:16px; }
+.sp-delivery-icon-spec ul { display:flex; flex-wrap:wrap; gap:12px 20px; margin:14px 0 0; padding:0; list-style:none; }
+.sp-delivery-icon-spec li { display:grid; justify-items:center; gap:6px; color:var(--ds-secondary); font-size:12px; line-height:20px; }
+@media(max-width:1199px) { .sp-icon-spec-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:699px) { .sp-icon-spec-grid { grid-template-columns:minmax(0,1fr); gap:12px; } }

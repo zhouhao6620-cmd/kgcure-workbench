@@ -1,0 +1,9 @@
+.business-workspace .ds-pagination {display:flex;align-items:center;justify-content:center;gap:6px;margin-top:28px;flex-wrap:wrap;}
+.ds-pagination button {display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 8px;border:1px solid transparent;border-radius:6px;background:transparent;color:#626873;font:inherit;font-size:14px;line-height:22px;}
+.ds-pagination button:hover:not(:disabled) {background:#f0f2f5;color:#17191e;}
+.ds-pagination button[aria-current=page],.ds-pagination button[aria-current=page]:hover {background:#0f1115;color:white;border-color:#0f1115;}
+.ds-pagination button:disabled {color:#a6adb8;cursor:default;}
+.ds-pagination button:focus-visible {outline:2px solid #8993a3;outline-offset:2px;}
+.ds-pagination .ds-page-direction {padding-inline:10px;}
+.ds-pagination .ds-page-gap {font-size:14px;color:#8a929e;}
+@media(max-width:699px){.business-workspace .ds-pagination{gap:4px}.ds-pagination button{min-width:28px;height:32px;padding-inline:5px}.ds-pagination .ds-page-direction{padding-inline:6px}.ds-pagination .ds-page-neighbour{display:none}}
