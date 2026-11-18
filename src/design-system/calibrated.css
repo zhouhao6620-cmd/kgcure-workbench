@@ -14,7 +14,7 @@
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-filter-chips { gap: 8px; }
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-filter-chips .sp-filter {
   min-height: var(--ds-filter-height, 34px);
-  padding: 6px 14px;
+  padding: 6px var(--ds-filter-inline-padding, 14px);
   border-radius: 999px;
   background: var(--ds-nav-selected);
   color: var(--ds-secondary);

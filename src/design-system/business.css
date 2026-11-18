@@ -85,6 +85,7 @@
 /* First-level introductions share typography and safe top breathing room. */
 :is(.business-workspace, .ds-spec-preview) .svc-tabs {
  --ds-filter-height:40px;
+ --ds-filter-inline-padding:18px;
  display:flex;width:fit-content;max-width:100%;height:auto;flex-wrap:wrap;
  justify-content:center;gap:8px;margin:32px auto 20px;padding:0;
  border:0;border-radius:0;background:transparent;
@@ -101,7 +102,7 @@
 .business-workspace .case-section .case-thumb svg {width:100%;height:100%;}
 .business-workspace .case-section .case-body {padding:12px 0 0;}
 .business-workspace :is(.case-card,.draw-card):focus-visible {outline:2px solid #8993a3;outline-offset:5px;border-radius:8px;}
-@media(max-width:699px){:is(.business-workspace, .ds-spec-preview) .svc-tabs{margin-top:28px;gap:6px;margin-bottom:20px}}
+@media(max-width:699px){:is(.business-workspace, .ds-spec-preview) .svc-tabs{--ds-filter-inline-padding:16px;margin-top:28px;gap:6px;margin-bottom:20px}}
 .business-workspace .ds-first-level > :is(.view,.sp-home,.ds-capability-store) {
  padding-top:var(--ds-first-level-top-space);
 }
@@ -133,6 +134,9 @@
  .business-workspace .ds-first-level {
   --ds-first-level-title-size:26px;
   --ds-first-level-title-line:38px;
+ }
+ .business-workspace .ds-first-level .ds-store-heading > div:first-child {
+  flex:none;
  }
 }
 
