@@ -1,16 +1,19 @@
 import { sitePath } from "../site-path.js";
 import { WorkspaceSelect } from '../design-system/WorkspaceSelect.jsx';
 import { PageActions } from '../design-system/SecondaryPageShell.jsx';
-import { HighlightedTitle } from "../design-system/Typography.jsx";
+import { MembershipRedeemDialog } from "./BillingUsage.jsx";
+import { ProcurementInquiry } from "./ProcurementInquiry.jsx";
+import { SAMPLE_BALANCE } from "./billing-usage-data.js";
+import { canUseExclusiveAgent, membershipBenefits } from '../content/membership.js';
 import { useState } from "react";
 import {
   ArrowRight,
-  Bookmark,
+  BadgeCheck,
+  Building2,
   Check,
   ClipboardCheck,
   Coins,
   CreditCard,
-  Crown,
   Download,
   FileText,
   Eye,
@@ -19,6 +22,7 @@ import {
   Gift,
   Image as ImageIcon,
   Layers,
+  MessageCircle,
   Orbit,
   RefreshCw,
   ShieldCheck,
@@ -26,11 +30,13 @@ import {
   Search,
   Upload,
   User,
+  X,
 } from "lucide-react";
-import { Button, DocumentEmptyIllustration, EmptyState as WorkspaceEmptyState, IconButton, Modal, Tag } from "../design-preview/components.jsx";
+import { AgentGlyph, Button, DocumentEmptyIllustration, EmptyState as WorkspaceEmptyState, IconButton, Modal, SkillGlyph, Tag } from "../design-preview/components.jsx";
 import { downloadText } from "../content/catalog.js";
 import { downloadWord } from "../design-preview/word-file.js";
 import { Badge, Btn, EmptyState, PageHead, Tabs, Toggle } from "../components.jsx";
+import "./membership-plans.css";
 
 const FILES = [
   ["AKK_减脂_科研头脑风暴纪要_v1.md", "M", "对话生成", "AKK益生菌减脂研究切入点", "2026/11/14 12:39", "43.1 KB"],
@@ -158,178 +164,120 @@ function InfoRow({ label, value, action, onAction, trailing }) {
   );
 }
 
-export function AccountQuota({ onUpgrade, onRecharge }) {
-  const [tab, setTab] = useState("使用分析");
-
-  return (
-    <div className="view acct-view account-flat quota-view">
-      <div className="crumb"><span>会员与账单</span> / <strong>积分与套餐</strong></div>
-      <div className="acct-head">
-        <h1>积分与套餐</h1>
-        <p>查看可用额度，了解你的 AI 使用与积分消耗。</p>
-      </div>
-
-      <PageActions><Button className="account-upgrade" onClick={onUpgrade}><Crown size={16}/>升级会员套餐</Button></PageActions>
-      <section className="billing-summary" aria-label="额度与余额">
-        <div><p>套餐剩余额度</p><h2>0% <Tag>免费版</Tag></h2><small>已用完 · 长期有效</small></div>
-        <div><p>长期积分</p><h2>5,900 <small>积分</small></h2><small>永久有效</small></div>
-        <div><p>集团分发积分</p><h2>0 <small>积分</small></h2><small>按集团规则有效</small></div>
-      </section>
-      <Button onClick={onRecharge}><Coins size={16}/>充值积分</Button>
-      <Tabs className="ds-detail-tabs account-filter-tabs" items={["积分流水", "使用分析", "统计说明"]} value={tab} onChange={setTab} />
-      {tab === "积分流水" && <WorkspaceEmptyState icon={FileText} description="当前预览暂无逐笔扣减数据。">暂无积分流水</WorkspaceEmptyState>}
-      {tab === "统计说明" && <section className="acct-card"><h2>积分扣减顺序</h2><p>依次使用集团分发积分、套餐额度和长期积分。免费版额度长期有效，不随周期刷新。</p><p>使用分析按用途汇总消耗和扣减次数。</p></section>}
-      {tab === "使用分析" && <section className="acct-card quota-analysis">
-        <div className="usage-head"><h2>使用概览</h2><span className="row-hint">示例数据 · 2026.10.16 – 2026.11.14</span></div>
-
-        <div className="stat-grid">
-          {[
-            ["套餐累计消耗", "100%", "按每次扣减时的套餐额度累计"],
-            ["长期积分消耗", "7,384", "积分　仅统计 AI 使用扣减"],
-            ["扣减记录数", "29", "条　套餐与长期积分分别计数"],
-            ["活跃天数", "7", "天　所选时段内有使用的天数"],
-          ].map(([label, value, hint]) => (
-            <div key={label} className="stat-card">
-              <span className="stat-label">{label}</span>
-              <strong>{value}</strong>
-              <span className="stat-hint">{hint}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="chart-block">
-          <div className="chart-head"><span>消耗趋势</span><span className="row-hint">示例趋势</span></div>
-          <svg className="line-chart" viewBox="0 0 640 180" preserveAspectRatio="none" role="img" aria-label="消耗趋势折线图">
-            <line x1="40" y1="150" x2="620" y2="150" stroke="#e2e8f0" />
-            <line x1="40" y1="100" x2="620" y2="100" stroke="#f1f5f9" />
-            <line x1="40" y1="50" x2="620" y2="50" stroke="#f1f5f9" />
-            <path d="M40 140 L160 132 L280 112 L400 86 L520 54 L620 44 L620 150 L40 150 Z" fill="rgba(26,91,255,0.08)" />
-            <path d="M40 140 L160 132 L280 112 L400 86 L520 54 L620 44" fill="none" stroke="#1a5bff" strokeWidth="2.5" strokeLinecap="round" />
-            {[0, 1, 2, 3].map((i) => <text key={i} x={40 + i * 193} y={172} fontSize="11" fill="#94a3b8">{["10.16", "10.25", "11.04", "11.14"][i]}</text>)}
-          </svg>
-          <div className="chart-legend"><span>长期积分</span><span>套餐百分比</span></div>
-        </div>
-
-        <div className="usage-bottom">
-          <div className="donut-wrap">
-            <div className="donut" role="img" aria-label="类型占比：科研工作流 58.74%，AI 使用（未分类）41.26%"><span>58.74%</span></div>
-            <div className="donut-legend">
-              <p><span className="dot blue" /> 科研工作流 <strong>58.74%</strong></p>
-              <p><span className="dot slate" /> AI 使用（未分类） <strong>41.26%</strong></p>
-              <span className="row-hint">按类型汇总 · 2 个使用类型</span>
-            </div>
-          </div>
-          <div className="quota-table-scroll"><table className="usage-table">
-            <thead><tr><th>使用类型</th><th>扣减记录数</th><th>套餐累计消耗</th><th>长期积分消耗</th></tr></thead>
-            <tbody>
-              <tr><td>AI 使用（未分类）<span className="row-hint">历史记录缺少用途标记</span></td><td>22 条</td><td>100%</td><td>3,047 积分</td></tr>
-              <tr><td>科研工作流<span className="row-hint">通过科研工作流发起的使用</span></td><td>7 条</td><td>0%</td><td>4,337 积分</td></tr>
-              <tr className="total"><td>合计</td><td>29 条</td><td>100%</td><td>7,384 积分</td></tr>
-            </tbody>
-          </table></div>
-        </div>
-        <p className="note">仅展示分类统计，不展示对话内容、任务名称或单次请求详情。</p>
-      </section>}
-    </div>
-  );
-}
-
-export function Membership({ onPlans, onQuota, onRecharge, onToast }) {
-  const [tab, setTab] = useState("账单记录");
-  return (
-    <div className="view acct-view account-flat billing-view">
-      <div className="crumb"><span>账户管理</span> / <strong>会员与账单</strong></div>
-      <div className="acct-head">
-        <h1>会员与账单</h1>
-        <p>管理会员权益，查看套餐额度与账单记录。</p>
-      </div>
-
-      <PageActions><Button className="account-upgrade" onClick={onPlans}><Crown size={16}/>升级会员套餐</Button></PageActions>
-      <section className="billing-summary" aria-label="套餐与积分概览">
-        <div><p>当前套餐</p><h2><span className="billing-plan-name">免费版</span> <Tag>使用中</Tag></h2><small>长期有效 · 1 个科研空间</small></div>
-        <div><p>长期积分</p><h2>5,900 <small>积分</small></h2><small>永久有效</small></div>
-        <div><p>集团分发积分</p><h2>0 <small>积分</small></h2><small>按集团规则有效</small></div>
-      </section>
-      <div className="billing-actions">
-        <p>套餐额度已用完，后续用量将从长期积分抵扣。</p>
-        <div>
-          <Button onClick={onQuota}><FileText size={16}/>积分消费明细</Button>
-          <Button onClick={onRecharge}><Coins size={16}/>充值积分</Button>
-          <Button onClick={() => onToast("兑换会员（原型演示）")}><Gift size={16}/>兑换会员</Button>
-        </div>
-      </div>
-      <Tabs className="ds-detail-tabs account-filter-tabs" items={["账单记录", "发票申请记录"]} value={tab} onChange={setTab} />
-      <section className="billing-records" aria-label={tab}>
-        {tab === "账单记录" ? (
-          <WorkspaceEmptyState icon={DocumentEmptyIllustration} description="购买或兑换会员后，账单会显示在这里。">暂无账单记录</WorkspaceEmptyState>
-        ) : (
-          <WorkspaceEmptyState icon={DocumentEmptyIllustration} description="购买会员后可申请发票。"
-            action={<Button onClick={() => onToast("当前暂无可开票订单")}>申请发票</Button>}>
-            暂无发票申请
-          </WorkspaceEmptyState>
-        )}
-      </section>
-    </div>
-  );
-}
-
+const POINTS_PER_YUAN = 100;
+const planNumber = new Intl.NumberFormat('zh-CN');
+const money = new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const RESEARCH_TOOLS = [
+  { name: '日常对话', icon: MessageCircle },
+  { name: '科研绘图', icon: ImageIcon },
+  { name: '科研 Skill', icon: SkillGlyph },
+];
 const PLANS = [
-  { id: 'FREE', name: '免费版', tag: '体验', price: '¥0', unit: '/ 永久免费', line: '无需付费 · 注册即享', desc: '适合轻量体验与偶尔使用', quota: '基础额度', refresh: '长期有效，不随周期刷新', spaces: '1 个', cta: '当前使用中', icon: Bookmark },
-  { id: 'BASIC', name: '基础版', tag: '日常科研', price: '¥79', unit: '/ 月', line: '按月结算 · 灵活开通', desc: '适合日常文献、分析与常规科研', quota: '标准额度', refresh: '每7天自动刷新', spaces: '2 个', cta: '立即开通 基础版', icon: FlaskConical },
-  { id: 'PLUS', name: '专家版 Plus', tag: '最受欢迎 · 深度科研首选', price: '¥299', unit: '/ 月', line: '按月结算 · 灵活开通', desc: '适合持续科研、论文与数据分析', quota: '高额度', refresh: '每7天自动刷新', spaces: '5 个', cta: '立即升级 Plus', icon: Layers },
-  { id: 'PRO', name: '专家版 Pro', tag: '高频科研', price: '¥659', unit: '/ 月', line: '按月结算 · 灵活开通', desc: '适合高频科研、多项目与复杂任务', quota: '最高额度', refresh: '每7天自动刷新', spaces: '不限', cta: '立即升级 Pro', icon: Orbit },
+  { id: 'BASIC', name: '基础版', useCase: '适合日常文献、分析与常规科研', checkoutHint: '日常文献与分析', price: 79, quota: 10000, icon: FlaskConical },
+  { id: 'PLUS', name: 'Plus', useCase: '适合持续科研、论文与数据分析', checkoutHint: '论文与数据分析', price: 299, quota: 40000, icon: Layers },
+  { id: 'PRO', name: 'Pro', useCase: '适合高频科研、多项目与复杂任务', checkoutHint: '多项目与复杂任务', price: 999, quota: 150000, icon: Orbit },
 ];
 
-const FEATURES = ['自由对话', '科研任务', '专业工作流', '高频科研场景'];
+function PlanAvailability({ included, children }) {
+  const StatusIcon = included ? Check : X;
+  return <li className="plan-feature-line plan-feature-status" data-included={included}>
+    <StatusIcon size={16} aria-hidden="true" />
+    <span>{children}<span className="sp-visually-hidden">{included ? '，已包含' : '，未包含'}</span></span>
+  </li>;
+}
 
-export function MembershipPlans({ onCheckout, onBack, onToast }) {
+function PlanCard({ plan, currentPlan, onCheckout }) {
+  const tier = plan.id.toLowerCase();
+  const { collaboration, academy } = membershipBenefits(tier);
+  const rechargePrice = plan.quota / POINTS_PER_YUAN;
+  const multiple = plan.quota / PLANS[0].quota;
+  const isCurrent = plan.id === currentPlan;
+  const action = isCurrent ? '续费' : currentPlan === 'FREE' ? '开通' : plan.id === 'PRO' ? '升级' : '选择';
+  return <article className="plan-card" data-plan={plan.id} aria-labelledby={`plan-${plan.id}`}>
+    <header className="plan-card-head">
+      <div className="plan-card-title">
+        <h2 id={`plan-${plan.id}`}>{plan.name}</h2>
+        {isCurrent && <span className="plan-current-badge" title="当前方案"><BadgeCheck size={14} aria-hidden="true" />当前</span>}
+      </div>
+      <plan.icon className="plan-card-mark" size={36} strokeWidth={1.2} aria-hidden="true" />
+      <p>{plan.useCase}</p>
+    </header>
+    <div className="plan-pricing">
+      <p className="plan-price"><span className="plan-currency">¥</span>{planNumber.format(plan.price)}<span className="plan-period"> / 月</span></p>
+      {multiple > 1 && <span className="plan-multiplier" title={`相当于基础版月度科研额度的 ${multiple} 倍`}>
+        <strong>{multiple}<span>×</span></strong><small>基础额度</small>
+      </span>}
+    </div>
+    <dl className="plan-quota">
+      <dt>赠送科研额度</dt>
+      <dd><strong>{planNumber.format(plan.quota)}</strong> 积分/月</dd>
+    </dl>
+    <p className="plan-savings" title={`同等额度直接充值需 ¥${planNumber.format(rechargePrice)}`}>
+      比直接积分充值省 ¥{planNumber.format(rechargePrice - plan.price)}
+    </p>
+    <Button variant={plan.id === 'PLUS' ? 'primary' : 'secondary'}
+      className={plan.id === 'PRO' ? 'plan-cta-pro' : undefined} onClick={() => onCheckout(plan.id)}>
+      {action}{plan.id === 'BASIC' ? '' : ' '}{plan.name}
+    </Button>
+    <ul className="plan-features">
+      {RESEARCH_TOOLS.map(({ name, icon: Icon }) => <li key={name} className="plan-feature-line">
+        <Icon size={16} strokeWidth={1.65} aria-hidden="true" />{name}
+      </li>)}
+      <li className="plan-feature-group">
+        <span className="plan-feature-line"><AgentGlyph size={16} />科研 Agent</span>
+        <ul className="plan-feature-details">
+          <PlanAvailability included>普通 Agent</PlanAvailability>
+          {canUseExclusiveAgent(tier) && <PlanAvailability included>专享 Agent</PlanAvailability>}
+        </ul>
+      </li>
+      <li className="plan-feature-group">
+        <span className="plan-feature-line"><FolderOpen size={16} strokeWidth={1.65} aria-hidden="true" />科研空间</span>
+        <ul className="plan-feature-details">
+          <PlanAvailability included={collaboration}>{collaboration ? '支持邀请成员协作' : '不支持邀请协作'}</PlanAvailability>
+        </ul>
+      </li>
+      {academy && <PlanAvailability included>KGcure 学院课程</PlanAvailability>}
+    </ul>
+  </article>;
+}
+
+export function MembershipPlans({ onCheckout, onBack, tier }) {
+  const [dialog, setDialog] = useState(null);
+  const currentPlan = tier.toUpperCase();
+  const closeDialog = () => setDialog(null);
   return <div className="view acct-view plans-view">
     <div className="crumb"><button type="button" className="text-link" onClick={onBack}>← 返回</button> / <strong>会员套餐</strong></div>
-    <header className="acct-head plans-heading">
-      <div><h1>选择适合你的方案</h1><p>根据科研需求选择套餐，随时可以升级或续费。</p></div>
+    <PageActions>
+      <Button className="plan-procurement-entry" aria-haspopup="dialog" onClick={() => setDialog('procurement')}>
+        <Building2 size={16} aria-hidden="true" />药械医院采购
+      </Button>
+    </PageActions>
+    <header className="plans-heading">
+      <h1>选择适合你的方案</h1>
+      <p>根据科研需求选择套餐，随时可以升级或续费</p>
     </header>
-    <div className="plan-grid" aria-label="会员套餐">
-      {PLANS.map(plan => <article key={plan.id} className="plan-card" data-plan={plan.id}>
-        <header className="plan-card-head">
-          <plan.icon className="plan-card-mark" size={60} strokeWidth={1} aria-hidden="true"/>
-          <span className="plan-tag">{plan.tag}</span>
-          <h2>{plan.name}</h2>
-        </header>
-        <div className="plan-price">{plan.price}<span>{plan.unit}</span></div>
-        <p className="plan-billing">{plan.line}</p>
-        <p className="plan-desc">{plan.desc}</p>
-        <dl className="plan-entitlements">
-          <div><dt>科研额度</dt><dd><strong>{plan.quota}</strong></dd></div>
-          <div><dt>刷新周期</dt><dd className="plan-refresh">{plan.refresh}</dd></div>
-          <div><dt>科研项目空间</dt><dd><strong>{plan.spaces}</strong></dd></div>
-        </dl>
-        <ul className="plan-features">{FEATURES.map(item => <li key={item}><Check size={13} aria-hidden="true"/>{item}</li>)}</ul>
-        <Btn kind={plan.id === 'PLUS' ? 'primary' : 'secondary'}
-          className={plan.id === 'PRO' ? 'plan-cta-pro' : undefined}
-          disabled={plan.id === 'FREE'} onClick={() => onCheckout(plan.id)}>{plan.cta}</Btn>
-      </article>)}
-    </div>
-    <div className="plan-redeem-row">
-      <button type="button" className="plan-redeem" onClick={() => onToast('输入兑换码（原型演示）')}>
-        <Gift size={16} strokeWidth={1.6} aria-hidden="true"/>立即兑换会员
-      </button>
-    </div>
+    <section aria-label="会员套餐">
+      <div className="plan-grid">
+        {PLANS.map(plan => <PlanCard key={plan.id} plan={plan} currentPlan={currentPlan} onCheckout={onCheckout} />)}
+      </div>
+      <div className="plan-redeem-row">
+        <Button aria-haspopup="dialog" onClick={() => setDialog('redeem')}>
+          <Gift size={16} strokeWidth={1.6} aria-hidden="true" />使用兑换码对话
+        </Button>
+      </div>
+    </section>
+    {dialog === 'redeem' && <MembershipRedeemDialog onClose={closeDialog} />}
+    {dialog === 'procurement' && <ProcurementInquiry onClose={closeDialog} />}
   </div>;
 }
 
-const CHECKOUT_PLANS = [
-  ["基础版", "日常科研", "¥79 / 月", "4,500 积分 / 7 天", "2 个科研空间"],
-  ["专家版 Plus", "进阶科研", "¥299 / 月", "22,500 积分 / 7 天", "5 个科研空间"],
-  ["专家版 Pro", "重度科研", "¥659 / 月", "50,000 积分 / 7 天", "不限数量科研空间"],
-];
-
-export function Checkout({ plan = "BASIC", onBack, onToast }) {
-  const [selected, setSelected] = useState(plan === "PLUS" ? 1 : plan === "PRO" ? 2 : 0);
+export function Checkout({ plan = "BASIC", tier, onBack, onToast }) {
+  const [selected, setSelected] = useState(plan);
   const [months, setMonths] = useState(1);
   const [pay, setPay] = useState("微信支付");
-  const price = [79, 299, 659][selected];
+  const current = PLANS.find(item => item.id === selected) || PLANS[0];
+  const price = current.price;
   const total = price * months;
-  const current = CHECKOUT_PLANS[selected];
 
   return (
     <div className="view acct-view checkout-view ds-checkout">
@@ -338,19 +286,19 @@ export function Checkout({ plan = "BASIC", onBack, onToast }) {
         <h1>会员套餐结算</h1>
         <p>选择套餐、购买时长和支付方式。</p>
       </div>
-      <PageActions><div className="checkout-membership-meta"><Badge tone="slate">免费版</Badge><Button onClick={onBack}><ClipboardCheck size={16} aria-hidden="true"/>查看权益</Button></div></PageActions>
+      <PageActions><div className="checkout-membership-meta"><Badge tone="slate">{membershipBenefits(tier).name}</Badge><Button onClick={onBack}><ClipboardCheck size={16} aria-hidden="true"/>查看权益</Button></div></PageActions>
 
       <div className="checkout-layout">
         <div className="checkout-main">
           <section className="checkout-step">
             <h2>选择会员套餐</h2>
             <div className="checkout-plans">
-              {CHECKOUT_PLANS.map((item, index) => (
-                <button key={item[0]} type="button" className={"checkout-plan" + (selected === index ? " is-active" : "")} aria-pressed={selected === index} onClick={() => setSelected(index)}>
-                  <span className="row-hint">{item[1]}</span>
-                  <strong>{item[0]}</strong>
-                  <span className="checkout-plan-price">{item[2]}</span>
-                  <span className="checkout-plan-detail">{item[3]}<br/>{item[4]}</span>
+              {PLANS.map(item => (
+                <button key={item.id} type="button" className={"checkout-plan" + (current.id === item.id ? " is-active" : "")} aria-pressed={current.id === item.id} onClick={() => setSelected(item.id)}>
+                  <span className="row-hint">{item.checkoutHint}</span>
+                  <strong>{item.name}</strong>
+                  <span className="checkout-plan-price">¥{planNumber.format(item.price)} / 月</span>
+                  <span className="checkout-plan-detail">赠送科研额度<br />{planNumber.format(item.quota)} 积分/月</span>
                 </button>
               ))}
             </div>
@@ -362,11 +310,11 @@ export function Checkout({ plan = "BASIC", onBack, onToast }) {
               {[[1, "1个月"], [3, "3个月"], [6, "6个月"], [12, "1年"]].map(([m, label]) => (
                 <button key={m} type="button" className={"duration" + (months === m ? " is-active" : "")} aria-pressed={months === m} onClick={() => setMonths(m)}>
                   <span>{label}</span>
-                  <strong>¥{(price * m).toFixed(2)}</strong>
+                  <strong>¥{money.format(price * m)}</strong>
                 </button>
               ))}
             </div>
-            <p className="note">套餐科研额度每7天刷新，通用积分长期保留。</p>
+            <p className="note">会员科研额度按月刷新，充值积分长期保留。</p>
           </section>
 
           <section className="checkout-step">
@@ -383,20 +331,20 @@ export function Checkout({ plan = "BASIC", onBack, onToast }) {
           </section>
         </div>
 
-        <aside className="order-card" aria-label="订单确认" data-plan={selected === 2 ? "PRO" : undefined}>
+        <aside className="order-card" aria-label="订单确认" data-plan={current.id}>
           <div className="order-head">订单确认</div>
           <CreditCard className="checkout-order-mark" size={88} strokeWidth={1} aria-hidden="true"/>
-          <h3>{current[0]}</h3>
+          <h3>{current.name}</h3>
           <p className="row-hint">{months}个月会员 · 科研套餐</p>
           <dl className="order-list">
-            <div><dt>套餐单价</dt><dd>¥{price}.00 / 月</dd></div>
+            <div><dt>套餐单价</dt><dd>¥{money.format(price)} / 月</dd></div>
             <div><dt>购买时长</dt><dd>{months}个月</dd></div>
-            <div><dt>周期额度</dt><dd>{current[3]}</dd></div>
+            <div><dt>赠送科研额度</dt><dd>{planNumber.format(current.quota)} 积分/月</dd></div>
             <div><dt>支付方式</dt><dd>{pay}</dd></div>
             <div><dt>开通账户</dt><dd>微信用户57585</dd></div>
           </dl>
-          <div className="order-total"><span>应付金额</span><strong>¥{total.toFixed(2)}</strong></div>
-          <Btn kind="primary" className={"full checkout-pay-button" + (selected === 2 ? " plan-cta-pro" : "")} onClick={() => onToast("原型演示：将生成支付二维码")}>确认并生成支付二维码</Btn>
+          <div className="order-total"><span>应付金额</span><strong>¥{money.format(total)}</strong></div>
+          <Btn kind="primary" className={"full checkout-pay-button" + (current.id === 'PRO' ? ' plan-cta-pro' : '')} onClick={() => onToast("原型演示：将生成支付二维码")}>确认并生成支付二维码</Btn>
           <button type="button" className="order-alt" onClick={() => onToast("请他人代付（原型演示）")}>请他人代付</button>
           <p className="order-hint">通过微信 / 支付宝完成支付</p>
         </aside>
@@ -405,7 +353,7 @@ export function Checkout({ plan = "BASIC", onBack, onToast }) {
   );
 }
 
-export function Recharge({ onBack, onToast }) {
+export function Recharge({ onBack, onRecords, onToast }) {
   const [amount, setAmount] = useState(100);
   const [pay, setPay] = useState("微信支付");
   const options = [10, 50, 100, 500];
@@ -418,17 +366,17 @@ export function Recharge({ onBack, onToast }) {
         <p>选择充值金额和支付方式。</p>
       </div>
 
-      <PageActions><div className="checkout-membership-meta"><Badge tone="blue">5,900 积分</Badge><Button onClick={() => onToast("查看积分明细（原型演示）")}><FileText size={16} aria-hidden="true"/>积分明细</Button></div></PageActions>
+      <PageActions><div className="checkout-membership-meta"><Badge tone="blue">{SAMPLE_BALANCE.toLocaleString("zh-CN")} 积分</Badge><Button onClick={onRecords}><FileText size={16} aria-hidden="true"/>积分明细</Button></div></PageActions>
 
       <div className="checkout-layout">
         <div className="checkout-main">
           <section className="checkout-step">
-            <h2>选择充值额度 <span className="row-hint">¥1 = 100 积分</span></h2>
+            <h2>选择充值额度 <span className="row-hint">¥1 = {POINTS_PER_YUAN} 积分</span></h2>
             <div className="recharge-grid">
               {options.map((item) => (
                 <button key={item} type="button" className={"recharge-option" + (amount === item ? " is-active" : "")} aria-pressed={amount === item} onClick={() => setAmount(item)}>
                   <span className="row-hint">通用积分</span>
-                  <strong>{(item * 100).toLocaleString()}</strong>
+                  <strong>{planNumber.format(item * POINTS_PER_YUAN)}</strong>
                   <span>¥{item.toFixed(2)}</span>
                   {item === 100 ? <span className="mini-flag">常用额度</span> : null}
                 </button>
@@ -458,7 +406,7 @@ export function Recharge({ onBack, onToast }) {
         <aside className="order-card">
           <div className="order-head">订单确认</div>
           <CreditCard className="checkout-order-mark" size={88} strokeWidth={1} aria-hidden="true"/>
-          <h3>{(amount * 100).toLocaleString()} 通用积分</h3>
+          <h3>{planNumber.format(amount * POINTS_PER_YUAN)} 通用积分</h3>
           <p className="row-hint">一次充值 · 长期有效</p>
           <dl className="order-list">
             <div><dt>充值金额</dt><dd>¥{amount.toFixed(2)}</dd></div>

@@ -1,0 +1,15 @@
+.ds-quota-progress {
+  --quota-fill: #3964fe;
+  display: block;
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf0f5;
+}
+.ds-quota-progress[data-tone="green"] { --quota-fill: #23845c; }
+.ds-quota-progress[data-tone="blue"] { --quota-fill: #3964fe; }
+.ds-quota-progress[data-tone="gold"] { --quota-fill: #b68838; }
+.ds-quota-progress[data-tone="orange"] { --quota-fill: #db6c28; }
+.ds-quota-progress[data-tone="red"] { --quota-fill: #d04449; }
+.ds-quota-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--quota-fill); }

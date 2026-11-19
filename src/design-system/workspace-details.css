@@ -3,6 +3,7 @@
 .workFavorite[aria-pressed=true] {color:#c82e41;background:white;border-color:var(--ds-line)}
 .workAbilityHead {display:block;margin-bottom:24px}
 .workAbilityTags {display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:0 0 12px}
+.workAbilityHead .workAgentRequirement { margin: 0 0 12px; color: var(--ds-secondary); }
 .sp-design-app .integratedDetail .workAbilityTags > :is(.sp-tag,.sp-skill-badge,.sp-agent-badge) {height:28px;padding-inline:8px;font-size:14px;font-weight:400}
 .sp-design-app .integratedDetail .workAbilityTags > :is(.sp-tag,.sp-skill-badge,.sp-agent-badge) > span {font-size:inherit;font-weight:inherit}
 .workAbilityHead>div,.workSpaceBody,.integratedDetail .ds-detail-columns>div {min-width:0}

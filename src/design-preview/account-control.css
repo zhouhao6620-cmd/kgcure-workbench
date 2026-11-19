@@ -14,10 +14,12 @@
 .sp-membership-upgrade { display:flex; align-items:center; gap:9px; min-height:44px; width:100%; padding:10px 12px; border:0; border-radius:8px; background:#fbf4e6; color:#7d5b27; font-size:14px; line-height:22px; font-weight:600; text-align:left; }
 .sp-membership-upgrade:hover { background:#f7ecd6; }
 .sp-membership-upgrade > span { flex:1; }
-.sp-account-quota { padding:12px 12px 14px; }
-.sp-account-quota > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px; line-height:20px; font-weight:400; color:#737d8b; }
-.sp-account-quota [role=progressbar] { margin-top:8px; height:4px; border-radius:4px; overflow:hidden; background:#edf0f4; }
-.sp-account-quota [role=progressbar] > span { display:block; height:100%; background:#3964fe; border-radius:inherit; }
+.sp-account-quota { display:grid; gap:5px; width:100%; padding:8px 12px 10px; border:0; border-radius:8px; background:transparent; text-align:left; cursor:pointer; }
+.sp-account-quota:hover { background:#f4f5f7; }
+.sp-account-quota-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px; line-height:19px; color:#626873; }
+.sp-account-quota-heading strong { font-size:13px; font-weight:600; color:#0f1115; }
+.sp-account-quota .sp-account-quota-track { height:4px; }
+.sp-account-quota-reset { color:#737d8b; font-size:12px; line-height:17px; font-variant-numeric:tabular-nums; }
 .sp-account-menu-group { border-top:1px solid #f0f2f5; padding:4px 0; }
 .sp-account-menu-group:last-child { padding-bottom:0; }
 .sp-account-menu-item { display:flex; align-items:center; gap:10px; min-height:36px; width:100%; padding:7px 12px; border:0; border-radius:6px; background:transparent; color:#252b34; text-align:left; font-size:14px; line-height:22px; font-weight:400; }

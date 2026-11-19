@@ -31,6 +31,9 @@
 .sp-design-app .sp-gray-top .sp-ability-icon { width:36px; height:36px; flex-shrink:0; border-radius:9px; }
 .sp-design-app .sp-gray-top .sp-ability-icon > svg { width:22px; height:22px; }
 .sp-design-app .sp-gray-heading { min-width:0; flex:1; }
+.sp-design-app .sp-agent-title { display:flex; align-items:center; gap:6px; min-width:0; }
+.sp-design-app .sp-agent-title > .sp-tag { flex:none; height:20px; padding-inline:5px; }
+.sp-design-app .sp-agent-card .sp-gray-top > .sp-tag { align-self:flex-start; flex:none; height:22px; gap:4px; padding-inline:6px; }
 .sp-design-app .sp-gray-heading > strong {
  display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
  font-size:14px; line-height:22px; font-weight:600; color:#252c37;

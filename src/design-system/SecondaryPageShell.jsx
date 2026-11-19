@@ -20,7 +20,8 @@ export function secondaryParent(path){
  if(path.startsWith('/workspace/workflows/template/'))return path.includes('/cases/')?path.split('/cases/')[0]:'/workspace/agents';
  if(path==='/workspace/contribute')return '/workspace/skills';
  if(path==='/workspace/membership/checkout')return '/workspace/membership-plans';
- if(['/workspace/membership-plans','/workspace/recharge','/workspace/account-quota'].includes(path))return '/workspace/membership';
+ if(path==='/workspace/recharge')return '/workspace/membership?view=points';
+ if(path==='/workspace/membership-plans')return '/workspace/membership';
  return '/workspace/chats/new';
 }
 export function SecondaryPageShell({path,onNavigate,onToast,children,scrollRef,firstLevel=false}){
@@ -29,6 +30,9 @@ export function SecondaryPageShell({path,onNavigate,onToast,children,scrollRef,f
  const context=new URLSearchParams(location.search);
  const fromSpace=context.get('space');
  let parent=secondaryParent(path);
+ if (context.get('preview') === 'free' && ['/workspace/recharge', '/workspace/membership-plans', '/workspace/membership/checkout'].includes(path)) {
+  parent += (parent.includes('?') ? '&' : '?') + 'preview=free';
+ }
  if(/^\/workspace\/(skills|agents)\//.test(path)&&fromSpace){
   parent='/workspace/research-space/'+encodeURIComponent(fromSpace);
   if(context.get('folder'))parent+='?folder='+encodeURIComponent(context.get('folder'));

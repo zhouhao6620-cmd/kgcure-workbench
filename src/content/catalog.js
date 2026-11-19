@@ -2,7 +2,10 @@ import rawCatalog from './catalog.json';
 import { EDITORIAL, AGENT_CORRECTIONS } from './editorial.js';
 import { skillAssessmentExample } from './skill-assessment-examples.js';
 const catalog=rawCatalog.map(item=>({...item,...(EDITORIAL[item.id]||{}),...(AGENT_CORRECTIONS[item.id]||{}),sourceIntro:item.intro,sourceSteps:item.steps,sourceDeliverables:item.deliverables,adapted:Boolean(EDITORIAL[item.id]||AGENT_CORRECTIONS[item.id])}));
+// Prototype assignments for reviewing the Agent entitlement flow.
+const previewExclusiveAgentIds = new Set(['1138', '1001', '1142']);
 for (const item of catalog) {
+  if (item.kind === 'agent') item.exclusive = previewExclusiveAgentIds.has(item.id);
   const assessment = skillAssessmentExample(item.id);
   if (assessment) Object.assign(item, { assessment, score: assessment.score, reviewed: true, sourceLabel: '已评测 · 演示' });
 }

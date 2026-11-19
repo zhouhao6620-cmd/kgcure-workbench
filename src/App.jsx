@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
-  Coins,
   CreditCard,
   FlaskConical,
   Folder,
@@ -32,7 +31,9 @@ import {
   X,
 } from "lucide-react";
 import { categories, researchWorkflows, shortcuts } from "./data.js";
-import { AccountQuota, Approvals, Checkout, Membership, MembershipPlans, MyFiles, ProfilePage, Recharge } from "./pages/account.jsx";
+import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge } from "./pages/account.jsx";
+import { BillingUsage } from "./pages/BillingUsage.jsx";
+import { SAMPLE_QUOTA_REMAINING } from "./pages/billing-usage-data.js";
 import { DrawingChat, MultiStepChat, WorkflowAssistantChat } from "./pages/chats.jsx";
 import { LandingPage } from "./pages/landing.jsx";
 import { DrawingPage, ServicePage } from "./pages/services.jsx";
@@ -50,6 +51,8 @@ import { ContributionPage } from './design-system/ContributionPage.jsx';
 import { CapabilityCase } from './design-system/CapabilityCase.jsx';
 import { SecondaryPageShell } from './design-system/SecondaryPageShell.jsx';
 import { capabilityById, capabilityPath, downloadText } from './content/catalog.js';
+import { canUseCapability, EXCLUSIVE_AGENT_REQUIREMENT, previewMembershipTier } from './content/membership.js';
+import { Button, Modal } from './design-preview/components.jsx';
 
 const cx = (...items) => items.filter(Boolean).join(" ");
 
@@ -85,10 +88,7 @@ function AccountMenu({ onNavigate, onClose }) {
       </button>
       <div className="menu-divider" />
       <button type="button" role="menuitem" className="menu-item" onClick={() => onNavigate("/workspace/membership")}>
-        <CreditCard size={16} /><span>会员与账单</span><span className="menu-badge">免费版</span>
-      </button>
-      <button type="button" role="menuitem" className="menu-item" onClick={() => onNavigate("/workspace/account-quota")}>
-        <Coins size={16} /><span>积分与套餐</span><span className="menu-value">11,155 · 0%</span>
+        <CreditCard size={16} /><span>账单与用量</span>
       </button>
       <button type="button" role="menuitem" className="menu-item" onClick={() => onNavigate("/workspace/membership-plans")}>
         <Sparkles size={16} /><span>会员套餐</span>
@@ -496,6 +496,8 @@ function NewChatPage({ mode, onNavigate, onToast }) {
 export function App() {
   const router = useRouter();
   const path = router.path;
+  const previewTier = router.get('preview');
+  const tier = previewMembershipTier(previewTier);
   const [localSessions,setLocalSessions]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-sessions-v2')||'[]');}catch{return [];}});
   const [spaces,setSpaces]=useState(initialResearchSpaces);
   const [historyOverrides,setHistoryOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-history-overrides')||'{}');}catch{return {};}});
@@ -511,6 +513,8 @@ export function App() {
   const [guest, setGuest] = useState(() => {
     try { return window.localStorage.getItem("kgcure-guest") === "1"; } catch { return false; }
   });
+  const [resetUsed, setResetUsed] = useState(false);
+  const [restrictedAgent, setRestrictedAgent] = useState(null);
   const accountRef = useRef(null);
   const scrollRef = useRef(null);
   const toastTimer = useRef(null);
@@ -549,7 +553,12 @@ export function App() {
       setAccountOpen(false);
       return;
     }
-    router.navigate(target);
+    const url = new URL(target, window.location.origin);
+    if (previewTier && url.pathname.startsWith('/workspace') && !url.searchParams.has('preview')) {
+      url.searchParams.set('preview', tier);
+    }
+    router.navigate(url.href);
+    setRestrictedAgent(null);
     setMobileOpen(false);
     setAccountOpen(false);
   }
@@ -588,7 +597,15 @@ export function App() {
   const isStore = ["/workspace/skills", "/workspace/agents", "/workspace/workflows", "/workspace/research-space"].includes(path);
   const isFirstLevel = isHome || ["/workspace/evidence-search", "/workspace/topic-selection", "/workspace/grant-application", "/workspace/scientific-drawing", "/workspace/skills", "/workspace/agents", "/workspace/research-space", "/workspace/workflows"].includes(path);
 
+  function requireCapabilityAccess(ability) {
+    const item = typeof ability === 'string' ? capabilityById(ability) : ability;
+    if (canUseCapability(item, tier)) return true;
+    setRestrictedAgent(item);
+    return false;
+  }
+
   function startTask(data={}) {
+    if (!requireCapabilityAccess(data.ability)) return false;
     const session=makeSession(data);setLocalSessions(items=>[session,...items]);navigate('/workspace/chats/'+session.id);
   }
   function sessionAction(type,item,title){
@@ -604,12 +621,14 @@ export function App() {
     }
   }
   function runCapability(item){startTask({ability:item,space:router.get('space')||'personal',origin:router.get('folder')?{folderId:router.get('folder')}:undefined,text:'使用「'+item.name+'」，请协助我完成科研任务。'});}
+  const hasBillingMembership = tier !== 'free';
+
   function renderStandard() {
-    if (isHome) return <BusinessHome key={router.search} onStart={startTask} onNavigate={navigate} onToast={showToast}/>;
+    if (isHome) return <BusinessHome key={router.search} onStart={startTask} onNavigate={navigate} onToast={showToast} onRequireCapability={requireCapabilityAccess}/>;
     if (path === "/workspace/skills" || path === "/workspace/agents") return <CapabilityStore onRecommend={task=>startTask({text:'我希望'+task.name+'，请先帮我推荐合适的科研能力。',origin:{category:task.category}})} key={path} kind={path.endsWith('skills')?'skill':'agent'} onNavigate={navigate}/>;
     if (path === '/workspace/contribute') return <ContributionPage onToast={showToast}/>;
     if (path.startsWith('/workspace/cases/')) {const [, , ,abilityId,caseId]=path.split('/');return <CapabilityCase item={capabilityById(abilityId)} caseId={caseId} onNavigate={navigate} onRun={runCapability}/>;}
-    if (/^\/workspace\/(skills|agents)\//.test(path)) {const id=path.split('/').at(-1),item=capabilityById(id) || (path.startsWith('/workspace/skills/') && COMMUNITY_SKILL_EXAMPLES.find(example=>example.id===id));return item?<CapabilityDetail key={item.id} item={item} onNavigate={navigate} onToast={showToast} onRun={runCapability}/>:<div className="view ds-page-empty"><h1>未找到该能力</h1><button onClick={()=>navigate('/workspace/skills')}>返回商店</button></div>;}
+    if (/^\/workspace\/(skills|agents)\//.test(path)) {const id=path.split('/').at(-1),item=capabilityById(id) || (path.startsWith('/workspace/skills/') && COMMUNITY_SKILL_EXAMPLES.find(example=>example.id===id));return item?<CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onToast={showToast} onRun={runCapability}/>:<div className="view ds-page-empty"><h1>未找到该能力</h1><button onClick={()=>navigate('/workspace/skills')}>返回商店</button></div>;}
     if (path === "/workspace/evidence-search") return <ServicePage showCaseType key="evidence" onStart={startTask} kind="evidence" onToast={showToast} />;
     if (path === "/workspace/topic-selection") return <ServicePage showCaseType key="topic" onStart={startTask} kind="topic" onToast={showToast} />;
     if (path === "/workspace/grant-application") return <ServicePage showCaseType key="grant" onStart={startTask} kind="grant" onToast={showToast} />;
@@ -620,7 +639,7 @@ export function App() {
     if (path.startsWith("/workspace/workflows/template/")) {
       const sourceId=path.split('/')[4],item=capabilityById(sourceId);
       if(item&&path.includes('/cases/'))return <CapabilityCase item={item} caseId={path.split('/').at(-1)} onNavigate={navigate} onRun={runCapability}/>;
-      if(item)return <CapabilityDetail key={item.id} item={item} onNavigate={navigate} onToast={showToast} onRun={runCapability}/>;
+      if(item)return <CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onToast={showToast} onRun={runCapability}/>;
       return (
         <WorkflowDetail
           onBack={() => navigate("/workspace/workflows")}
@@ -632,17 +651,34 @@ export function App() {
     }
     if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} onToast={showToast} />;
     if (path === "/workspace/profile") return <ProfilePage onToast={showToast} />;
-    if (path === "/workspace/account-quota") return <AccountQuota onUpgrade={() => navigate("/workspace/membership-plans")} onRecharge={() => navigate("/workspace/recharge")} />;
-    if (path === "/workspace/membership") {
-      return <Membership onPlans={() => navigate("/workspace/membership-plans")} onQuota={() => navigate("/workspace/account-quota")} onRecharge={() => navigate("/workspace/recharge")} onToast={showToast} />;
+    if (path === "/workspace/membership" || path === "/workspace/account-quota") {
+      const view = (router.get("view") === "points" || path === "/workspace/account-quota") ? "points" : "member";
+      return <BillingUsage
+        view={view}
+        tier={tier}
+        resetUsed={resetUsed}
+        onUseReset={() => setResetUsed(true)}
+        showRecords={router.get("section") === "records"}
+        onViewChange={next => navigate(next === 'points' ? '/workspace/membership?view=points' : '/workspace/membership')}
+        onPlans={() => navigate('/workspace/membership-plans')}
+        onRecharge={() => navigate('/workspace/recharge')}
+        onToast={showToast}
+      />;
     }
     if (path === "/workspace/membership-plans") {
-      return <MembershipPlans onCheckout={(plan) => navigate("/workspace/membership/checkout?plan=" + plan + "&months=1")} onBack={() => navigate("/workspace/membership")} onToast={showToast} />;
+      return <MembershipPlans tier={tier}
+        onCheckout={plan => navigate('/workspace/membership/checkout?plan=' + plan + '&months=1')}
+        onBack={() => navigate('/workspace/membership')} />;
     }
     if (path === "/workspace/membership/checkout") {
-      return <Checkout plan={router.get("plan") || "BASIC"} onBack={() => navigate("/workspace/membership-plans")} onToast={showToast} />;
+      return <Checkout plan={router.get("plan") || "BASIC"} tier={tier}
+        onBack={() => navigate('/workspace/membership-plans')} onToast={showToast} />;
     }
-    if (path === "/workspace/recharge") return <Recharge onBack={() => navigate("/workspace/membership")} onToast={showToast} />;
+    if (path === "/workspace/recharge") {
+      return <Recharge onBack={() => navigate('/workspace/membership?view=points')}
+        onRecords={() => navigate('/workspace/membership?view=points&section=records')}
+        onToast={showToast} />;
+    }
     if (path === "/workspace/approvals") return <Approvals onFiles={() => navigate("/workspace/my-files")} />;
 
     return (
@@ -660,7 +696,7 @@ export function App() {
     const id = path.split("/").pop();
     const session=localSessions.find(x=>x.id===id);
     const delivery = {spaces, onSave:(file, spaceId) => saveDelivery(file, spaceId, id)};
-    if(session)return <ResearchConversation key={id} session={session} onUpdate={next=>setLocalSessions(items=>items.map(x=>x.id===next.id?{...next,updatedAt:Date.now()}:x))} onNavigate={navigate} delivery={delivery}/>;
+    if(session)return <ResearchConversation key={id} session={session} tier={tier} onRequireCapability={requireCapabilityAccess} onUpdate={next=>setLocalSessions(items=>items.map(x=>x.id===next.id?{...next,updatedAt:Date.now()}:x))} onNavigate={navigate} delivery={delivery}/>;
     if (id === "e9dd87e0-b232-479d-b0a9-5ba249a76a78") return <DrawingChat onToast={showToast} delivery={delivery} />;
     if (id === "d00e51b8-6552-4d64-9042-9c537a7f8c61") {
       return <WorkflowAssistantChat onOpenWorkflow={() => navigate("/workspace/workflows/template/35a3e188211447888f499c11d0b90345")} onToast={showToast} />;
@@ -694,9 +730,13 @@ export function App() {
   }
 
   return (
-    <BusinessFrame path={path} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={visibleHistory} onSessionAction={sessionAction} spaces={spaces} onSpaces={setSpaces}>
+    <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={visibleHistory} onSessionAction={sessionAction} spaces={spaces} onSpaces={setSpaces}>
       {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
+      {restrictedAgent && <Modal title={restrictedAgent.name} onClose={() => setRestrictedAgent(null)}>
+        <p>{EXCLUSIVE_AGENT_REQUIREMENT}</p>
+        <div className="sp-dialog-actions"><Button onClick={() => setRestrictedAgent(null)}>关闭</Button><Button variant="primary" onClick={() => navigate('/workspace/membership-plans')}>查看会员权益</Button></div>
+      </Modal>}
       {toast ? <div className="toast" role="status">{toast}</div> : null}
     </BusinessFrame>
   );

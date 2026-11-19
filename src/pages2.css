@@ -184,48 +184,6 @@
 .mini-points span:first-child { font-size: 12px; color: var(--muted-foreground); }
 .mini-points strong { font-size: 16px; }
 
-.business-workspace .ds-secondary-scroll:has(> .plans-view) { background: transparent; }
-.business-workspace .ds-secondary-scroll > .plans-view { margin-block: 0; padding-bottom: 48px; }
-.plans-view .plans-heading { margin-bottom: 28px; text-align: center; }
-.plan-redeem-row { display: flex; justify-content: center; margin-top: 24px; }
-.plan-redeem { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 6px 12px; border: 1px solid var(--ds-line); border-radius: 999px; background: #fff; color: var(--ds-secondary); font-size: 14px; line-height: 22px; }
-.plan-redeem:hover { border-color: var(--ds-card-hover); color: var(--ds-ink); }
-.plan-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.business-workspace .plans-view .plan-card {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 22px 18px;
-  border: 1px solid #e7e7e5;
-  border-radius: var(--ds-radius-card);
-  background: transparent;
-}
-.business-workspace .plans-view .plan-card[data-plan='PLUS'] { border-color: #adb1ba; }
-.business-workspace .plans-view .plan-card[data-plan='PRO'] { border-color: #dbccb0; }
-.plan-card-head { position: relative; isolation: isolate; min-height: 66px; }
-.plan-card-mark { position: absolute; z-index: -1; top: -5px; right: -2px; color: #ebedf0; pointer-events: none; }
-.plan-tag { display: inline-block; color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
-.plan-card[data-plan='PLUS'] .plan-tag { color: var(--ds-ink); }
-.plan-card[data-plan='PRO'] .plan-tag { color: #795b31; }
-.plan-card-head h2 { margin: 6px 0 0; color: var(--ds-ink); font-size: 20px; line-height: 28px; font-weight: 600; }
-.plan-price { color: var(--ds-ink); font-size: 34px; font-weight: 600; line-height: 42px; font-variant-numeric: tabular-nums; letter-spacing: -.035em; }
-.plan-price > span { margin-left: 5px; color: var(--ds-secondary); font-size: 12px; font-weight: 400; letter-spacing: 0; }
-.plan-billing, .plan-desc { color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
-.plan-billing { margin: 3px 0 0; }
-.plan-desc { min-height: 40px; margin: 7px 0 0; }
-.plan-entitlements { display: grid; gap: 9px; margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--ds-card-line); }
-.plan-entitlements > div { display: grid; grid-template-columns: minmax(48px, 1fr) auto; align-items: baseline; gap: 0 4px; }
-.plan-entitlements dt { color: var(--ds-secondary); font-size: 12px; line-height: 22px; }
-.plan-entitlements dd { margin: 0; text-align: right; }
-.plan-entitlements strong { color: var(--ds-ink); font-size: 14px; line-height: 22px; font-weight: 600; }
-.plan-entitlements .plan-refresh { color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
-.plan-features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 14px 0 17px; padding: 0; list-style: none; }
-.plan-features li { display: flex; align-items: start; gap: 4px; color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
-.plan-features svg { flex: none; margin-top: 3px; color: #8993a1; }
-.plan-card > .btn { margin-top: auto; width: 100%; justify-content: center; font-weight: 500; }
-.plan-card[data-plan='PLUS'] > .btn { background: var(--ds-ink); color: #fff; }
-.plan-card[data-plan='PLUS'] > .btn:hover { background: #30343c; }
-
 :is(.plan-card, .ds-checkout) .plan-cta-pro {
   position: relative;
   border-color: #b69154;
@@ -377,7 +335,6 @@
   .land-hero h1 { font-size: 40px; }
   .land-section { padding: 56px 24px; }
   .trust-grid, .land-case-grid, .role-cards, .contact-services { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .checkout-layout { grid-template-columns: minmax(0, 1fr); }
   .order-card { position: static; }
   .usage-bottom { grid-template-columns: minmax(0, 1fr); }
@@ -421,12 +378,6 @@
 }
 
 
-@media (max-width: 1199px) { .plans-view .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 599px) {
-  .plans-view .plan-grid { grid-template-columns: minmax(0, 1fr); }
-  .plans-view .plan-card-head { min-height: 64px; }
-}
-
 .ds-checkout .checkout-layout { grid-template-columns: minmax(0, 1fr) minmax(272px, 32%); gap: 32px; margin-top: 22px; }
 .ds-checkout .checkout-main { display: grid; gap: 28px; }
 .ds-checkout .checkout-step h2 { margin: 0 0 12px; color: var(--ds-ink); font-size: 16px; line-height: 24px; font-weight: 600; }
@@ -451,6 +402,10 @@
 .ds-checkout .checkout-pay-button { justify-content: center; background-color: var(--ds-ink); }
 .ds-checkout .checkout-pay-button:hover { background-color: #2f333b; }
 .ds-checkout .checkout-pay-button.plan-cta-pro { color: #f3dca7; }
+.ds-checkout .order-card[data-plan='PLUS'] { border-color: #d1bcea; background: linear-gradient(155deg, #f5effc, #fff 42%); }
+.ds-checkout .order-card[data-plan='PLUS'] .checkout-order-mark { color: #dbc6f0; }
+.ds-checkout .order-card[data-plan='PLUS'] .checkout-pay-button { background-color: #7542bf; border-color: #7542bf; }
+.ds-checkout .order-card[data-plan='PLUS'] .checkout-pay-button:hover { background-color: #6334a8; border-color: #6334a8; }
 @media (max-width: 1023px) { .ds-checkout .checkout-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 479px) { .ds-checkout .duration-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 

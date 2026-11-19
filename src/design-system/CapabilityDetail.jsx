@@ -1,8 +1,9 @@
 import { PageActions } from './SecondaryPageShell.jsx';
 import { useState } from 'react';
 import { ArrowRight, ArrowUpRight, Heart, FilePenLine, Workflow, Target, ListChecks, Link2, Repeat2, MousePointer2, Info, History } from 'lucide-react';
-import { StarRating, AgentBadge, AgentCard, Button, SkillCard, SkillBadge, Tag } from '../design-preview/components.jsx';
+import { StarRating, AgentBadge, AgentCard, AgentExclusiveBadge, Button, SkillCard, SkillBadge, Tag } from '../design-preview/components.jsx';
 import { CAPABILITIES, capabilityPath } from '../content/catalog.js';
+import { canUseCapability, EXCLUSIVE_AGENT_REQUIREMENT } from '../content/membership.js';
 import { assessmentDimensions } from '../content/skill-assessment-examples.js';
 import { CaseCoverCard } from './CaseCoverCard.jsx';
 import './workspace-details.css';
@@ -102,8 +103,11 @@ function SkillVersionHistory({item}) {
  </ol>;
 }
 
-export function CapabilityDetail({item,onNavigate,onToast,onRun}){
+export function CapabilityDetail({item,tier,onNavigate,onToast,onRun}){
  const isSkill=item.kind==='skill'; const assessment=item.assessment; const [tab,setTab]=useState('intro');
+ const canLaunch=canUseCapability(item,tier);
+ const actionLabel=isSkill?'在对话中使用':canLaunch?'启动 Agent':'查看会员权益';
+ const launch=()=>canLaunch?onRun(item):onNavigate('/workspace/membership-plans');
  const [favorite,setFavorite]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-favorites')||'[]').includes(item.id);}catch{return false;}});
  const tabs = isSkill
   ? [['intro', '概述介绍'], ['review', '评测报告'], ['source', '版本记录']]
@@ -126,8 +130,10 @@ export function CapabilityDetail({item,onNavigate,onToast,onRun}){
   <p>{item.description}</p>
   <div className="workAbilityTags">
    {isSkill ? <SkillBadge/> : <AgentBadge/>}
+   {item.exclusive && <AgentExclusiveBadge/>}
    {tags.map(label => <Tag key={label}>{label}</Tag>)}
   </div>
+  {!canLaunch && <p className="workAgentRequirement">{EXCLUSIVE_AGENT_REQUIREMENT}</p>}
   <div className="workSource">
    {item.author}<span>{item.updated}{!item.demo&&' 更新'}</span>
   </div>
@@ -135,7 +141,7 @@ export function CapabilityDetail({item,onNavigate,onToast,onRun}){
  return <article className="view ds-capability-detail-page integratedDetail">
   <PageActions>
    <button type="button" className="workFavorite" aria-label={favorite?'取消收藏':'收藏'} aria-pressed={favorite} title={favorite?'取消收藏':'收藏'} onClick={toggle}><Heart size={16} fill={favorite?'currentColor':'none'}/><span>{favorite?'已收藏':'收藏'}</span></button>
-   {!item.demo&&<Button variant="primary" className={isSkill?undefined:"workAgentLaunch"} onClick={()=>onRun(item)}><ArrowUpRight size={16}/>{isSkill?'在对话中使用':'启动 Agent'}</Button>}
+   {!item.demo&&<Button variant="primary" className={isSkill?undefined:"workAgentLaunch"} onClick={launch}><ArrowUpRight size={16}/>{actionLabel}</Button>}
   </PageActions>
   <button className="workMobileCases" onClick={()=>document.getElementById('work-case-rail')?.scrollIntoView({block:'start'})}>应用案例（{item.cases.length}） <ArrowRight size={14}/></button>
   <div className="ds-detail-columns"><div>{heading}{isSkill?<SkillAssessment example={assessment}/>:(<section className="workPlan"><header><strong>执行流程</strong><button onClick={()=>setTab('flow')}>{item.steps.length?item.steps.length+' 个步骤':'查看说明'} <ArrowRight size={14}/></button></header>
@@ -156,7 +162,7 @@ export function CapabilityDetail({item,onNavigate,onToast,onRun}){
     {tab==='review'&&!item.demo&&!assessment&&<><div className="workReport"><small>专业评测报告</small><h2>这项能力的结果如何核验？</h2><p>针对「{item.name}」，可从任务输入、预期交付和可复现的证据三处核对。</p></div><h3>尚无正式报告</h3><p>评测版本、任务样本及评分依据尚待提供。</p><h3>目前可查的材料</h3><div className="workEvidence">{[['intro','输入要求与交付范围',item.output],['source','目录来源',item.author+' · '+item.updated]].map(([id,title,note])=><button key={id} type="button" onClick={()=>setTab(id)}><span>{title}<small>{note}</small></span><ArrowRight size={16}/></button>)}</div></>}
     {tab==='flow'&&<><h2>执行流程</h2>{!item.steps.length&&<p>来源尚未提供分步骤流程，使用前需进一步确认。</p>}<ol className="ds-detail-flow-list">{item.steps.map((step,i)=><li key={step}><span>{String(i+1).padStart(2,'0')}</span><strong>{step}</strong></li>)}</ol><Paragraphs text={item.flow.replace(/^关键流程\n/,'')}/><h3>预期交付</h3><Paragraphs text={item.deliverables?item.deliverables.replace(/^关键产出\n/,''):'来源尚未列出具体交付清单，需结合项目文件与运行要求确认。'}/></>}
     {tab==='guide'&&!isSkill&&item.demo&&<><h2>使用说明</h2><p>此演示条目用于预览社区贡献的展示与筛选。</p></>}
-    {tab==='guide'&&!isSkill&&!item.demo&&<><h2>输入与使用说明</h2><p>在对话中补充所需信息，核对输入与运行配置后继续。以下要求来自此能力的线上详情。</p><div className="ds-input-guide">{item.fields.map((field,i)=><section key={i}><h3>{field.label}{field.required&&<span>必填</span>}</h3><p>{field.description}</p>{field.example&&<small>示例：{field.example}</small>}</section>)}</div><h3>研究材料要求</h3><Paragraphs text={item.materials||'请结合任务目标提供必要的研究材料。'}/><Button variant="primary" onClick={()=>onRun(item)}>去对话补充输入<ArrowUpRight size={16}/></Button></>}
+    {tab==='guide'&&!isSkill&&!item.demo&&<><h2>输入与使用说明</h2><p>在对话中补充所需信息，核对输入与运行配置后继续。以下要求来自此能力的线上详情。</p><div className="ds-input-guide">{item.fields.map((field,i)=><section key={i}><h3>{field.label}{field.required&&<span>必填</span>}</h3><p>{field.description}</p>{field.example&&<small>示例：{field.example}</small>}</section>)}</div><h3>研究材料要求</h3><Paragraphs text={item.materials||'请结合任务目标提供必要的研究材料。'}/><Button variant="primary" onClick={launch}>{canLaunch?'去对话补充输入':actionLabel}<ArrowUpRight size={16}/></Button></>}
     {isSkill&&tab==='source'&&<SkillVersionHistory item={item}/>}
    </section></div><aside className="workCaseRail" id="work-case-rail"><header><h2>应用案例</h2><small>{item.cases.length} 项</small></header>{item.cases.length?item.cases.map(c=><CaseCoverCard key={c.id} title={c.name} category={item.group||item.category}><span className={'workCaseArt '+(isSkill?'':'agent')} aria-hidden="true"><i/><i/><i/>{isSkill?<FilePenLine/>:<Workflow/>}</span></CaseCoverCard>):<p>当前来源未提供关联案例。</p>}</aside></div>
   {!!related.length&&<section className="ds-related"><div className="ds-section-title"><h2>相关推荐</h2></div><div className="sp-agent-grid">{related.map(x=>{const Card=x.kind==='skill'?SkillCard:AgentCard;return <Card key={x.id} item={x} onDetail={x=>onNavigate(capabilityPath(x))}/>;})}</div></section>}

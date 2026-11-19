@@ -1,0 +1,449 @@
+.business-workspace .ds-secondary-scroll > .plans-view {
+  margin-block: 0;
+  padding-bottom: 48px;
+}
+
+.plans-view .plans-heading {
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.plans-heading h1 {
+  color: var(--ds-ink);
+  font-size: 34px;
+  line-height: 44px;
+  font-weight: 600;
+}
+
+.plans-heading > p {
+  margin-top: 8px;
+  color: var(--ds-secondary);
+  font-size: 16px;
+  line-height: 26px;
+  white-space: normal;
+  text-wrap: pretty;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 14px;
+}
+
+.business-workspace .plans-view .plan-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  padding: 24px 22px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-card);
+  background: #fff;
+}
+
+.business-workspace .plans-view .plan-card[data-plan='PLUS'] {
+  border-color: #d1bcea;
+}
+
+.business-workspace .plans-view .plan-card[data-plan='PRO'] {
+  border-color: #dbccb0;
+}
+
+.plan-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 6px;
+}
+
+.plan-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-card-mark {
+  color: #c9d1df;
+}
+
+.plan-card[data-plan='PLUS'] .plan-card-mark {
+  color: #c5a8e8;
+}
+
+.plan-card[data-plan='PRO'] .plan-card-mark {
+  color: #d9c298;
+}
+
+.plan-card-head h2 {
+  color: var(--ds-ink);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+.plan-card-head > p {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  color: var(--ds-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.plan-current-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--ds-ink);
+  border-radius: var(--ds-radius-tag);
+  background: var(--ds-ink);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.plan-pricing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 74px;
+  margin: 14px 0 16px;
+}
+
+.plan-multiplier {
+  display: grid;
+  justify-items: end;
+  flex: none;
+  color: var(--ds-secondary);
+  white-space: nowrap;
+}
+
+.plan-multiplier strong {
+  font-size: 48px;
+  line-height: 48px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.055em;
+}
+
+.plan-multiplier strong > span {
+  margin-left: 2px;
+  font-size: .65em;
+  font-weight: 500;
+}
+
+.plan-card .plan-price {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  color: var(--ds-ink);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 48px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.055em;
+  white-space: nowrap;
+}
+
+.plan-currency {
+  align-self: flex-start;
+  margin: 7px 3px 0 0;
+  font-size: 20px;
+  line-height: 24px;
+  letter-spacing: 0;
+}
+
+.plan-period {
+  margin-left: 7px;
+  color: var(--ds-secondary);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.plan-quota {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--ds-card-line);
+}
+
+.plan-quota dt, .plan-quota dd {
+  margin: 0;
+  color: var(--ds-secondary);
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.plan-quota strong {
+  color: var(--ds-ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.plan-card .plan-savings {
+  margin: 6px 0 16px;
+  color: var(--ds-ink);
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.plan-card[data-plan='PLUS'] .plan-savings {
+  color: #7041ad;
+}
+
+.plan-card[data-plan='PRO'] .plan-savings {
+  color: #9a6b21;
+}
+
+.plan-card > .sp-button {
+  width: 100%;
+}
+
+.plan-features {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--ds-card-line);
+  color: var(--ds-ink);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.plan-feature-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.plan-feature-line svg {
+  margin-top: 3px;
+}
+
+.plan-feature-group, .plan-features > .plan-feature-status {
+  margin-top: 5px;
+}
+
+.plan-feature-details {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding-left: 24px;
+  list-style: none;
+}
+
+.plan-feature-status[data-included='false'] {
+  color: #6c737e;
+}
+
+.plan-feature-status[data-included='false'] svg {
+  color: #9a6b21;
+}
+
+.plan-redeem-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.plan-redeem-row .sp-button {
+  min-height: 42px;
+  padding-inline: 18px;
+  border-color: var(--ds-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ds-ink);
+}
+
+.plan-redeem-row .sp-button:hover {
+  border-color: var(--ds-card-hover);
+  background: #fff;
+}
+
+.ds-secondary-bar .plan-procurement-entry.sp-button {
+  border-color: var(--ds-line);
+  color: var(--ds-secondary);
+}
+
+.ds-secondary-bar .plan-procurement-entry.sp-button:hover {
+  background: var(--ds-sidebar);
+}
+
+.procurement-form, .procurement-fields, .procurement-actions {
+  display: grid;
+}
+
+.procurement-form { gap: 24px; }
+.procurement-fields { gap: 16px; }
+.procurement-actions { gap: 12px; }
+
+.procurement-type-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.procurement-form :is(legend, .sp-field > span) {
+  color: var(--ds-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.procurement-type-field legend {
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.procurement-types {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.procurement-types label {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  min-height: 72px;
+  padding: 8px 4px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-card);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.procurement-types label svg { color: var(--ds-secondary); }
+.procurement-types label:is(:hover, :has(:checked)) svg { color: currentColor; }
+
+.procurement-types label:hover, .procurement-types label:has(:checked) {
+  border-color: var(--ds-primary);
+  color: var(--ds-primary-hover);
+}
+
+.procurement-types label:has(:checked) {
+  background: var(--ds-message);
+  font-weight: 600;
+}
+
+.procurement-types label:has(:focus-visible) {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+
+.procurement-form .sp-field {
+  gap: 8px;
+  margin: 0;
+}
+
+.procurement-form .sp-field input {
+  min-height: 42px;
+  border-color: var(--ds-line);
+  box-shadow: none;
+}
+
+.procurement-form .sp-field input:focus {
+  border-color: var(--ds-primary);
+}
+
+.procurement-error {
+  margin: 0;
+  color: #b23846;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.procurement-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+  text-align: center;
+}
+
+.procurement-success-icon {
+  margin-top: auto;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #edf7f1;
+  color: #36724e;
+}
+
+.procurement-result h3 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.procurement-result p {
+  color: var(--ds-secondary);
+}
+
+.procurement-qr {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 12px 0 24px;
+  color: var(--ds-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.procurement-qr img, .procurement-qr-placeholder {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  width: 160px;
+  height: 160px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-sidebar);
+  object-fit: contain;
+}
+
+.procurement-result > .sp-button {
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 1199px) {
+  .business-workspace .plans-view .plan-card { padding: 22px 18px; }
+}
+
+@media (min-width: 700px) and (max-width: 1199px) {
+  .plan-card-head > p { min-height: 44px; }
+  .plan-card .plan-price { font-size: 34px; line-height: 42px; }
+  .plan-multiplier strong { font-size: 40px; line-height: 44px; }
+  .plan-period { margin-left: 4px; }
+}
+
+@media (max-width: 699px) {
+  .plans-view .plans-heading { margin-bottom: 24px; }
+  .plans-heading h1 { font-size: 28px; line-height: 38px; }
+  .plan-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .procurement-form { gap: 20px; }
+  .procurement-types { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .procurement-types label { min-height: 64px; }
+}
+
+.plan-card[data-plan='PLUS'] .plan-multiplier { color: rgb(117 66 191 / 43%); }
+.plan-card[data-plan='PRO'] .plan-multiplier { color: rgb(170 119 41 / 43%); }
+.business-workspace .plans-view .plan-card[data-plan='PLUS'] > .sp-button-primary { background: #7542bf; border-color: #7542bf; }
+.business-workspace .plans-view .plan-card[data-plan='PLUS'] > .sp-button-primary:hover { background: #6334a8; border-color: #6334a8; }
