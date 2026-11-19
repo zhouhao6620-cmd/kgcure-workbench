@@ -42,11 +42,11 @@ export function ProcurementInquiry({ onClose }) {
     {submittedHeight !== null ? <div className="procurement-result" style={{ minBlockSize: submittedHeight }}>
       <span className="procurement-success-icon"><CircleCheck size={30} strokeWidth={1.7} aria-hidden="true" /></span>
       <h3 role="status">已收到你的信息</h3>
-      <p>学术顾问将在<strong>2个工作日</strong>联系您</p>
+      <p>科研顾问将在<strong>2个工作日</strong>联系您</p>
       <figure className="procurement-qr">
-        {ADVISOR_QR && !qrFailed ? <img src={ADVISOR_QR} width="160" height="160" alt="学术顾问企业微信二维码" onError={() => setQrFailed(true)} />
+        {ADVISOR_QR && !qrFailed ? <img src={ADVISOR_QR} width="160" height="160" alt="科研顾问企业微信二维码" onError={() => setQrFailed(true)} />
           : <div className="procurement-qr-placeholder"><QrCode size={36} strokeWidth={1.5} aria-hidden="true" /><span>二维码待配置</span></div>}
-        <figcaption>学术顾问企业微信</figcaption>
+        <figcaption>科研顾问企业微信</figcaption>
       </figure>
       <Button variant="primary" autoFocus onClick={onClose}>我知道了</Button>
     </div> : <form className="procurement-form" onSubmit={submit}>
