@@ -19,6 +19,7 @@ export function secondaryParent(path){
  if(path.startsWith('/workspace/agents/'))return '/workspace/agents';
  if(path.startsWith('/workspace/workflows/template/'))return path.includes('/cases/')?path.split('/cases/')[0]:'/workspace/agents';
  if(path==='/workspace/contribute')return '/workspace/skills';
+ if(path==='/workspace/profile/verification')return '/workspace/profile';
  if(path==='/workspace/membership/checkout')return '/workspace/membership-plans';
  if(path==='/workspace/recharge')return '/workspace/membership?view=points';
  if(path==='/workspace/membership-plans')return '/workspace/membership';

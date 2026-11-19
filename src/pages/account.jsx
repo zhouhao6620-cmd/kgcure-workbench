@@ -5,7 +5,7 @@ import { MembershipRedeemDialog } from "./BillingUsage.jsx";
 import { ProcurementInquiry } from "./ProcurementInquiry.jsx";
 import { SAMPLE_BALANCE } from "./billing-usage-data.js";
 import { canUseExclusiveAgent, membershipBenefits } from '../content/membership.js';
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -114,12 +114,34 @@ export function MyFiles({ onToast, sessions=[] }) {
   );
 }
 
-export function ProfilePage({ onToast }) {
+const VERIFIED_PROFILE_EXAMPLE = {
+  realName: '周*', idNumber: '3****************3',
+  organization: '医疗机构 · 示例医院', role: '临床医生 · 主治医师',
+  needs: ['文献检索', '数据分析'],
+};
+
+export function ProfilePage({ onToast, verified, verification, reviewSubmission, onVerify }) {
+  const details = verified ? VERIFIED_PROFILE_EXAMPLE : verification;
+  const verificationSection = useRef(null);
+
+  useEffect(() => {
+    if (!reviewSubmission || !verification) return;
+    const frame = requestAnimationFrame(() => {
+      verificationSection.current?.focus({ preventScroll: true });
+      verificationSection.current?.scrollIntoView({ block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [reviewSubmission, verification]);
+
   return (
     <div className="view acct-view account-flat profile-view">
-      <div className="acct-head">
+      <div className="acct-head profile-head">
         <h1>个人资料</h1>
         <p>管理账户信息和实名认证。</p>
+        <div className="profile-verification-entry">
+          {details ? <Tag tone="green" icon={ShieldCheck}>已实名认证</Tag>
+            : <Button variant="primary" onClick={onVerify}><ShieldCheck size={16} aria-hidden="true" />马上认证</Button>}
+        </div>
       </div>
 
       <section className="account-section">
@@ -142,13 +164,18 @@ export function ProfilePage({ onToast }) {
           <InfoRow label="账户密码" value="未设置" action="设置密码" onAction={() => onToast("设置密码（原型演示）")} />
         </div>
       </section>
-      <section className="account-section">
-        <header><h2>实名认证</h2></header>
+      {details && <section className="account-section profile-identity" ref={verificationSection} tabIndex={-1} aria-labelledby="profile-identity-title">
+        <header><h2 id="profile-identity-title">实名认证</h2></header>
         <div>
-          <InfoRow label="姓名" value="周*" trailing={<span className="profile-verification"><Tag tone="green" icon={ShieldCheck}>已实名认证</Tag></span>} />
-          <InfoRow label="身份证号" value="3****************3" />
+          <InfoRow label="姓名" value={details.realName || '未填写'} trailing={
+            <Tag tone="green" icon={ShieldCheck}>已实名认证</Tag>
+          } />
+          <InfoRow label="身份证号" value={details.idNumber} />
+          <InfoRow label="所属机构" value={details.organization || '未填写'} />
+          <InfoRow label="科研身份" value={details.role || '未选择'} />
+          <InfoRow label="主要科研需求" value={details.needs.join('、') || '未选择'} />
         </div>
-      </section>
+      </section>}
     </div>
   );
 }
@@ -271,6 +298,21 @@ export function MembershipPlans({ onCheckout, onBack, tier }) {
   </div>;
 }
 
+function PaymentOptions({ selected, onChange }) {
+  return <div className="pay-row">
+    {[
+      ["微信支付", "wechat-pay.png"],
+      ["支付宝", "alipay.png"],
+    ].map(([name, logo]) => (
+      <button key={name} type="button" className={"pay-option" + (selected === name ? " is-active" : "")}
+        aria-pressed={selected === name} onClick={() => onChange(name)}>
+        <img className="pay-provider-logo" src={sitePath(`/payment/${logo}`)} width={32} height={32} alt="" />
+        <span><strong>{name}</strong><span className="row-hint">{name}扫一扫快捷支付</span></span>
+      </button>
+    ))}
+  </div>;
+}
+
 export function Checkout({ plan = "BASIC", tier, onBack, onToast }) {
   const [selected, setSelected] = useState(plan);
   const [months, setMonths] = useState(1);
@@ -319,14 +361,7 @@ export function Checkout({ plan = "BASIC", tier, onBack, onToast }) {
 
           <section className="checkout-step">
             <h2>选择支付方式</h2>
-            <div className="pay-row">
-              {["微信支付", "支付宝"].map((item) => (
-                <button key={item} type="button" className={"pay-option" + (pay === item ? " is-active" : "")} aria-pressed={pay === item} onClick={() => setPay(item)}>
-                  <span className={"pay-logo " + (item === "微信支付" ? "wechat" : "alipay")}>{item === "微信支付" ? "微" : "支"}</span>
-                  <span><strong>{item}</strong><span className="row-hint">{item}扫一扫快捷支付</span></span>
-                </button>
-              ))}
-            </div>
+            <PaymentOptions selected={pay} onChange={setPay} />
             <p className="note">会员服务与发票说明</p>
           </section>
         </div>
@@ -391,14 +426,7 @@ export function Recharge({ onBack, onRecords, onToast }) {
 
           <section className="checkout-step">
             <h2>选择支付方式</h2>
-            <div className="pay-row">
-              {["微信支付", "支付宝"].map((item) => (
-                <button key={item} type="button" className={"pay-option" + (pay === item ? " is-active" : "")} aria-pressed={pay === item} onClick={() => setPay(item)}>
-                  <span className={"pay-logo " + (item === "微信支付" ? "wechat" : "alipay")}>{item === "微信支付" ? "微" : "支"}</span>
-                  <span><strong>{item}</strong><span className="row-hint">{item}扫一扫快捷支付</span></span>
-                </button>
-              ))}
-            </div>
+            <PaymentOptions selected={pay} onChange={setPay} />
             <p className="note">充值说明与发票</p>
           </section>
         </div>

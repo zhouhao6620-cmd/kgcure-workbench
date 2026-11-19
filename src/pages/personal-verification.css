@@ -1,0 +1,164 @@
+.business-workspace .ds-secondary-scroll > .view.verification-view {
+  margin-block: 0;
+  padding-top: 36px;
+  padding-bottom: 48px;
+}
+
+.verification-head { margin-bottom: 36px; }
+.business-workspace .verification-head.acct-head > p { white-space: normal; }
+.business-workspace .verification-head.acct-head .verification-reward {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #926b2d;
+  font-size: 14px;
+}
+
+.verification-form {
+  --verification-field-gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 36px;
+  max-width: 780px;
+}
+
+.verification-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.verification-section-heading h2 { font-size: 16px; line-height: 24px; font-weight: 600; }
+.verification-section-heading > span { color: var(--ds-secondary); font-size: 12px; line-height: 20px; white-space: nowrap; }
+
+.verification-organizations {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.verification-organizations button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 22px;
+  min-height: 68px;
+  padding: 8px 4px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-card);
+  background: white;
+}
+
+.verification-organizations button svg { color: var(--ds-secondary); }
+.verification-organizations button:hover { background: var(--ds-sidebar); border-color: var(--ds-card-hover); }
+.verification-organizations button[aria-pressed='true'] {
+  color: var(--ds-primary);
+  border-color: var(--ds-primary);
+  background: var(--ds-message);
+}
+.verification-organizations button[aria-pressed='true'] svg { color: inherit; }
+
+.verification-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--verification-field-gap);
+  align-items: start;
+}
+
+.verification-view .verification-field { margin: 0; gap: 8px; }
+.verification-view .verification-field input { min-height: 44px; }
+.verification-view .ds-field-select-trigger { min-height: calc(var(--ds-button-height) + 2px); }
+.verification-proof-title { color: var(--ds-ink); font-size: 14px; line-height: 22px; font-weight: 600; }
+.verification-view .verification-field-hint { color: var(--ds-secondary); font-weight: 400; margin-left: 4px; }
+.verification-required { color: var(--sp-danger); }
+.verification-view .verification-institution { margin-top: 16px; width: calc((100% - var(--verification-field-gap)) / 2); }
+
+.verification-id-control { position: relative; }
+.verification-id-control > button { position: absolute; top: 50%; right: 5px; transform: translateY(-50%); }
+.verification-view .verification-id-control input { padding-right: 40px; }
+
+.verification-needs-section { container-type: inline-size; }
+.verification-needs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1.5cqi, 12px) 8px;
+}
+.verification-needs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: calc(var(--ds-button-compact) + 4px);
+  padding: clamp(7px, 1.1cqi, 10px) clamp(8px, 1.1cqi, 10px);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-tag);
+  color: var(--ds-ink);
+  background: white;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: left;
+}
+.verification-needs button svg { color: var(--ds-secondary); }
+.verification-needs button:hover { border-color: var(--sp-input-hover); }
+.verification-needs button[aria-pressed='true'] {
+  border-color: var(--ds-ink);
+  background: var(--ds-ink);
+  color: white;
+}
+.verification-needs button[aria-pressed='true'] svg { color: inherit; }
+
+.verification-proof { margin-top: 20px; }
+.verification-proof-title { display: inline-block; margin-bottom: 8px; }
+.verification-upload {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 88px;
+  padding: 12px;
+  border: 1px dashed var(--ds-card-hover);
+  border-radius: var(--ds-radius-card);
+  color: var(--ds-secondary);
+  text-align: center;
+  cursor: pointer;
+}
+.verification-upload:is(:hover, [data-drag-over='true']) { border-color: var(--ds-primary); background: var(--ds-sidebar); }
+.verification-upload:focus-within { border-color: var(--ds-primary); box-shadow: 0 0 0 3px rgb(57 100 254 / 10%); }
+.verification-upload:has([aria-invalid='true']) { border-color: #c95b65; }
+.verification-upload-action { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; line-height: 22px; }
+.verification-file-name { color: var(--ds-primary); max-width: 100%; overflow-wrap: anywhere; font-size: 12px; line-height: 20px; }
+.verification-view .verification-error { color: #b23846; display: block; font-size: 12px; line-height: 20px; }
+.verification-proof > .verification-error { margin-top: 4px; }
+.verification-privacy { display: flex; align-items: flex-start; gap: 6px; margin-top: 16px; color: var(--sp-danger); font-size: 12px; line-height: 20px; }
+.verification-privacy svg { margin-top: 3px; }
+.verification-actions p { color: var(--ds-secondary); font-size: 12px; line-height: 20px; }
+
+.verification-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 1023px) {
+  .business-workspace .ds-secondary-scroll > .view.verification-view { padding-top: 28px; }
+}
+
+@media (max-width: 699px) {
+  .verification-head { margin-bottom: 28px; }
+  .verification-form { gap: 28px; }
+  .verification-organizations { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .verification-fields { grid-template-columns: minmax(0, 1fr); }
+  .verification-view .verification-institution { width: 100%; }
+  .verification-needs { max-inline-size: 248px; }
+  .verification-needs button { gap: 6px; }
+  .verification-actions { align-items: flex-start; flex-direction: column; }
+  .verification-actions .sp-button { width: 100%; }
+}

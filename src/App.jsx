@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { categories, researchWorkflows, shortcuts } from "./data.js";
 import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge } from "./pages/account.jsx";
+import { PersonalVerification } from "./pages/PersonalVerification.jsx";
 import { BillingUsage } from "./pages/BillingUsage.jsx";
 import { SAMPLE_QUOTA_REMAINING } from "./pages/billing-usage-data.js";
 import { DrawingChat, MultiStepChat, WorkflowAssistantChat } from "./pages/chats.jsx";
@@ -514,6 +515,7 @@ export function App() {
     try { return window.localStorage.getItem("kgcure-guest") === "1"; } catch { return false; }
   });
   const [resetUsed, setResetUsed] = useState(false);
+  const [verificationPreview, setVerificationPreview] = useState(null);
   const [restrictedAgent, setRestrictedAgent] = useState(null);
   const accountRef = useRef(null);
   const scrollRef = useRef(null);
@@ -547,6 +549,7 @@ export function App() {
 
   function navigate(target) {
     if (target === "/welcome") {
+      setVerificationPreview(null);
       setGuestState(true);
       router.navigate("/");
       setMobileOpen(false);
@@ -650,7 +653,15 @@ export function App() {
       );
     }
     if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} onToast={showToast} />;
-    if (path === "/workspace/profile") return <ProfilePage onToast={showToast} />;
+    if (path === "/workspace/profile") return <ProfilePage onToast={showToast}
+      verified={router.get('verification') === 'verified'}
+      verification={verificationPreview} reviewSubmission={router.get('verification') === 'submitted'}
+      onVerify={() => navigate('/workspace/profile/verification')} />;
+    if (path === "/workspace/profile/verification") return <PersonalVerification onToast={showToast} onSubmit={summary => {
+      setVerificationPreview(summary);
+      setToast(null);
+      navigate('/workspace/profile?verification=submitted');
+    }} />;
     if (path === "/workspace/membership" || path === "/workspace/account-quota") {
       const view = (router.get("view") === "points" || path === "/workspace/account-quota") ? "points" : "member";
       return <BillingUsage
