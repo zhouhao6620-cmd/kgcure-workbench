@@ -8,7 +8,7 @@ import { CapabilityFilters, useCapabilityFilters } from './CapabilityFilters.jsx
 import { HighlightedTitle } from './Typography.jsx';
 import { Pagination } from './Pagination.jsx';
 import { PageActions } from './SecondaryPageShell.jsx';
-import { AgentCard, SkillCard, Modal, Button, DocumentEmptyIllustration, EmptyState, IconButton } from '../design-preview/components.jsx';
+import { AgentCard, SkillCard, Modal, Button, EmptyState, IconButton, SearchEmptyIllustration } from '../design-preview/components.jsx';
 import { BUSINESS_SKILLS, BUSINESS_AGENTS, STORE_FEATURES, capabilityById, capabilityPath } from '../content/catalog.js';
 import { useRouter } from '../router.jsx';
 import { COMMUNITY_SKILL_EXAMPLES } from '../content/community-skill-examples.js';
@@ -163,7 +163,7 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
         {visible.map(item => <Card key={item.id} item={item} onDetail={() => onNavigate(capabilityPath(item))}/>)}
       </div>
       {!filtered.length &&
-        <EmptyState icon={source === '独立测评' ? DocumentEmptyIllustration : Search}
+        <EmptyState icon={SearchEmptyIllustration}
           description={source === '独立测评' ? '可切换分类查看。' : '试试其他关键词或分类。'}
           onReset={() => { reset(); setPage(1); }}>
           {source === '独立测评' ? '暂无评测记录' : source === '开源社区' ? '没有匹配的社区贡献' : '没有匹配的科研能力'}

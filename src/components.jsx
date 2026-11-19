@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { HighlightedTitle } from "./design-system/Typography.jsx";
-import { Button as GoldenButton, Tag as GoldenTag } from "./design-preview/components.jsx";
+import { Button as GoldenButton, EmptyState as SharedEmptyState, Tag as GoldenTag } from "./design-preview/components.jsx";
 import { ArrowLeft, ChevronRight, X } from "lucide-react";
 
 export function Btn({ children, kind = "secondary", size = "md", className = "", ...props }) {
@@ -70,14 +70,7 @@ export function Badge({ children, tone = "blue" }) {
 }
 
 export function EmptyState({ icon: Icon, title, description, action }) {
-  return (
-    <div className="empty-state">
-      {Icon ? <Icon size={28} /> : null}
-      <p className="empty-title">{title}</p>
-      {description ? <p className="empty-desc">{description}</p> : null}
-      {action}
-    </div>
-  );
+  return <SharedEmptyState icon={Icon} description={description} action={action}>{title}</SharedEmptyState>;
 }
 
 export function Modal({ title, onClose, children, footer, width = 520 }) {

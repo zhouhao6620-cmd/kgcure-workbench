@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ClipboardCheck, ChevronDown, ChevronRight, Crown, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
+import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ChevronDown, ChevronRight, Crown, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
 import deepseekIcons from "./deepseek-icons.json";
 import { AGENTS, MODELS, SKILLS } from "./data.js";
 
@@ -26,12 +26,23 @@ export function IconButton({ label, children, className, ...props }) {
  return <button type="button" title={tooltip ? undefined : label} aria-label={label} data-tooltip={tooltip ? text : undefined} className={cx("sp-icon-button", tooltip && "sp-deepseek-action", className)} {...props}>{kind ? <DeepSeekIcon name={kind}/> : children}</button>;
 }
 
-// Shared type identities. One 24px optical grid, legible at 16–24px.
+// Shared capability identities. Design artboard is 108 × 108; render sizes stay optical.
 export function SkillGlyph({size=20,...props}) {
- return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="m12 3 9 4.5-9 4.5-9-4.5L12 3Z"/><path d="m3 12 9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>;
+ return <svg width={size} height={size} viewBox="0 0 108 108" fill="none" stroke="currentColor" strokeWidth="6.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+  <path d="M54 14 95 36.5 54 59 13 36.5 54 14Z"/>
+  <path d="m13 51.5 41 22.5 41-22.5"/>
+  <path d="m13 67 41 22.5L95 67"/>
+ </svg>;
 }
 export function AgentGlyph({size=20,...props}) {
- return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><rect x="4" y="7" width="16" height="13" rx="4"/><path d="M12 3v4M2 12v4m20-4v4M9 16h6"/><circle cx="12" cy="3" r="1" fill="currentColor" stroke="none"/><path d="M9 11.5v1M15 11.5v1" strokeWidth="2.4"/></svg>;
+ return <svg width={size} height={size} viewBox="0 0 108 108" fill="none" stroke="currentColor" strokeWidth="6.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+  <rect x="19" y="28" width="70" height="56" rx="18"/>
+  <path d="M54 16v12M8 47v18m92-18v18"/>
+  <circle cx="54" cy="14" r="4" fill="currentColor" stroke="none"/>
+  <circle cx="40" cy="53" r="4.2" fill="currentColor" stroke="none"/>
+  <circle cx="68" cy="53" r="4.2" fill="currentColor" stroke="none"/>
+  <path d="M37 68c10 8 24 8 34 0"/>
+ </svg>;
 }
 export function SkillBadge() { return <span className="sp-skill-badge"><SkillGlyph size={18}/><span>Skill</span></span>; }
 export function Tag({ children, tone = "neutral", icon:Icon }) {
@@ -78,6 +89,22 @@ export function AgentCard({ item, context = "store", onDetail, onCall }) {
  {item.steps.length > 0 && <span className="sp-gray-flow" aria-label={"完整流程："+item.steps.join("、")} title={item.steps.join(" → ")}>{stages.map(step=><span key={step}><i aria-hidden="true"/><span>{step}</span></span>)}</span>}
  <span className="sp-gray-bottom sp-gray-agent-bottom"><span className="sp-gray-output"><FileText size={16}/><span><small>预期交付</small><strong>{item.output}</strong></span></span><span className="sp-gray-action sp-gray-launch" aria-hidden="true"><ArrowUp size={16}/></span></span>
  </button></article>;
+}
+
+export function SpaceDirectoryOptions({ spaces, value, caption, onPick, onNew }) {
+  return <>
+    <p className="sp-space-directory-caption">{caption}</p>
+    <div className="sp-space-directory-list">
+      {spaces.map(item => <button type="button" className="sp-space-directory-option" role="menuitemradio"
+        aria-checked={value === item.id} key={item.id} onClick={() => onPick(item.id)}>
+        <Folder size={15} aria-hidden="true"/><span>{item.name}</span>{value === item.id && <Check className="sp-space-check" size={15} aria-hidden="true"/>}
+      </button>)}
+    </div>
+    <div className="sp-space-directory-divider" role="separator" aria-hidden="true"/>
+    <button type="button" className="sp-space-directory-option is-new" role="menuitem" onClick={onNew}>
+      <Plus size={15} aria-hidden="true"/><span>新建科研空间</span>
+    </button>
+  </>;
 }
 
 export function Composer({ chat = false, draft, onDraft, model, onModel, ability, onAbility, space, spaces, onSpace, attachments, onAttach, onRemove, onSend, onViewAll, onNewSpace, onPickExisting, annotate = false, placeholder, inputLabel, showCapabilities = true, showSpace = true, configuration, skills = SKILLS, agents = AGENTS }) {
@@ -148,7 +175,7 @@ export function Composer({ chat = false, draft, onDraft, model, onModel, ability
       {configuration}
       <div className="sp-composer-tools"><div className="sp-composer-left"><IconButton label="添加附件" className="sp-attachment-icon" onClick={() => fileInput.current?.click()}><Paperclip size={19} /></IconButton><input className="sp-visually-hidden" tabIndex={-1} type="file" ref={fileInput} multiple aria-label="选择本地附件" onChange={event => { onAttach(Array.from(event.target.files || [])); event.target.value = ""; }} />{!chat && showCapabilities && <>{capabilityPicker("skill")}{capabilityPicker("agent")}</>}</div><div className="sp-composer-right"><div className="sp-picker-anchor"><button type="button" className="sp-model-select" aria-label="选择模型" aria-expanded={open === "model"} aria-haspopup="menu" onClick={event => toggle("model", event.currentTarget)}><span><span className="sp-model-brand">Shuyu </span>{selectedModel.name.replace("Shuyu ", "")}</span><ChevronDown size={12} /></button>{open === "model" && <div className="sp-popover sp-model-picker" style={menuPosition} role="menu" aria-label="选择模型"><div className="sp-menu-caption">选择模型</div>{MODELS.map(item => <button type="button" key={item.id} className="sp-menu-choice" role="menuitemradio" aria-checked={model === item.id} onClick={() => { onModel(item.id); setOpen(null); }}><span><strong>{item.name}</strong><small>{item.description}</small></span>{model === item.id && <Check size={16} />}</button>)}</div>}</div><button type="submit" className="sp-send" aria-label="发送消息" disabled={!draft.trim() && !attachments.length}><ArrowUp size={21} strokeWidth={2} /></button></div></div>
     </form>
-    {!chat && showSpace && <div className="sp-space-strip"><div className="sp-picker-anchor"><button type="button" className="sp-space-select" aria-label="选择任务归属空间" title="不选择科研空间时，任务属于个人会话" aria-expanded={open === "space"} aria-haspopup="menu" onClick={event => toggle("space", event.currentTarget)}><Folder size={16} /><span>{space === "personal" ? "选择科研空间" : spaces.find(item => item.id === space)?.name}</span><ChevronDown size={12} /></button>{open === "space" && <div className="sp-popover sp-space-picker" style={menuPosition} role="menu" aria-label="任务归属空间">{spaces.filter(item => item.id !== "personal").map(item => <button type="button" className="sp-menu-choice" role="menuitemradio" aria-checked={space === item.id} key={item.id} onClick={() => { onSpace(item.id); setOpen(null); }}><Folder size={15} /><span>{item.name}</span>{space === item.id && <Check size={15} />}</button>)}<hr /><button type="button" className="sp-menu-choice" role="menuitem" onClick={() => { setOpen(null); onNewSpace?.(); }}><Plus size={15} /><span>新建科研空间</span></button><button type="button" className="sp-menu-choice" role="menuitemradio" aria-checked={space === "personal"} onClick={() => { onSpace("personal"); setOpen(null); }}><span>不选择科研空间</span>{space === "personal" && <Check size={15} />}</button></div>}</div></div>}
+    {!chat && showSpace && <div className="sp-space-strip"><div className="sp-picker-anchor"><button type="button" className="sp-space-select" aria-label="选择任务归属空间" aria-expanded={open === "space"} aria-haspopup="menu" onClick={event => toggle("space", event.currentTarget)}><Folder size={16} /><span>{spaces.find(item => item.id === space)?.name || "选择科研空间"}</span><ChevronDown size={12} /></button>{open === "space" && <div className="sp-popover sp-space-picker" style={menuPosition} role="menu" aria-label="任务归属空间"><SpaceDirectoryOptions spaces={spaces} value={space} caption="请选择空间目录" onPick={id => { onSpace(id); setOpen(null); }} onNew={() => { setOpen(null); onNewSpace?.(); }} /></div>}</div></div>}
   </div>;
 }
 
@@ -175,16 +202,63 @@ export function Modal({ title, children, onClose, wide = false, footer, placemen
   return <div className={cx("sp-modal-backdrop", placement === "search" && "sp-search-backdrop")} onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section ref={ref} className={cx("sp-modal", wide && "sp-modal-wide")} role="dialog" aria-modal="true" aria-label={title}><header className="sp-modal-header"><h2>{title}</h2><IconButton label="关闭弹窗" onClick={onClose}><X size={18} /></IconButton></header><div className="sp-modal-body">{children}</div>{footer && <footer className="sp-modal-footer">{footer}</footer>}</section></div>;
 }
 
-export function DocumentEmptyIllustration() {
-  return <span className="ds-document-empty-art" aria-hidden="true">
-    <FileText strokeWidth={.8}/>
-    <ClipboardCheck strokeWidth={.75}/>
-  </span>;
+export function ApprovalEmptyIllustration() {
+  return <svg className="sp-empty-art" viewBox="0 0 108 108" fill="none" aria-hidden="true" shapeRendering="geometricPrecision">
+    <path d="M55 24h17l16 16v40a8 8 0 0 1-8 8H55V24Z" fill="#F2F5F9" stroke="#B7C1CE" strokeWidth="2.4" strokeLinejoin="round"/>
+    <path d="M72 24v10a6 6 0 0 0 6 6h10" fill="#F8FAFC" stroke="#B7C1CE" strokeWidth="2.4" strokeLinejoin="round"/>
+    <rect x="16" y="25" width="58" height="68" rx="11" fill="#FAFBFD" stroke="#9DAABB" strokeWidth="2.6"/>
+    <rect x="34" y="16" width="23" height="13" rx="6" fill="#F8FAFC" stroke="#9DAABB" strokeWidth="2.4"/>
+    <path d="m36 60 10 10 19-22" stroke="#8494A8" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>;
 }
 
-export function EmptyState({ children = "没有找到相关内容", icon: Icon = Search, description = "试试其他关键词，或清除当前筛选。", onReset, action }) {
-  return <div className="sp-empty">
-    <Icon size={28} strokeWidth={1.5} aria-hidden="true"/>
+export function RecordEmptyIllustration() {
+  return <svg className="sp-empty-art" viewBox="0 0 108 108" fill="none" aria-hidden="true" shapeRendering="geometricPrecision">
+    <path d="M19 28c0-6.6 5.4-12 12-12h32l20 20v44c0 6.6-5.4 12-12 12H31c-6.6 0-12-5.4-12-12V28Z" fill="#FAFBFD" stroke="#9DAABB" strokeWidth="2.6" strokeLinejoin="round"/>
+    <path d="M63 16v13c0 3.9 3.1 7 7 7h13" fill="#F2F5F9" stroke="#B7C1CE" strokeWidth="2.4" strokeLinejoin="round"/>
+    <path d="M32 31h19M32 40h13" stroke="#CDD5DF" strokeWidth="2.2" strokeLinecap="round"/>
+    <circle cx="52" cy="61" r="17" fill="#F8FAFC" stroke="#8F9FB2" strokeWidth="2.8"/>
+    <path d="M52 50v12l8 5" stroke="#8F9FB2" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>;
+}
+
+export function SearchEmptyIllustration() {
+  return <svg className="sp-empty-art" viewBox="0 0 108 108" fill="none" aria-hidden="true" shapeRendering="geometricPrecision">
+    <path d="M18 28c0-6.6 5.4-12 12-12h31l20 20v44c0 6.6-5.4 12-12 12H30c-6.6 0-12-5.4-12-12V28Z" fill="#FAFBFD" stroke="#9DAABB" strokeWidth="2.6" strokeLinejoin="round"/>
+    <path d="M61 16v13c0 3.9 3.1 7 7 7h13" fill="#F2F5F9" stroke="#B7C1CE" strokeWidth="2.4" strokeLinejoin="round"/>
+    <path d="M31 31h16M31 40h12M31 76h27" stroke="#CDD5DF" strokeWidth="2.2" strokeLinecap="round"/>
+    <circle cx="46" cy="54" r="17" fill="#F8FAFC" stroke="#8B9BAF" strokeWidth="3"/>
+    <path d="m58 66 13 13" stroke="#8B9BAF" strokeWidth="3.2" strokeLinecap="round"/>
+  </svg>;
+}
+
+export function TrashEmptyIllustration() {
+  return <svg className="sp-empty-art" viewBox="0 0 108 108" fill="none" aria-hidden="true" shapeRendering="geometricPrecision">
+    <path d="M31 35h46l-4 49c-.5 6.1-5.6 10.8-11.7 10.8H46.7C40.6 94.8 35.5 90.1 35 84L31 35Z" fill="#FAFBFD" stroke="#9DAABB" strokeWidth="2.6" strokeLinejoin="round"/>
+    <rect x="23" y="25" width="62" height="13" rx="6.5" fill="#F4F7FA" stroke="#9DAABB" strokeWidth="2.6"/>
+    <path d="M43 19h22" stroke="#9DAABB" strokeWidth="2.8" strokeLinecap="round"/>
+    <path d="M44 43v39M64 43v39" stroke="#D2DAE3" strokeWidth="2.2" strokeLinecap="round"/>
+  </svg>;
+}
+
+export function SpaceEmptyIllustration() {
+  return <svg className="sp-empty-art" viewBox="0 0 108 108" fill="none" aria-hidden="true" shapeRendering="geometricPrecision">
+    <path d="M14 35c0-7.7 6.3-14 14-14h18l9 10h25c7.7 0 14 6.3 14 14v35c0 7.7-6.3 14-14 14H28c-7.7 0-14-6.3-14-14V35Z" fill="#F8FAFD" stroke="#9DAABB" strokeWidth="2.6" strokeLinejoin="round"/>
+    <path d="M14 48h80" stroke="#AAB7C6" strokeWidth="2.2" strokeLinecap="round"/>
+    <rect x="34" y="38" width="40" height="38" rx="6" fill="#FFFFFF" stroke="#BEC9D5" strokeWidth="2.2"/>
+    <path d="M43 51h22M43 60h16" stroke="#C6D0DC" strokeWidth="2.2" strokeLinecap="round"/>
+   </svg>;
+}
+
+export function DocumentEmptyIllustration() {
+  return <RecordEmptyIllustration/>;
+}
+
+export function EmptyState({ children = "没有找到相关内容", icon: Icon = SearchEmptyIllustration, description = "试试其他关键词，或清除当前筛选。", onReset, action, className }) {
+  return <div className={cx("sp-empty", className)} role="status">
+    <span className="sp-empty-visual" aria-hidden="true">
+      <Icon className="sp-empty-icon" size={52} strokeWidth={1.35}/>
+    </span>
     <h3>{children}</h3>
     {description && <p>{description}</p>}
     {action ?? (onReset && <Button onClick={onReset}>清除筛选</Button>)}

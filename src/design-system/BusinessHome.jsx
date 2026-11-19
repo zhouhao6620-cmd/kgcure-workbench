@@ -81,6 +81,6 @@ export function BusinessHome({ onNavigate, onToast, onStart, onRequireCapability
 
   return <HomeSurface title={<>从一个问题，到真正的<span className="sp-title-accent">科研成果</span></>} description={HOME_COPY.home.description}
     composer={<BoundComposer key={selectedAbility?.id || 'home'} initialModel={landingPayload?.model || 'pro'} initialAttachments={landingPayload?.attachments || []}
-      initialAbility={selectedAbility} initialSpace={router.get('space') || 'personal'} value={value} onChange={setValue} onSubmit={onStart} onToast={onToast} onNavigate={onNavigate} onRequireCapability={onRequireCapability}/>}
+      initialAbility={selectedAbility} initialSpace={router.get('space') || null} value={value} onChange={setValue} onSubmit={onStart} onToast={onToast} onNavigate={onNavigate} onRequireCapability={onRequireCapability}/>}
     shortcuts={<HomeShortcuts onNavigate={onNavigate}/>} footer={<BusinessCases onNavigate={onNavigate} imageCards/>}/>;
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Composer } from '../design-preview/components.jsx';
 import { BUSINESS_SPACES, BUSINESS_SKILLS, BUSINESS_AGENTS } from '../content/catalog.js';
-export function BoundComposer({value,onChange,onSubmit,onToast,chat=false,placeholder,inputLabel,showCapabilities=true,showSpace=true,configuration,initialAbility=null,initialModel='pro',initialAttachments=[],initialSpace='personal',model:externalModel,onModelChange,onNavigate,onRequireCapability}) {
+export function BoundComposer({value,onChange,onSubmit,onToast,chat=false,placeholder,inputLabel,showCapabilities=true,showSpace=true,configuration,initialAbility=null,initialModel='pro',initialAttachments=[],initialSpace=null,model:externalModel,onModelChange,onNavigate,onRequireCapability}) {
  const [model,setModel]=useState(initialModel),[ability,setAbility]=useState(initialAbility),[space,setSpace]=useState(initialSpace),[attachments,setAttachments]=useState(initialAttachments);
  const selectedModel=externalModel ? (/image/i.test(externalModel)?'image':/flash/i.test(externalModel)?'flash':'pro') : model;
  function selectAbility(item) {

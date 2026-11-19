@@ -480,7 +480,7 @@
 .sp-delivery-actions { display:flex; gap:4px; flex-shrink:0; }
 .sp-delivery-actions button { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:0; border-radius:6px; background:transparent; color:#596474; }
 .sp-delivery-actions button:hover,.sp-source-delivery-card:has(> :popover-open) button[popovertarget] { background:#edf1f7; color:var(--sp-blue); }
-.sp-delivery-spaces { position:fixed; right:auto; margin:0; padding:4px; border:1px solid var(--ds-line); border-radius:var(--ds-radius-card); background:white; box-shadow:0 8px 24px rgba(15,17,21,.12); color:var(--ds-ink); overflow:auto; }
+.sp-delivery-spaces { position:fixed; right:auto; margin:0; padding:6px; border:1px solid var(--ds-line); border-radius:var(--ds-radius-card); background:white; box-shadow:0 8px 24px rgba(15,17,21,.12); color:var(--ds-ink); overflow:auto; }
 .sp-delivery-spaces p { margin:0; padding:6px 8px; font-size:12px; line-height:20px; color:var(--ds-secondary); }
 .sp-delivery-spaces button { display:flex; align-items:center; gap:8px; width:100%; min-height:36px; padding:6px 8px; border:0; border-radius:6px; background:white; color:inherit; font-size:14px; text-align:left; }
 .sp-delivery-spaces button:is(:hover,:focus-visible) { background:var(--ds-nav-selected); outline-offset:-2px; }

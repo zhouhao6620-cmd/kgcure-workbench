@@ -1,7 +1,7 @@
 import { sitePath } from "../site-path.js";
 import { createContext, useContext, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Share2 } from 'lucide-react';
+import { ArrowLeft, Search, Share2 } from 'lucide-react';
 import { Button, IconButton, Modal } from '../design-preview/components.jsx';
 import './secondary.css';
 import { capabilityById, capabilityPath } from '../content/catalog.js';
@@ -25,7 +25,7 @@ export function secondaryParent(path){
  if(path==='/workspace/membership-plans')return '/workspace/membership';
  return '/workspace/chats/new';
 }
-export function SecondaryPageShell({path,onNavigate,onToast,children,scrollRef,firstLevel=false}){
+export function SecondaryPageShell({path,onNavigate,onToast,children,scrollRef,firstLevel=false,onCapabilitySearch}){
  const [target,setTarget]=useState(null),[share,setShare]=useState(false);
  const link=location.origin+sitePath(path)+location.search;
  const context=new URLSearchParams(location.search);
@@ -42,7 +42,7 @@ export function SecondaryPageShell({path,onNavigate,onToast,children,scrollRef,f
  }
  async function copy(){try{await navigator.clipboard.writeText(link);onToast('已复制本地预览链接');}catch{onToast('请选中并复制链接');}}
  return <ToolbarContext.Provider value={target}><section className="ds-secondary-shell">
-  <header className="ds-secondary-bar" aria-label="页面操作栏"><button type="button" className="ds-secondary-back" aria-label="返回" onClick={()=>onNavigate(parent)}><ArrowLeft size={18}/><span>返回</span></button><div className="ds-secondary-bar-actions"><IconButton label="分享当前页面" onClick={()=>setShare(true)}><Share2 size={18}/></IconButton><div className="ds-secondary-context-actions" ref={setTarget}/></div></header>
+  <header className="ds-secondary-bar" aria-label="页面操作栏"><button type="button" className="ds-secondary-back" aria-label="返回" onClick={()=>onNavigate(parent)}><ArrowLeft size={18}/><span>返回</span></button><div className="ds-secondary-bar-actions">{onCapabilitySearch ? <IconButton label="搜索科研能力" onClick={onCapabilitySearch}><Search size={18}/></IconButton> : <><IconButton label="分享当前页面" onClick={()=>setShare(true)}><Share2 size={18}/></IconButton><div className="ds-secondary-context-actions" ref={setTarget}/></>}</div></header>
   <div className={'page-scroll ds-secondary-scroll'+(firstLevel?' ds-first-level ds-store-scroll':'')} ref={scrollRef}>{children}</div>
   {share&&<Modal title="分享页面" onClose={()=>setShare(false)}><p className="ds-prose">复制当前页面的本地预览链接。</p><label className="sp-field"><span>页面链接</span><input readOnly aria-label="页面分享链接" value={link} onFocus={e=>e.target.select()}/></label><p className="ds-muted">链接仅在可访问当前本地服务的环境中有效。</p><div className="sp-dialog-actions"><Button onClick={()=>setShare(false)}>关闭</Button><Button variant="primary" onClick={copy}>复制链接</Button></div></Modal>}
  </section></ToolbarContext.Provider>;

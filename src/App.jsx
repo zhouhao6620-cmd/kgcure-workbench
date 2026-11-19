@@ -31,7 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { categories, researchWorkflows, shortcuts } from "./data.js";
-import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge } from "./pages/account.jsx";
+import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge, countMyFiles } from "./pages/account.jsx";
 import { PersonalVerification } from "./pages/PersonalVerification.jsx";
 import { BillingUsage } from "./pages/BillingUsage.jsx";
 import { SAMPLE_QUOTA_REMAINING } from "./pages/billing-usage-data.js";
@@ -45,7 +45,7 @@ import { BusinessFrame } from "./design-system/BusinessFrame.jsx";
 import { CapabilityStore } from "./design-system/CapabilityStore.jsx";
 import { BusinessHome } from "./design-system/BusinessHome.jsx";
 import { DesignPreview } from "./design-preview/DesignPreview.jsx";
-import { CapabilityDetail } from './design-system/CapabilityDetail.jsx';
+import { CapabilityDetail, CapabilitySearch } from './design-system/CapabilityDetail.jsx';
 import { ResearchConversation, makeSession } from './design-system/ResearchConversation.jsx';
 import { ResearchSpaces, initialResearchSpaces } from './design-system/ResearchSpaces.jsx';
 import { ContributionPage } from './design-system/ContributionPage.jsx';
@@ -501,15 +501,32 @@ export function App() {
   const tier = previewMembershipTier(previewTier);
   const [localSessions,setLocalSessions]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-sessions-v2')||'[]');}catch{return [];}});
   const [spaces,setSpaces]=useState(initialResearchSpaces);
+  const [libraryFiles,setLibraryFiles]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-file-library-files-v1')||'[]');}catch{return [];}});
   const [historyOverrides,setHistoryOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-history-overrides')||'{}');}catch{return {};}});
   useEffect(()=>localStorage.setItem('kgcure-history-overrides',JSON.stringify(historyOverrides)),[historyOverrides]);
   const visibleHistory=[...localSessions,...CONVERSATIONS].filter(item=>!historyOverrides[item.id]?.hidden).map(item=>({...item,title:historyOverrides[item.id]?.title||item.title}));
   useEffect(()=>{localStorage.setItem('kgcure-sessions-v2',JSON.stringify(localSessions));},[localSessions]);
   useEffect(()=>{localStorage.setItem('kgcure-spaces-v2',JSON.stringify(spaces));},[spaces]);
+  useEffect(()=>{localStorage.setItem('kgcure-file-library-files-v1',JSON.stringify(libraryFiles));},[libraryFiles]);
+  useEffect(()=>{
+    let saved=[];
+    try { saved=JSON.parse(localStorage.getItem('kgcure-spaces-v2')||'[]'); } catch { return; }
+    if(!Array.isArray(saved))return;
+    const retired=saved.filter(space=>space?.id==='personal'||space?.isDefault||space?.name==='默认空间'||String(space?.name||'').trim().toLowerCase()==='test');
+    if(!retired.length)return;
+    const preserved=retired.flatMap(space=>(space.files||[]).map(file=>({...file,source:file.source||'历史空间文件',spaceName:'我的文件库'})));
+    setLibraryFiles(current=>{
+      const known=new Set(current.map(file=>file.id));
+      const additions=preserved.filter(file=>!known.has(file.id));
+      return additions.length?[...additions,...current]:current;
+    });
+  },[]);
+  const libraryFileCount=countMyFiles(localSessions,libraryFiles);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [capabilitySearchOpen, setCapabilitySearchOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [guest, setGuest] = useState(() => {
     try { return window.localStorage.getItem("kgcure-guest") === "1"; } catch { return false; }
@@ -528,6 +545,14 @@ export function App() {
   }
 
   function saveDelivery(file, spaceId, sessionId) {
+    if (!spaceId || spaceId === 'personal') {
+      const id = 'library:' + (sessionId || 'design-preview') + ':' + file.id;
+      const hasContent = typeof file.content === 'string';
+      const record = {...file, id, sessionId, author:'周浩', date:Date.now(), source:'对话交付', spaceName:'我的文件库'};
+      setLibraryFiles(current => current.some(item => item.id === id) ? current : [record, ...current]);
+      showToast((hasContent ? '文件已保存到' : '文件记录已保存到') + '我的文件库');
+      return;
+    }
     const space = spaces.find(item => item.id === spaceId);
     if (!space) return showToast('此科研空间已不存在');
     const session = localSessions.find(item => item.id === sessionId);
@@ -570,6 +595,7 @@ export function App() {
     scrollRef.current?.scrollTo({ top: 0 });
     setMobileOpen(false);
     setAccountOpen(false);
+    setCapabilitySearchOpen(false);
   }, [path]);
 
   useEffect(() => () => { if (toastTimer.current) window.clearTimeout(toastTimer.current); }, []);
@@ -595,6 +621,8 @@ export function App() {
 
   const mode = router.get("task") === "research" ? "research" : "chat";
   const isCase = path.startsWith("/workspace/workflows/") && path.includes("/cases/") && !capabilityById(path.split("/")[4]);
+  const isCapabilityDetail = /^\/workspace\/(skills|agents)\/[^/]+$/.test(path)
+    || (/^\/workspace\/workflows\/template\/[^/]+$/.test(path) && Boolean(capabilityById(path.split('/')[4])));
   const isChat = path.startsWith("/workspace/chats/") && path !== "/workspace/chats/new";
   const isHome = path === "/workspace" || path === "/" || path === "/workspace/chats/new";
   const isStore = ["/workspace/skills", "/workspace/agents", "/workspace/workflows", "/workspace/research-space"].includes(path);
@@ -611,6 +639,42 @@ export function App() {
     if (!requireCapabilityAccess(data.ability)) return false;
     const session=makeSession(data);setLocalSessions(items=>[session,...items]);navigate('/workspace/chats/'+session.id);
   }
+  function spaceAction(type,item,details={}){
+    if(!item)return;
+    if(type==='pin'){
+      setSpaces(current=>{
+        const updated=current.map(space=>space.id===item.id?{...space,pinned:!space.pinned}:space);
+        return [...updated.filter(space=>space.pinned),...updated.filter(space=>!space.pinned)];
+      });
+      showToast(item.pinned?'已取消置顶「'+item.name+'」':'已置顶「'+item.name+'」');
+      return;
+    }
+    if(type==='rename'){
+      if(!details.name?.trim())return;
+      setSpaces(current=>current.map(space=>space.id===item.id?{...space,name:details.name.trim(),goal:details.goal?.trim()||''}:space));
+      showToast('已更新「'+details.name.trim()+'」');
+      return;
+    }
+    if(type==='delete'){
+      const deleted=spaces.find(space=>space.id===item.id);
+      if(!deleted)return;
+      const deletedSessionFiles=localSessions.filter(session=>session.space===item.id).flatMap(session=>session.files||[]);
+      const preservedFiles=[...(deleted.files||[]),...deletedSessionFiles]
+        .filter((file,index,items)=>items.findIndex(candidate=>candidate.id===file.id)===index)
+        .map(file=>({...file,source:file.source||'科研空间文件',spaceName:deleted.name}));
+      setLibraryFiles(current=>{
+        const known=new Set(current.map(file=>file.id));
+        const additions=preservedFiles.filter(file=>!known.has(file.id));
+        return additions.length?[...additions,...current]:current;
+      });
+      setSpaces(current=>{
+        return current.filter(space=>space.id!==item.id);
+      });
+      setLocalSessions(items=>items.map(session=>session.space===item.id?{...session,space:null,origin:session.origin?{...session.origin,folderId:undefined}:session.origin}:session));
+      showToast('空间已删除，文件仍可在「我的文件库」中查看');
+      if(path.startsWith('/workspace/research-space/'+item.id))navigate('/workspace/research-space');
+    }
+  }
   function sessionAction(type,item,title){
     if(type==='rename'){
       setHistoryOverrides(values=>({...values,[item.id]:{...values[item.id],title}}));
@@ -623,7 +687,7 @@ export function App() {
       downloadText(item.title+'.md','# '+item.title+'\n\n'+body);
     }
   }
-  function runCapability(item){startTask({ability:item,space:router.get('space')||'personal',origin:router.get('folder')?{folderId:router.get('folder')}:undefined,text:'使用「'+item.name+'」，请协助我完成科研任务。'});}
+  function runCapability(item){startTask({ability:item,space:router.get('space')||null,origin:router.get('folder')?{folderId:router.get('folder')}:undefined,text:'使用「'+item.name+'」，请协助我完成科研任务。'});}
   const hasBillingMembership = tier !== 'free';
 
   function renderStandard() {
@@ -631,18 +695,18 @@ export function App() {
     if (path === "/workspace/skills" || path === "/workspace/agents") return <CapabilityStore onRecommend={task=>startTask({text:'我希望'+task.name+'，请先帮我推荐合适的科研能力。',origin:{category:task.category}})} key={path} kind={path.endsWith('skills')?'skill':'agent'} onNavigate={navigate}/>;
     if (path === '/workspace/contribute') return <ContributionPage onToast={showToast}/>;
     if (path.startsWith('/workspace/cases/')) {const [, , ,abilityId,caseId]=path.split('/');return <CapabilityCase item={capabilityById(abilityId)} caseId={caseId} onNavigate={navigate} onRun={runCapability}/>;}
-    if (/^\/workspace\/(skills|agents)\//.test(path)) {const id=path.split('/').at(-1),item=capabilityById(id) || (path.startsWith('/workspace/skills/') && COMMUNITY_SKILL_EXAMPLES.find(example=>example.id===id));return item?<CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onToast={showToast} onRun={runCapability}/>:<div className="view ds-page-empty"><h1>未找到该能力</h1><button onClick={()=>navigate('/workspace/skills')}>返回商店</button></div>;}
+    if (/^\/workspace\/(skills|agents)\//.test(path)) {const id=path.split('/').at(-1),item=capabilityById(id) || (path.startsWith('/workspace/skills/') && COMMUNITY_SKILL_EXAMPLES.find(example=>example.id===id));return item?<CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onRun={runCapability}/>:<div className="view ds-page-empty"><h1>未找到该能力</h1><button onClick={()=>navigate('/workspace/skills')}>返回商店</button></div>;}
     if (path === "/workspace/evidence-search") return <ServicePage showCaseType key="evidence" onStart={startTask} kind="evidence" onToast={showToast} />;
     if (path === "/workspace/topic-selection") return <ServicePage showCaseType key="topic" onStart={startTask} kind="topic" onToast={showToast} />;
     if (path === "/workspace/grant-application") return <ServicePage showCaseType key="grant" onStart={startTask} kind="grant" onToast={showToast} />;
     if (path === "/workspace/scientific-drawing") return <DrawingPage onStart={startTask} onOpenChat={() => navigate("/workspace/chats/e9dd87e0-b232-479d-b0a9-5ba249a76a78")} onToast={showToast} />;
-    if (path === "/workspace/research-space") return <ResearchSpaces spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} onToast={showToast}/>;
+    if (path === "/workspace/research-space") return <ResearchSpaces spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
     if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
     if (path === "/workspace/workflows") return <CapabilityStore onRecommend={task=>startTask({text:task.name,origin:{category:task.category}})} key="legacy-agents" kind="agent" onNavigate={navigate}/>;
     if (path.startsWith("/workspace/workflows/template/")) {
       const sourceId=path.split('/')[4],item=capabilityById(sourceId);
       if(item&&path.includes('/cases/'))return <CapabilityCase item={item} caseId={path.split('/').at(-1)} onNavigate={navigate} onRun={runCapability}/>;
-      if(item)return <CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onToast={showToast} onRun={runCapability}/>;
+      if(item)return <CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onRun={runCapability}/>;
       return (
         <WorkflowDetail
           onBack={() => navigate("/workspace/workflows")}
@@ -652,7 +716,7 @@ export function App() {
         />
       );
     }
-    if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} onToast={showToast} />;
+    if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} libraryFiles={libraryFiles} onToast={showToast} />;
     if (path === "/workspace/profile") return <ProfilePage onToast={showToast}
       verified={router.get('verification') === 'verified'}
       verification={verificationPreview} reviewSubmission={router.get('verification') === 'submitted'}
@@ -706,7 +770,14 @@ export function App() {
   function renderChat() {
     const id = path.split("/").pop();
     const session=localSessions.find(x=>x.id===id);
-    const delivery = {spaces, onSave:(file, spaceId) => saveDelivery(file, spaceId, id)};
+    const delivery = {
+      spaces,
+      onSave:(file, spaceId) => saveDelivery(file, spaceId, id),
+      onNewSpace:() => {
+        navigate('/workspace/research-space');
+        showToast('请在科研空间页新建空间');
+      },
+    };
     if(session)return <ResearchConversation key={id} session={session} tier={tier} onRequireCapability={requireCapabilityAccess} onUpdate={next=>setLocalSessions(items=>items.map(x=>x.id===next.id?{...next,updatedAt:Date.now()}:x))} onNavigate={navigate} delivery={delivery}/>;
     if (id === "e9dd87e0-b232-479d-b0a9-5ba249a76a78") return <DrawingChat onToast={showToast} delivery={delivery} />;
     if (id === "d00e51b8-6552-4d64-9042-9c537a7f8c61") {
@@ -716,7 +787,14 @@ export function App() {
     return <MultiStepChat title={id === "d6afecac-2d0c-49e5-952f-ea432738f373" ? "工作流全流程展示" : undefined} onToast={showToast} delivery={delivery} />;
   }
 
-  if (path === "/design-system") return <><DesignPreview delivery={{spaces, onSave:saveDelivery}} />{toast && <div className="toast" role="status">{toast}</div>}</>;
+  if (path === "/design-system") return <><DesignPreview delivery={{
+    spaces,
+    onSave:saveDelivery,
+    onNewSpace:() => {
+      navigate('/workspace/research-space');
+      showToast('请在科研空间页新建空间');
+    },
+  }} />{toast && <div className="toast" role="status">{toast}</div>}</>;
 
   if (guest || path === "/welcome") {
     return (
@@ -741,9 +819,13 @@ export function App() {
   }
 
   return (
-    <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={visibleHistory} onSessionAction={sessionAction} spaces={spaces} onSpaces={setSpaces}>
-      {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
+    <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={spaces} onSpaces={setSpaces}>
+      {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef} onCapabilitySearch={isCapabilityDetail ? () => setCapabilitySearchOpen(true) : undefined}>{renderStandard()}</SecondaryPageShell>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
+      {isCapabilityDetail && capabilitySearchOpen && <CapabilitySearch onClose={() => setCapabilitySearchOpen(false)} onChoose={item => {
+        setCapabilitySearchOpen(false);
+        navigate(capabilityPath(item) + router.search);
+      }}/>}
       {restrictedAgent && <Modal title={restrictedAgent.name} onClose={() => setRestrictedAgent(null)}>
         <p>{EXCLUSIVE_AGENT_REQUIREMENT}</p>
         <div className="sp-dialog-actions"><Button onClick={() => setRestrictedAgent(null)}>关闭</Button><Button variant="primary" onClick={() => navigate('/workspace/membership-plans')}>查看会员权益</Button></div>

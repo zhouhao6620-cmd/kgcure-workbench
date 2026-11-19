@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, ChevronRight, Coins, Crown, Gift, Info, ReceiptText, Ticket } from 'lucide-react';
 import { QuotaProgress } from "../design-system/QuotaProgress.jsx";
 import { Tabs } from '../components.jsx';
-import { Button, DocumentEmptyIllustration, EmptyState, Modal, Tag } from '../design-preview/components.jsx';
+import { Button, EmptyState, Modal, RecordEmptyIllustration, Tag } from '../design-preview/components.jsx';
 import { canUseExclusiveAgent, membershipBenefits } from '../content/membership.js';
 import { BillingUsageAnalysis } from './BillingUsageAnalysis.jsx';
 import {
@@ -175,7 +175,7 @@ function BillingRecords({ view, onChange, hasMembership, onToast, resetUsed, onU
         </table>
       </div>
       {!hasMembership && <p className="bu-chart-note">开通会员后可使用{QUOTA_INVITE.cardName}。</p>}
-    </section> : view === 'invoices' ? <EmptyState icon={DocumentEmptyIllustration} description="订单的发票申请记录会在这里显示。"
+    </section> : view === 'invoices' ? <EmptyState icon={RecordEmptyIllustration} description="订单的发票申请记录会在这里显示。"
       action={<Button onClick={() => onToast('发票服务尚未接入')}>申请发票</Button>}>暂无发票申请</EmptyState>
       : rows.length ? <div className="bu-table-scroll" role="region" aria-label={isMember ? '会员账单' : '积分账单'} tabIndex={0}>
       <table className="bu-table bu-ledger">
@@ -186,7 +186,7 @@ function BillingRecords({ view, onChange, hasMembership, onToast, resetUsed, onU
             : <><td className={row.delta > 0 ? 'bu-credit' : 'bu-debit'}>{row.delta > 0 ? '+' : ''}{number.format(row.delta)}</td><td>{row.payment}</td></>}
         </tr>)}</tbody>
       </table>
-    </div> : <EmptyState icon={DocumentEmptyIllustration} description="购买或兑换会员后，账单会显示在这里。">暂无会员账单</EmptyState>}
+    </div> : <EmptyState icon={RecordEmptyIllustration} description="购买或兑换会员后，账单会显示在这里。">暂无会员账单</EmptyState>}
   </section>;
 }
 

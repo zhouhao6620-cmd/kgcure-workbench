@@ -1,18 +1,32 @@
 import { sitePath } from "../site-path.js";
 import { useState } from 'react';
-import { Award, ChevronDown, Folder, Lightbulb, MessageCirclePlus, MoreHorizontal, Palette, PanelLeft, Plus, Search } from 'lucide-react';
+import { Award, ChevronDown, Folder, LibraryBig, Lightbulb, MessageCirclePlus, MoreHorizontal, Palette, PanelLeft, Plus, Search } from 'lucide-react';
 import { AgentGlyph, SkillGlyph, IconButton, NewBadge, cx } from '../design-preview/components.jsx';
 import { AccountControl } from '../design-preview/AccountControl.jsx';
 import { HOME_COPY } from '../design-preview/data.js';
 const NAV=[{scene:'evidence',icon:Search},{scene:'topic',icon:Lightbulb},{scene:'grant',icon:Award},{scene:'drawing',icon:Palette}];
 
-export function WorkspaceNavigation({accountTier,accountQuotaRemaining,collapsed,mobileOpen,onCollapse,onNewTask,onScene,onCapabilities,activeScene,activeCapability,spaces=[],sessions=[],currentId,onSpace,onAllSpaces,onNewSpace,onOpenSession,onHistoryMenu,historyMenuId,onSearch,onNavigate,onAccountAction,onNotice}) {
+export function WorkspaceNavigation({accountTier,accountQuotaRemaining,collapsed,mobileOpen,onCollapse,onNewTask,onScene,onCapabilities,activeScene,activeCapability,filesActive,spaces=[],sessions=[],currentId,onFiles,onSpace,onAllSpaces,onNewSpace,onSpaceMenu,spaceMenuId,onOpenSession,onHistoryMenu,historyMenuId,onSearch,onNavigate,onAccountAction,onNotice}) {
  const [sections,setSections]=useState({spaces:true,history:true});
  return <aside className={cx('sp-sidebar',collapsed&&'sp-sidebar-hidden')}>
   <header className="sp-sidebar-head"><button type="button" className="sp-brand" aria-label="数愈科研 创建新任务" onClick={onNewTask}><img src={sitePath("/design-preview/kgcure-logo.png")} alt="KGcure"/></button><div className="sp-sidebar-tools"><IconButton label="收起导航" onClick={onCollapse}><PanelLeft size={16}/></IconButton></div></header>
   <button type="button" className="sp-new-task" onClick={onNewTask}><MessageCirclePlus size={18}/><span>创建新任务</span><kbd>⌘ J</kbd></button>
   <div className="sp-sidebar-scroll"><nav className="sp-main-nav" aria-label="主要导航">{NAV.map(({scene,icon:Icon})=><button type="button" key={scene} className={cx('sp-nav-link',activeScene===scene&&'is-active')} onClick={()=>onScene(scene)}><Icon size={18} strokeWidth={1.7}/><span>{HOME_COPY[scene].label}</span></button>)}<div className="sp-nav-heading sp-professional-heading">专家</div><button type="button" className={cx('sp-nav-link',activeCapability==='skill'&&'is-active')} onClick={()=>onCapabilities('skill')}><SkillGlyph size={18}/><span>科研 Skill</span><NewBadge/></button><button type="button" className={cx('sp-nav-link',activeCapability==='agent'&&'is-active')} onClick={()=>onCapabilities('agent')}><AgentGlyph size={18}/><span>科研 Agent</span></button></nav>
-  <div className="sp-space-nav"><div className="sp-nav-section-head"><button type="button" className="sp-nav-heading" aria-expanded={sections.spaces} onClick={()=>setSections(v=>({...v,spaces:!v.spaces}))}>科研空间<ChevronDown size={14}/></button><div className="ds-space-nav-actions">{onAllSpaces&&<button type="button" className="ds-space-all" onClick={onAllSpaces}>全部</button>}<IconButton label="新建示例科研空间" onClick={onNewSpace}><Plus size={15}/></IconButton></div></div>{sections.spaces&&spaces.filter(x=>x.id!=='personal').map(item=><button type="button" className="sp-nav-link" key={item.id} onClick={()=>onSpace(item)}><Folder size={17} strokeWidth={1.7}/><span>{item.name}</span></button>)}</div>
+  <div className="sp-space-nav">
+   <div className="sp-nav-section-head">
+    <button type="button" className="sp-nav-heading" aria-expanded={sections.spaces} onClick={()=>setSections(v=>({...v,spaces:!v.spaces}))}>科研空间<ChevronDown size={14}/></button>
+    <div className="ds-space-nav-actions">{onAllSpaces&&<button type="button" className="ds-space-all" onClick={onAllSpaces}>全部</button>}<IconButton label="新建示例科研空间" onClick={onNewSpace}><Plus size={15}/></IconButton></div>
+   </div>
+   {sections.spaces&&<>
+    <div className={cx('sp-space-row','sp-file-library-nav-row',filesActive&&'is-active')}>
+     <button type="button" className="sp-space-link" onClick={onFiles}><LibraryBig size={17} strokeWidth={1.7}/><span>我的文件库</span></button>
+    </div>
+    {spaces.map(item=><div className="sp-space-row" key={item.id}>
+     <button type="button" className="sp-space-link" onClick={()=>onSpace(item)}><Folder size={17} strokeWidth={1.7}/><span>{item.name}</span></button>
+     {onSpaceMenu&&<button type="button" className="sp-space-more" aria-label={'管理科研空间 '+item.name} aria-expanded={spaceMenuId===item.id} onClick={event=>onSpaceMenu(item,event.currentTarget)}><MoreHorizontal size={16}/></button>}
+    </div>)}
+   </>}
+  </div>
   <div className="sp-history-head"><button type="button" className="sp-nav-heading" aria-expanded={sections.history} onClick={()=>setSections(v=>({...v,history:!v.history}))}>对话<ChevronDown size={14}/></button><IconButton label="搜索历史对话" onClick={onSearch}><Search size={15}/></IconButton></div><div className="sp-history-list" hidden={!sections.history}>{sessions.map(item=><div key={item.id} className={cx('sp-history-row',currentId===item.id&&'is-active')}><button type="button" className="sp-history-link" title={item.title} onClick={()=>onOpenSession(item)}>{item.title}</button>{onHistoryMenu&&<button type="button" className="sp-history-more" aria-label={'管理对话 '+item.title} aria-expanded={historyMenuId===item.id} onClick={e=>onHistoryMenu(item,e.currentTarget)}><MoreHorizontal size={16}/></button>}</div>)}</div></div>
   <footer className="sp-account-footer"><AccountControl tier={accountTier} quotaRemaining={accountQuotaRemaining} visible={!collapsed||mobileOpen} onNavigate={onNavigate} onAction={onAccountAction} onNotice={onNotice}/></footer>
  </aside>;

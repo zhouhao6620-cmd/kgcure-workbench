@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Bookmark, ChevronDown, FolderOpen, Languages } from 'lucide-react';
-import { Button } from './components.jsx';
+import { ApprovalEmptyIllustration, Button, EmptyState, RecordEmptyIllustration, SearchEmptyIllustration, SpaceEmptyIllustration } from './components.jsx';
 import { ConversationPrompt, FollowUpHeading } from '../design-system/ConversationPrompt.jsx';
 import { LanguageOptions } from '../design-system/LanguageOptions.jsx';
 import { Pagination } from '../design-system/Pagination.jsx';
@@ -108,11 +108,18 @@ export function NavigationSpec() {
   const [page, setPage] = useState(1);
   const [language, setLanguage] = useState('简体中文');
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [filter, setFilter] = useState('全部');
 
   return <section className="sp-gallery-section" id="spec-navigation">
     <div className="sp-section-heading"><div><h2>标签、分页与语言菜单</h2><p>菜单操作统一为 14px，辅助说明为 12px。</p></div></div>
+    <h3 className="sp-spec-subheading">筛选胶囊 · 36px</h3>
+    <div className="sp-filter-chips sp-spec-filter-chips" role="group" aria-label="筛选胶囊示例">
+      {['全部','文献调研','论文写作','基金申报'].map(item => <button type="button" key={item} className={'sp-filter' + (filter === item ? ' is-active' : '')} aria-pressed={filter === item} onClick={() => setFilter(item)}>{item}</button>)}
+    </div>
+    <p className="sp-section-note">统一使用 36px 高、左右 16px 内边距和 999px 圆角。选中项黑底白字、600 字重；未选中项浅灰底次级文字、500 字重。所有出现位置采用一致的上下 6px 额外留白。</p>
     <h3 className="sp-spec-subheading">下划线标签 · 16px</h3>
     <DetailTabsExample/>
+    <p className="sp-section-note">所有下划线标签统一为 16px。未选中项使用 500 字重和次级文字色；选中项使用 600 字重、正文黑色，并保留下划线。账单、文件库、详情章节和工作流共用此规则。</p>
     <div className="sp-spec-control-grid">
       <div className="sp-spec-control-example">
         <h3>数字分页</h3>
@@ -126,5 +133,18 @@ export function NavigationSpec() {
         </div>
       </div>
     </div>
+  </section>;
+}
+
+export function EmptyStateSpec() {
+  return <section className="sp-gallery-section" id="spec-empty">
+    <div className="sp-section-heading"><div><h2>缺省态</h2><p>页面与列表级空状态共用同一视觉框和文字层级。</p></div></div>
+    <div className="sp-empty-spec-grid">
+      <article><EmptyState icon={ApprovalEmptyIllustration} description="发起文件下载申请后，可在这里查看进度。">暂无审批</EmptyState><small>审批或申请为空</small></article>
+      <article><EmptyState icon={RecordEmptyIllustration} description="购买或兑换会员后，账单会显示在这里。">暂无记录</EmptyState><small>账单、发票或记录为空</small></article>
+      <article><EmptyState icon={SearchEmptyIllustration} onReset={() => {}}>没有匹配的科研能力</EmptyState><small>筛选或搜索无结果</small></article>
+      <article><EmptyState icon={SpaceEmptyIllustration} description="可在空间上传文件，或者发起任务对话。">暂无内容</EmptyState><small>空间或列表为空</small></article>
+    </div>
+    <p className="sp-section-note">审批、记录、搜索无结果和空间无内容分别使用独立插画，统一放在 108 × 108px 画板内，全部使用中性灰阶，不带品牌蓝或彩色状态点。图标下留 12px，再依次放置 16/24px、600 字重标题和 14/22px 常规字重描述。标题与描述间距 8px，操作按钮距描述 10px。页面级缺省态都复用这四个图标，不另行缩放。</p>
   </section>;
 }

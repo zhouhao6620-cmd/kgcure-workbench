@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>医路有AI · 科研工具库 | Skill & Agent 详情页</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+          },
+          colors: {
+            brand: {
+              600: '#2563EB',
+              700: '#1D4ED8',
+              800: '#1E40AF',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* 基础排印与医疗编辑风视觉规范 */
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* 裸跑 Prompt 缺陷标红波浪线 */
+    .flaw-mark {
+      background-color: #FEF2F2;
+      color: #B91C1C;
+      text-decoration: underline wavy #DC2626;
+      text-underline-offset: 3px;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* 轻量滚动条 */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F1F5F9;
+      border-radius: 999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* 动效 */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      animation: fadeSlideUp 0.2s ease-out forwards;
+    }
+
+    @keyframes slideInDrawer {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+    .animate-drawer {
+      animation: slideInDrawer 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* 雷达图交互节点与森林图平滑过渡 */
+    .radar-dot {
+      cursor: pointer;
+      transition: r 0.16s ease, stroke-width 0.16s ease, fill 0.16s ease;
+    }
+    .radar-dot:hover {
+      r: 7.5;
+    }
+    .forest-transition {
+      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- ==================== 顶部固定极简导航栏 ==================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <!-- 左侧品牌 -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-[#1D4ED8] flex items-center justify-center text-white shadow-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+          </svg>
+        </div>
+        <span class="text-sm sm:text-base font-bold text-slate-900 tracking-tight">医路有AI · 科研工具库</span>
+      </div>
+
+      <!-- 中央胶囊切换器 -->
+      <nav aria-label="视图切换" class="inline-flex items-center bg-slate-100 p-1 rounded-full border border-slate-200">
+        <button id="switch-skill" type="button" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all bg-white text-[#1D4ED8] shadow-xs">
+          Skill 详情页
+        </button>
+        <button id="switch-agent" type="button" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900">
+          Agent 详情页
+        </button>
+      </nav>
+
+      <!-- 右侧留白平衡（桌面端显示极简目录标） -->
+      <div class="hidden md:flex items-center text-xs text-slate-400 font-medium shrink-0">
+        医学科研透明评测版
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 主内容容器 ==================== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-7 sm:py-9">
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 1: SKILL 详情页                                                  -->
+    <!-- ===================================================================== -->
+    <section id="view-skill" class="space-y-6 animate-fade-up">
+
+      <!-- 1. 极简 Hero Header（右侧仅保留单个主按钮） -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-3 max-w-3xl">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span class="px-2 py-0.5 rounded-md bg-blue-50 text-[#1D4ED8] font-semibold border border-blue-100">Skill</span>
+              <span>临床文献阅读</span>
+              <span class="text-slate-300">·</span>
+              <span class="font-mono text-slate-600">v2.4</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-[#059669] font-medium">综合实测 4.6 / 5.0</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
+              SCI 临床文献 PICO 与结局指标提取 Skill
+            </h1>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+              面向临床干预文献的高保真结构化提取指令：强制分离主/次要终点、附带原文页码定位，杜绝普通对话 AI 遗漏失访率或脑补阴性结论。
+            </p>
+          </div>
+
+          <!-- 极简单按钮 CTA（无冗余卡片壳、无状态角标、无堆叠副按钮） -->
+          <div class="shrink-0">
+            <button id="btn-use-skill" type="button" class="w-full md:w-auto px-6 py-3 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 active:scale-[0.99] text-white text-sm font-semibold shadow-xs transition-all inline-flex items-center justify-center gap-2">
+              <span>使用此 Skill</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 重新设计：基础信息速览（4 模块 Bento 网格，3 秒判断匹配度与边界） -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-0.5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">基础信息速览</h2>
+          <span class="text-xs text-slate-400">3 秒判断适用场景与使用边界</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Card 1: 适合谁 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between gap-3">
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 text-[#1D4ED8] flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                </span>
+                <h3 class="text-sm font-bold text-slate-900">适合谁</h3>
+              </div>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                临床硕博生、规培医生、系统评价 / Meta 分析作者、临床综述写作者。
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">文献精读</span>
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">Meta 数据初提</span>
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">临床综述整理</span>
+            </div>
+          </div>
+
+          <!-- Card 2: 解决什么痛点 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-emerald-50 text-[#059669] flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </span>
+              <h3 class="text-sm font-bold text-slate-900">解决什么痛点</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              替代手动通读数十页英文 RCT 抄录表格，避免普通对话 AI <strong class="font-semibold text-slate-800">漏报失访率、混淆 ITT / PP 人群</strong>或擅自脑补阴性结局结论。
+            </p>
+          </div>
+
+          <!-- Card 3: 输入与产出 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+              </span>
+              <h3 class="text-sm font-bold text-slate-900">输入与产出</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              输入 <span class="font-medium text-slate-800">1 篇英文 RCT 全文 PDF</span> → 输出结构化 PICO 与结局指标底表（逐条附带原文页码定位）；单篇耗时从 <span class="font-mono text-slate-500 line-through">35 min</span> 降至约 <span class="font-mono font-semibold text-[#059669]">11 min（省时 ~68%）</span>。
+            </p>
+          </div>
+
+          <!-- Card 4: 使用边界 / 不适合谁 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-amber-50 text-[#D97706] flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+              </span>
+              <h3 class="text-sm font-bold text-slate-900">使用边界 / 不适合谁</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              仅适用临床干预研究（RCT / 队列）；<strong class="font-semibold text-slate-800">不适用于基础动物实验</strong>；跨页小字号森林图或补充材料表格数值仍需点页码人工复核。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 评测基准声明条 (Testing Protocol Bar) -->
+      <div class="bg-white rounded-xl border border-slate-200 px-5 py-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm text-slate-600">
+          <span class="inline-flex items-center gap-1.5 font-semibold text-slate-900">
+            <span class="w-2 h-2 rounded-full bg-[#1D4ED8]"></span>
+            评测基准：
+          </span>
+          <span>基于 20 篇近 3 年高分临床 RCT 全文（<span class="font-mono text-slate-800">NEJM / Lancet / JAMA</span>）</span>
+          <span class="text-slate-300">·</span>
+          <span>统一基座复测 3 轮</span>
+          <span class="text-slate-300">·</span>
+          <span class="font-mono text-slate-700">2026.11 实测</span>
+        </div>
+        <button id="btn-open-rubric" type="button" class="self-start lg:self-center text-xs sm:text-sm font-semibold text-[#1D4ED8] hover:text-blue-800 hover:underline whitespace-nowrap transition-colors">
+          查看测试集与打分细则 →
+        </button>
+      </div>
+
+      <!-- 4. 多维评测过程拆解（左侧 4 轴交互雷达图 + 右侧 4 维度实测卡） -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 space-y-6">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">多维评测过程透明拆解</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">点击雷达顶点或右侧维度卡片，直接查看每项评分背后的实测动作、原始数据与评测员批注</p>
+          </div>
+          <span class="font-mono text-xs text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+            盲测总计 600 个核心字段
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <!-- 左栏：4 轴交互式 SVG 雷达图 -->
+          <div class="lg:col-span-5 bg-slate-50/80 rounded-xl border border-slate-200 p-5 flex flex-col items-center">
+            <div class="w-full flex items-baseline justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500">四维实测轮廓</span>
+              <span class="font-mono text-xl font-bold text-slate-900">4.6 <span class="text-xs font-normal text-slate-400">/ 5.0</span></span>
+            </div>
+
+            <svg id="skill-radar-svg" viewBox="0 0 320 250" class="w-full max-w-[300px] h-auto overflow-visible" aria-label="四维评测雷达图">
+              <!-- JS 动态渲染以同步激活高亮 -->
+            </svg>
+
+            <div id="radar-caption" class="w-full mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+              <!-- JS 动态渲染 -->
+            </div>
+          </div>
+
+          <!-- 右栏：4 个可点击维度拆解卡 -->
+          <div id="skill-dim-list" class="lg:col-span-7 space-y-3">
+            <!-- JS 动态渲染 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. 实测过程切片 & 翻车边界现场 (Tabbed Card) -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <!-- Tab 顶栏 -->
+        <div class="px-6 pt-5 pb-4 border-b border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">实测案例穿透与边界压测</h2>
+            <p class="text-xs text-slate-500 mt-0.5">样本：含复杂亚组分析与补充附表的英文 RCT 全文（保留 8.4% 失访率与 1 项阴性次要终点）</p>
+          </div>
+          <div class="inline-flex bg-slate-200/70 p-1 rounded-xl shrink-0 self-start sm:self-auto">
+            <button type="button" data-slice-tab="slice" class="slice-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-xs transition-all">
+              实测过程切片 (Before / Process / After)
+            </button>
+            <button type="button" data-slice-tab="stress" class="slice-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span>
+              翻车边界现场 (2 项压测)
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 1: 实测过程切片 (Before / Process / After) -->
+        <div id="panel-slice" class="p-6 space-y-5">
+          <!-- Process：Skill 四步强约束执行拆解 -->
+          <div class="rounded-xl bg-blue-50/50 border border-blue-200/80 p-4">
+            <div class="text-xs font-bold text-[#1D4ED8] mb-2.5 flex items-center gap-1.5">
+              <span>Process · Skill 四步强约束执行拆解</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+              <div class="bg-white rounded-lg p-2.5 border border-blue-100 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-[#1D4ED8] text-white font-mono text-[11px] font-bold flex items-center justify-center shrink-0">1</span>
+                <span class="font-medium text-slate-800">纳排标准与 ITT/PP 强拆</span>
+              </div>
+              <div class="bg-white rounded-lg p-2.5 border border-blue-100 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-[#1D4ED8] text-white font-mono text-[11px] font-bold flex items-center justify-center shrink-0">2</span>
+                <span class="font-medium text-slate-800">主要/次要终点物理隔离</span>
+              </div>
+              <div class="bg-white rounded-lg p-2.5 border border-blue-100 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-[#1D4ED8] text-white font-mono text-[11px] font-bold flex items-center justify-center shrink-0">3</span>
+                <span class="font-medium text-slate-800">逐条绑定原文页码切片</span>
+              </div>
+              <div class="bg-white rounded-lg p-2.5 border border-blue-100 flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-[#1D4ED8] text-white font-mono text-[11px] font-bold flex items-center justify-center shrink-0">4</span>
+                <span class="font-medium text-slate-800">未报告强制填 <code class="font-mono text-[#1D4ED8] bg-blue-50 px-1 rounded">NR</code></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Before vs After 对比网格 -->
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+            <!-- Before: 裸跑普通 Prompt -->
+            <div class="xl:col-span-5 rounded-xl border border-rose-200 bg-rose-50/20 overflow-hidden">
+              <div class="px-4 py-3 bg-rose-50/80 border-b border-rose-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-[#DC2626] text-white text-[11px] font-bold">Before</span>
+                  <span class="text-xs sm:text-sm font-bold text-rose-950">裸跑普通 Prompt</span>
+                </div>
+                <span class="text-[11px] text-rose-700 font-medium">3 处科研隐患</span>
+              </div>
+              <div class="p-4 space-y-3.5">
+                <div class="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 rounded-lg px-3 py-2">
+                  输入：“帮我总结这篇 RCT 的研究设计和主要结局。”
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4 text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2">
+                  <p>
+                    本研究纳入 1,240 例患者评估干预组对比安慰剂的疗效。结果显示，<span class="flaw-mark">随访 12–24 周期间主要复合终点风险显著降低（HR=0.76）</span>，整体依从性良好。
+                  </p>
+                  <p>
+                    在次要结局与年龄分层分析中，<span class="flaw-mark">干预组也呈现出一定程度的临床改善趋势</span>，具有较高的临床推广价值。
+                  </p>
+                </div>
+                <div class="space-y-1.5 text-xs text-rose-900">
+                  <div class="flex items-start gap-1.5"><span>✕</span><span>混用 12 周探索性节点与 24 周主要终点</span></div>
+                  <div class="flex items-start gap-1.5"><span>✕</span><span>完全遗漏 8.4% 失访率与 ITT / PP 样本差值</span></div>
+                  <div class="flex items-start gap-1.5"><span>✕</span><span>将无统计学意义（p=0.18）的次要终点脑补为“改善趋势”</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- After: 带红绿标批注输出样本 + 可点击页码回源 -->
+            <div class="xl:col-span-7 rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-[#059669] text-white text-[11px] font-bold">After</span>
+                  <span class="text-xs sm:text-sm font-bold text-slate-900">Skill 输出样本与红绿标批注</span>
+                </div>
+                <span class="text-[11px] text-[#1D4ED8] font-medium">点击右侧页码标签可展开英文原文核验</span>
+              </div>
+
+              <div class="p-4 space-y-4">
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                  <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
+                        <th class="py-2.5 px-3 font-semibold w-28">核心字段</th>
+                        <th class="py-2.5 px-3 font-semibold">结构化提取结果</th>
+                        <th class="py-2.5 px-3 font-semibold text-right w-28">页码回源</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-800">
+                      <tr class="hover:bg-slate-50/70">
+                        <td class="py-2.5 px-3 font-semibold text-slate-700">人群口径 (P)</td>
+                        <td class="py-2.5 px-3"><span class="font-mono font-semibold">ITT N=1,240</span>（622 vs 618）；<span class="font-mono">PP N=1,136</span></td>
+                        <td class="py-2.5 px-3 text-right">
+                          <button type="button" data-cite="p4" class="cite-chip font-mono text-[11px] px-2 py-1 rounded-md border transition-colors">p.4</button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/70">
+                        <td class="py-2.5 px-3 font-semibold text-slate-700">主要结局 & 失访</td>
+                        <td class="py-2.5 px-3">24 周复合终点 <span class="font-mono font-semibold text-[#059669]">HR=0.76 (0.64–0.90, p=0.002)</span>；失访率 <span class="font-mono font-semibold">8.4%</span></td>
+                        <td class="py-2.5 px-3 text-right">
+                          <button type="button" data-cite="p7" class="cite-chip font-mono text-[11px] px-2 py-1 rounded-md border transition-colors">p.7</button>
+                        </td>
+                      </tr>
+                      <tr class="bg-emerald-50/30 hover:bg-emerald-50/50">
+                        <td class="py-2.5 px-3 font-semibold text-slate-700">次要与亚组 (O2)</td>
+                        <td class="py-2.5 px-3">次要终点 <span class="font-mono">HR=0.91 (0.79–1.05, p=0.18, 无差异)</span>；年龄亚组交互 <span class="font-mono font-semibold">P=0.41</span></td>
+                        <td class="py-2.5 px-3 text-right">
+                          <button type="button" data-cite="p9" class="cite-chip font-mono text-[11px] px-2 py-1 rounded-md border transition-colors">p.9</button>
+                        </td>
+                      </tr>
+                      <tr class="bg-rose-50/40 hover:bg-rose-50/70">
+                        <td class="py-2.5 px-3 font-semibold text-rose-900">附表亚组 (S2)</td>
+                        <td class="py-2.5 px-3">
+                          女性亚组敏感性分析：<span class="font-mono font-semibold text-[#DC2626]">HR=0.78 (0.64–0.94)</span>
+                          <span class="ml-1 px-1.5 py-0.5 rounded bg-rose-100 text-[#DC2626] text-[10px] font-bold">红标 +0.02 偏差</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-right">
+                          <button type="button" data-cite="p14" class="cite-chip font-mono text-[11px] px-2 py-1 rounded-md border transition-colors">p.14 Table S2</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- 行内英文原文切片核验区（点击页码实时切换） -->
+                <div id="inline-verify-box" class="rounded-xl border p-3.5 transition-all">
+                  <!-- JS 动态填充 -->
+                </div>
+
+                <!-- 评测员红绿标批注 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs leading-relaxed">
+                  <div class="rounded-lg bg-emerald-50/70 border border-emerald-200 p-3">
+                    <span class="inline-block px-1.5 py-0.5 rounded bg-[#059669] text-white text-[10px] font-bold mb-1">绿标亮点</span>
+                    <p class="text-emerald-950">准确分离 ITT / PP 人群与 8.4% 失访率，并将阴性次要终点（p=0.18）与亚组交互 P=0.41 忠实标注，零幻觉夸大。</p>
+                  </div>
+                  <div class="rounded-lg bg-rose-50/70 border border-rose-200 p-3">
+                    <span class="inline-block px-1.5 py-0.5 rounded bg-[#DC2626] text-white text-[10px] font-bold mb-1">红标预警</span>
+                    <p class="text-rose-950">补充材料 Table S2 置信区间上限读取偏差 <span class="font-mono font-semibold">+0.02</span>（实为 0.92 误读为 0.94），导出前请点击 <button type="button" data-cite="p14" class="underline font-mono font-bold text-[#DC2626]">p.14 Table S2</button> 回源复核。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: 翻车边界现场 (Boundary Test) -->
+        <div id="panel-stress" class="hidden p-6 space-y-5">
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs sm:text-sm text-slate-700 leading-relaxed">
+            <strong class="text-slate-900">为什么要主动公开边界压测？</strong> 科研工具的可信度来自“知道它在哪里会失手”。以下是评测团队刻意施压后记录的 2 项真实边界表现及人工兜底规则。
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- 边界压测 1: 跨页小字号森林图亚组置信区间串行错位 -->
+            <div class="rounded-xl border border-rose-200 bg-white p-5 space-y-3.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-rose-50 text-[#DC2626] border border-rose-200 text-xs font-bold">压测 #01 · 失效预警</span>
+                <span class="font-mono text-xs text-slate-400">涉补充材料森林图</span>
+              </div>
+              <h3 class="text-base font-bold text-slate-900">跨页小字号森林图亚组置信区间串行错位</h3>
+              <div class="space-y-2 text-xs">
+                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                  <div class="font-semibold text-slate-500 mb-1">施压输入（Input Stress）</div>
+                  <p class="text-slate-700">喂入补充材料中 8pt 小字号、跨两页排版且无横线分隔的多亚组森林图附表（Table S2）。</p>
+                </div>
+                <div class="p-3 rounded-lg bg-rose-50/70 border border-rose-200 font-mono">
+                  <div class="font-sans font-semibold text-[#DC2626] mb-1">实测行为（Output Behavior）</div>
+                  <div class="text-slate-700">原文真实值：<span class="text-[#059669] font-bold">HR 0.78 (0.64–0.92)</span></div>
+                  <div class="text-slate-700 mt-0.5">Skill 输出值：<span class="text-[#DC2626] font-bold">HR 0.78 (0.64–0.94)</span> ← 相邻行上限串位</div>
+                </div>
+                <div class="p-3 rounded-lg bg-amber-50/80 border border-amber-200 text-amber-950">
+                  <strong>人工兜底规则：</strong>凡提取结果附带 <code class="font-mono font-semibold">Fig / Table S</code> 页码标签的数值，导入 RevMan / R 统计脚本前必须点开原文核对 10 秒。
+                </div>
+              </div>
+            </div>
+
+            <!-- 边界压测 2: 缺失标准差的多臂试验强制触发 NR 防幻觉机制 -->
+            <div class="rounded-xl border border-emerald-200 bg-white p-5 space-y-3.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#059669] border border-emerald-200 text-xs font-bold">压测 #02 · 防幻觉触发</span>
+                <span class="font-mono text-xs text-slate-400">缺失 SD 多臂 RCT</span>
+              </div>
+              <h3 class="text-base font-bold text-slate-900">缺失标准差的多臂试验强制触发 NR 防幻觉机制</h3>
+              <div class="space-y-2 text-xs">
+                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                  <div class="font-semibold text-slate-500 mb-1">施压输入（Input Stress）</div>
+                  <p class="text-slate-700">选取 1 篇三臂临床试验，原文仅报告了中位数与 IQR，刻意未报告连续结局的均值与标准差（Mean ± SD）。</p>
+                </div>
+                <div class="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200 font-mono">
+                  <div class="font-sans font-semibold text-[#059669] mb-1">实测行为（Output Behavior）</div>
+                  <div class="text-slate-700">Mean ± SD 栏位：<span class="bg-white px-1.5 py-0.5 rounded border border-emerald-300 font-bold text-slate-900">NR (原文仅报告 Median [IQR]: 4.2 [3.1–5.8])</span></div>
+                  <div class="font-sans text-emerald-900 mt-1">未像通用大模型那样擅自估算 SD 或把 IQR 当 SD 填入。</div>
+                </div>
+                <div class="p-3 rounded-lg bg-blue-50/70 border border-blue-200 text-blue-950">
+                  <strong>人工兜底规则：</strong>看到 <code class="font-mono font-semibold">NR</code> 提示后，由研究者统一决定是否按 Wan/Luo 公式进行中位数→均值转换，确保方法学可追溯。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 2: AGENT 详情页                                                  -->
+    <!-- ===================================================================== -->
+    <section id="view-agent" class="hidden space-y-6 animate-fade-up">
+
+      <!-- 1. 极简 Hero Header（右侧仅保留单个主按钮） -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-3 max-w-3xl">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-semibold">Agent 工作流</span>
+              <span>循证医学 · Meta 分析预研</span>
+              <span class="text-slate-300">·</span>
+              <span>5 步玻璃盒流程</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-[#D97706] font-medium">含 2 处人工拍板闸口</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
+              临床 Meta 分析选题与可行性预研 Agent
+            </h1>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+              输入 1 句研究想法与目标期刊分值，全透明执行双库检索、撞车排查、文献初筛日志、口径比对与 Python 沙盒效应量预跑，约 6 分钟产出立项评估包。
+            </p>
+          </div>
+
+          <!-- 极简单按钮 CTA（彻底去除冗余状态框与双按钮） -->
+          <div class="shrink-0">
+            <button id="btn-run-agent" type="button" class="w-full md:w-auto px-6 py-3 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 active:scale-[0.99] text-white text-sm font-semibold shadow-xs transition-all inline-flex items-center justify-center gap-2">
+              <span>立即运行</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 重新设计：基础信息速览（4 模块 Bento 网格） -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-0.5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">基础信息速览</h2>
+          <span class="text-xs text-slate-400">运行前 3 秒掌握投入产出与边界</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Card 1: 适合谁 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between gap-3">
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-blue-50 text-[#1D4ED8] flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                </span>
+                <h3 class="text-sm font-bold text-slate-900">适合谁</h3>
+              </div>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                计划投稿临床 Meta 分析的医生与硕博生、课题组立项评估者、需要快速排查选题撞车风险的研究人员。
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">Meta 选题立项</span>
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">撞车风险排查</span>
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">异质性预探查</span>
+            </div>
+          </div>
+
+          <!-- Card 2: 解决什么痛点 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-emerald-50 text-[#059669] flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </span>
+              <h3 class="text-sm font-bold text-slate-900">解决什么痛点</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              杜绝闷头查文献半个月才发现<strong class="font-semibold text-slate-800">同类 Meta 刚发表</strong>，或做到统计阶段才发现各研究结局口径不统一、根本无法合并的沉没成本。
+            </p>
+          </div>
+
+          <!-- Card 3: 投入与最终交付 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+              </span>
+              <h3 class="text-sm font-bold text-slate-900">投入与最终交付</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              仅需输入 <span class="font-medium text-slate-800">1 句研究想法与目标期刊分值</span> → 约 <span class="font-mono font-semibold text-[#1D4ED8]">6 分钟</span>自动产出 4 件套立项包（评估报告 + 数据底表.xlsx + 剔除日志.csv + PROSPERO 注册草稿），全程含 2 处人工拍板闸口。
+            </p>
+          </div>
+
+          <!-- Card 4: 使用边界 / 不适合谁 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-amber-50 text-[#D97706] flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+              </span>
+              <h3 class="text-sm font-bold text-slate-900">使用边界 / 不适合谁</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              定位为“选题可行性预研与风险筛查”，<strong class="font-semibold text-slate-800">不可直接替代</strong>正式投稿要求的双人独立背靠背全文提取与 Cochrane RoB 2 偏倚风险正式评估。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 内置案例回放头部（紧凑单行控制台 + 进度条） -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3.5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md bg-blue-50 text-[#1D4ED8] border border-blue-100 text-[11px] font-bold">内置真实案例回放</span>
+              <span class="text-xs text-slate-500">无需填表，直接透视后台 5 步动作与中间产物</span>
+            </div>
+            <div class="text-sm font-semibold text-slate-900">
+              GLP-1 受体激动剂对非糖尿病超重/肥胖人群 MACE 影响
+              <span class="font-normal text-slate-500"> · 目标 IF 5+ SCI · 近 5 年大型 RCT</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button id="btn-replay-toggle" type="button" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all inline-flex items-center gap-1.5">
+              <span id="replay-icon">▶</span>
+              <span id="replay-label">自动演示 5 步执行过程</span>
+            </button>
+            <button id="btn-replay-reset" type="button" class="hidden px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium transition-colors">
+              重置
+            </button>
+          </div>
+        </div>
+
+        <!-- 线性进度条 -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span id="replay-step-text">当前透视：Step 01 / 05 · 课题结构化与双库检索式生成</span>
+            <span id="replay-pct-text" class="font-mono font-semibold text-[#1D4ED8]">20%</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div id="replay-bar-fill" class="h-full bg-[#1D4ED8] rounded-full transition-all duration-500" style="width: 20%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 双栏玻璃盒工作流（左 5 步纵向管线 + 右实时中间产物检视器） -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- 左栏：5 步纵向可点击管线 -->
+        <div class="lg:col-span-5 space-y-2.5">
+          <div class="flex items-center justify-between px-0.5 mb-1">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">执行步骤流（点击切换）</h2>
+            <span class="text-[11px] text-[#D97706] font-medium">含 2 处人工拍板闸口</span>
+          </div>
+          <div id="agent-pipeline-list" class="space-y-2.5">
+            <!-- JS 动态渲染 -->
+          </div>
+        </div>
+
+        <!-- 右栏：实时中间产物检视器 -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 overflow-hidden lg:sticky lg:top-20">
+          <div id="inspector-header" class="px-5 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <!-- JS 动态渲染 -->
+          </div>
+          <div id="inspector-body" class="p-5 sm:p-6 min-h-[500px]">
+            <!-- JS 动态渲染 -->
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== 通用轻量弹窗（Skill 使用指南 / 评测 Rubric / Agent 交付物在线预览） ==================== -->
+  <div id="modal-overlay" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-[2px] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden animate-fade-up">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="modal-title" class="text-base font-bold text-slate-900">弹窗标题</h3>
+        <button id="modal-close" type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">✕</button>
+      </div>
+      <div id="modal-body" class="p-6 overflow-y-auto custom-scroll text-sm text-slate-700 space-y-4"></div>
+      <div id="modal-footer" class="px-6 py-3.5 border-t border-slate-200 bg-slate-50/70 flex items-center justify-end gap-2.5"></div>
+    </div>
+  </div>
+
+  <!-- ==================== Agent 极简右侧启动抽屉 ==================== -->
+  <div id="agent-drawer-overlay" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-[2px] flex justify-end">
+    <div class="bg-white w-full max-w-md h-full shadow-2xl border-l border-slate-200 flex flex-col animate-drawer">
+      <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">运行 Meta 分析预研 Agent</h3>
+          <p class="text-xs text-slate-500 mt-0.5">填写核心课题与目标分值即可启动 5 步预研</p>
+        </div>
+        <button id="drawer-close" type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700">✕</button>
+      </div>
+
+      <form id="agent-run-form" class="flex-1 overflow-y-auto custom-scroll p-6 space-y-5">
+        <div class="flex items-center justify-between">
+          <label for="input-topic" class="text-xs font-semibold text-slate-800">研究想法 / 临床课题 <span class="text-[#DC2626]">*</span></label>
+          <button id="btn-fill-demo" type="button" class="text-xs font-medium text-[#1D4ED8] hover:underline">
+            填入演示课题试跑
+          </button>
+        </div>
+        <textarea id="input-topic" name="topic" rows="3" required placeholder="例：GLP-1 受体激动剂对非糖尿病超重/肥胖人群主要心血管不良事件（MACE）的影响" class="w-full -mt-3 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-[#1D4ED8]"></textarea>
+
+        <div class="space-y-1.5">
+          <label for="input-if" class="block text-xs font-semibold text-slate-800">目标期刊影响因子（IF）</label>
+          <select id="input-if" name="targetIf" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-[#1D4ED8]">
+            <option value="IF 5+ SCI（JCR Q1 / Q2）">IF 5+ SCI（JCR Q1 / Q2）</option>
+            <option value="IF 10+ 顶刊 / 专科顶刊">IF 10+ 顶刊 / 专科顶刊</option>
+            <option value="IF 3–5 稳妥发表">IF 3–5 稳妥发表</option>
+            <option value="中文核心 / 中华系列">中文核心 / 中华系列</option>
+          </select>
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="input-extra" class="block text-xs font-semibold text-slate-800">补充限定条件 <span class="font-normal text-slate-400">（选填）</span></label>
+          <input id="input-extra" name="extra" type="text" placeholder="例：优先纳入近 5 年大型 RCT，排查撞车风险" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-[#1D4ED8]" />
+        </div>
+
+        <div class="rounded-xl bg-amber-50/70 border border-amber-200 p-3.5 text-xs text-amber-950 leading-relaxed">
+          工作流将在 <strong>Step 01（检索式确认）</strong>与 <strong>Step 04（沙盒统计审核）</strong>自动暂停，待您拍板确认后继续执行。
+        </div>
+      </form>
+
+      <div class="px-6 py-4 border-t border-slate-200 bg-slate-50/70 flex items-center justify-end gap-2.5">
+        <button id="drawer-cancel" type="button" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-100">取消</button>
+        <button type="submit" form="agent-run-form" class="px-5 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors">
+          确认并开始运行 →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 轻提示 Toast ==================== -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-lg flex items-center gap-2 max-w-[92vw]">
+    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 静态业务数据
+    // =========================================================================
+
+    // Skill 四维评测数据（严格匹配雷达图坐标与业务指标）
+    const SKILL_DIMS = [
+      {
+        id: 'fidelity',
+        name: '学术忠实度',
+        score: 4.6,
+        axis: 'top',
+        color: '#1D4ED8',
+        badge: '29/30 字段零偏差',
+        action: '从 20 篇高分临床 RCT 中随机抽检 30 个核心字段（含 ITT/PP 样本量、主要/次要终点 HR 及 P 值、失访率、亚组交互 P 值），由 2 名临床流病背景评测员逐字段盲核。',
+        metrics: '29 / 30 字段完全匹配（96.7%）；阴性次要终点零幻觉夸大；未报告字段 100% 强制输出 NR。',
+        note: '在极易出错的 ITT / PP 人群分离与阴性亚组交互项判读上非常稳健；唯一 1 处偏差出现在补充材料跨页小字号附表。'
+      },
+      {
+        id: 'stability',
+        name: '结构稳定度',
+        score: 4.8,
+        axis: 'right',
+        color: '#059669',
+        badge: '5/5 轮格式零缺失',
+        action: '选取同一篇含多臂干预的 NEJM RCT 全文，在默认参数下连续独立运行 5 轮，检验 Markdown 表格列数、PICO 字段完整性与页码定位格式。',
+        metrics: '5 / 5 轮输出结构完全一致（100%）；字段遗漏率 0%；可直接复制进 Excel 无需二次整理。',
+        note: '彻底消除了普通大模型“时而给表格、时而给长段散文”的格式飘移问题，适合批量处理系统评价初提底表。'
+      },
+      {
+        id: 'chart',
+        name: '图表抗压能力',
+        score: 3.5,
+        axis: 'bottom',
+        color: '#DC2626',
+        badge: '跨页附表 1 处串位 · 必核红区',
+        action: '刻意要求提取补充材料（Supplementary Appendix）中 8pt 小字号跨页森林图与密集亚组附表数值，测试版面解析上限。',
+        metrics: '主文表格准确率 98.5%；但补充材料跨页森林图出现 1 处 95% CI 上限读取偏差（实际 0.92 误读为 0.94）。',
+        note: '当前版本明确暴露的短板：已为所有附表字段强制附加页码回源标签，导出进统计软件前务必人工点击页码复核。'
+      },
+      {
+        id: 'efficiency',
+        name: '人工复核提效',
+        score: 4.7,
+        axis: 'left',
+        color: '#1D4ED8',
+        badge: '35 分钟 → 11 分钟（省时 ~68%）',
+        action: '邀请 6 名临床医学硕博进行双组计时对照：A 组纯人工通读并手工录入标准提取表，B 组先由本 Skill 提取，再依据页码标签逐条回源复核。',
+        metrics: '单篇高分 RCT 平均耗时从 35.2 分钟降至 11.1 分钟（提效约 68%），关键失访率漏提率从 15% 降至 0%。',
+        note: '把人工从繁琐的全文翻找与抄录中解放出来，将 11 分钟全部聚焦于高价值的页码核验与方法学判断。'
+      }
+    ];
+
+    // Skill 原文切片回源数据
+    const CITE_MAP = {
+      p4: {
+        loc: 'p.4 · Methods — Study Population',
+        type: 'ok',
+        badge: '✓ 原文完全匹配',
+        quote: 'A total of <mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">1,240 patients</mark> underwent randomization (622 active vs. 618 placebo) forming the <mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">intention-to-treat (ITT)</mark> cohort; <mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">1,136 patients</mark> comprised the per-protocol (PP) population.',
+        note: 'Skill 准确拆分了 ITT（1,240）与 PP（1,136）两套人群口径，防止后续 Meta 合并样本量口径混用。'
+      },
+      p7: {
+        loc: 'p.7 · Table 2 & Figure 1 — Primary Outcome & Follow-up',
+        type: 'ok',
+        badge: '✓ 原文完全匹配',
+        quote: 'At Week 24, the primary composite endpoint occurred less frequently with active therapy (<mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">HR, 0.76; 95% CI, 0.64 to 0.90; P=0.002</mark>). Overall, <mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">104 patients (8.4%)</mark> were lost to follow-up.',
+        note: '精确锁定 24 周主要终点数值与 8.4% 失访率，未与 12 周中期指标混淆。'
+      },
+      p9: {
+        loc: 'p.9 · Results — Key Secondary Endpoint & Subgroup',
+        type: 'ok',
+        badge: '✓ 抗幻觉亮点',
+        quote: 'No statistically significant difference was seen for the key secondary outcome (<mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">HR, 0.91; 95% CI, 0.79 to 1.05; P=0.18</mark>). Age subgroup analysis showed no heterogeneity (<mark class="bg-emerald-100 text-emerald-900 px-1 rounded font-semibold">P for interaction = 0.41</mark>).',
+        note: '严格忠实于阴性统计结果，杜绝普通大模型擅自脑补“呈现临床改善趋势”。'
+      },
+      p14: {
+        loc: 'p.14 · Supplementary Appendix Table S2 — Sensitivity Subgroup',
+        type: 'warn',
+        badge: '⚠ 实测偏差 +0.02（必核红区）',
+        quote: 'Female subgroup adjusted model: HR 0.78 (95% CI: 0.64 to <mark class="bg-rose-200 text-rose-950 px-1 rounded font-bold">0.92</mark>). [Adjacent wrapped row upper bound: <mark class="bg-amber-200 text-amber-950 px-1 rounded">0.94</mark>]',
+        note: '跨页小字号森林图发生 1 行串位，导致 CI 上限 0.92 被误读为 0.94（偏差 +0.02），请手动修正后再纳入统计表。'
+      }
+    };
+
+    // Skill 结构化可复制指令模板（供极简弹窗一键复制）
+    const SKILL_INSTRUCTION_TEXT = `【角色与约束】你是一名临床流行病学与循证医学数据提取专家。请严格按以下 4 条规则阅读我上传的英文临床干预研究（RCT/队列）全文 PDF：
+1. 必须以标准 Markdown 表格输出 PICOS（明确拆列 ITT 与 PP 人群样本量、干预剂量、随访时间、失访率）。
+2. 主要终点与次要/亚组结局必须物理分行，严禁将 P ≥ 0.05 的阴性结果解读为“呈改善趋势”。
+3. 每一条提取数值后必须附带原文页码及图表位置（如 p.7 Table 2）。
+4. 若原文未报告某字段（如缺失标准差 SD），必须强制填写 NR（原文未报告），严禁推测或补全。`;
+
+    // Agent 5 步管线配置
+    const AGENT_STEPS = [
+      {
+        num: '01',
+        title: '课题结构化与双库检索式生成',
+        tool: 'MeSH 词表 API',
+        time: '30 秒',
+        summary: '拆解 PICOS，输出 PubMed / Embase 布尔检索式与命中量估算',
+        gate: '人工确认闸口 1'
+      },
+      {
+        num: '02',
+        title: '撞车排查与文献初筛日志',
+        tool: 'PROSPERO + PubMed',
+        time: '1.5 分钟',
+        summary: '扫描近 24 个月同类 Meta 找差异缺口，生成 328 → 14 篇剔除日志',
+        gate: null
+      },
+      {
+        num: '03',
+        title: '关键指标抽取与口径冲突标红',
+        tool: 'PDF 并行抽取引擎',
+        time: '2 分钟',
+        summary: '汇总 14 篇核心 RCT 底表，自动标出 2 篇 4-point MACE 口径冲突',
+        gate: null
+      },
+      {
+        num: '04',
+        title: 'Python 沙盒预跑效应量与异质性探查',
+        tool: 'Python 统计沙盒',
+        time: '1 分钟',
+        summary: '独立脚本计算随机效应合并 HR、I² 与预跑森林图（支持敏感性切换）',
+        gate: '人工确认闸口 2'
+      },
+      {
+        num: '05',
+        title: '交付物打包与审稿人视角质检',
+        tool: 'SCI 评审质检引擎',
+        time: '40 秒',
+        summary: '输出 3 条高频审稿质疑预判及 4 份可在线预览的立项交付包',
+        gate: null
+      }
+    ];
+
+    const BOOLEAN_QUERIES = {
+      pubmed: `("Glucagon-Like Peptide-1 Receptor Agonists"[Mesh] OR "GLP-1"[tiab] OR "semaglutide"[tiab] OR "tirzepatide"[tiab] OR "liraglutide"[tiab])
+AND ("Overweight"[Mesh] OR "Obesity"[Mesh] OR "BMI >= 27"[tiab])
+NOT ("Diabetes Mellitus, Type 2"[Mesh] AND "only"[tiab])
+AND ("Major Adverse Cardiovascular Events"[tiab] OR "MACE"[tiab] OR "Cardiovascular Diseases/mortality"[Mesh] OR "Myocardial Infarction"[Mesh] OR "Stroke"[Mesh])
+AND ("Randomized Controlled Trial"[pt] OR "randomized"[tiab])
+AND ("2021/01/01"[PDAT] : "2026/11/19"[PDAT])`,
+      embase: `('glucagon like peptide 1 receptor agonist'/exp OR 'semaglutide':ab,ti OR 'tirzepatide':ab,ti OR 'liraglutide':ab,ti)
+AND ('obesity'/exp OR 'overweight'/exp)
+NOT ('non insulin dependent diabetes mellitus'/mj)
+AND ('major adverse cardiac event'/exp OR 'mace':ab,ti OR 'cardiovascular mortality'/exp)
+AND ('randomized controlled trial'/exp)
+AND [2021-2026]/py`
+    };
+
+    const EXCLUSION_DATA = [
+      { id: 'PMID-39104218', title: '16-week oral semaglutide weight-loss efficacy in non-diabetic adults', reasonTag: '随访不足24周', detail: '随访仅 16 周（不足 24 周预设门槛），且未设独立 MACE 终点裁决委员会' },
+      { id: 'PMID-38921504', title: 'Real-world CV outcomes of GLP-1 RA in obesity: propensity-matched cohort', reasonTag: '非RCT设计', detail: '回顾性医保数据库队列研究，不符合仅纳入大型 RCT 的预设研究设计' },
+      { id: 'PMID-38740192', title: 'Cardiovascular outcomes of dulaglutide in obese adults with type 2 diabetes', reasonTag: '人群不符', detail: '100% 合并 2 型糖尿病患者，不符合“非糖尿病超重/肥胖人群”纳入标准' },
+      { id: 'PMID-38411093', title: 'Phase 2 dose-ranging trial of dual incretin agonist over 12 weeks', reasonTag: '随访不足24周', detail: '12 周 II 期剂量探索试验，心血管终点事件数为 0' },
+      { id: 'PMID-38192844', title: 'Updated network meta-analysis of incretin therapies in obesity', reasonTag: '非RCT设计', detail: '二次文献（Meta 分析），已移入撞车排查对照库，不纳入原始合并' },
+      { id: 'PMID-37982011', title: 'Liraglutide cardiovascular safety profile in adolescents aged 12–17', reasonTag: '人群不符', detail: '受试者为青少年人群（<18 岁），不满足成人肥胖人群限定' }
+    ];
+
+    const RCT_EXTRACTED = [
+      { code: 'RCT-01', trial: 'SELECT', year: 2023, drug: 'Semaglutide 2.4mg', n: '17,604', bmi: '33.3', fu: '39.8月', mace: '3-point MACE', conflict: false, hr: '0.80 (0.72–0.90)' },
+      { code: 'RCT-02', trial: 'SURMOUNT-CVO', year: 2025, drug: 'Tirzepatide 15mg', n: '13,299', bmi: '34.1', fu: '36.0月', mace: '3-point MACE', conflict: false, hr: '0.77 (0.68–0.87)' },
+      { code: 'RCT-03', trial: 'REDEFINE-CV', year: 2026, drug: 'CagriSema', n: '4,218', bmi: '34.7', fu: '32.0月', mace: '3-point MACE', conflict: false, hr: '0.76 (0.64–0.91)' },
+      { code: 'RCT-04', trial: 'OASIS-CV', year: 2024, drug: 'Oral Semaglutide', n: '2,410', bmi: '32.6', fu: '28.5月', mace: '4-point MACE（含不稳定心绞痛住院）', conflict: true, hr: '0.94 (0.79–1.12)' },
+      { code: 'RCT-05', trial: 'SCALE-Cardio LT', year: 2022, drug: 'Liraglutide 3.0mg', n: '3,731', bmi: '38.0', fu: '36.0月', mace: '3-point MACE', conflict: false, hr: '0.83 (0.66–1.04)' },
+      { code: 'RCT-06', trial: 'STEP-10 Long', year: 2025, drug: 'Semaglutide 2.4mg', n: '1,961', bmi: '35.2', fu: '30.0月', mace: '3-point MACE', conflict: false, hr: '0.79 (0.60–1.04)' },
+      { code: 'RCT-07', trial: 'ENLIGHTEN-Obese', year: 2023, drug: 'Liraglutide 3.0mg', n: '1,580', bmi: '33.9', fu: '26.0月', mace: '4-point MACE（含不稳定心绞痛住院）', conflict: true, hr: '0.98 (0.81–1.19)' },
+      { code: 'RCT-08', trial: 'SUMMIT-MACE Sub', year: 2025, drug: 'Tirzepatide 15mg', n: '731', bmi: '38.2', fu: '24.0月', mace: '3-point MACE', conflict: false, hr: '0.71 (0.51–0.99)' }
+    ];
+
+    const DELIVERABLE_PREVIEWS = {
+      report: {
+        title: '《选题可行性评估报告》在线预览',
+        html: `
+          <div class="space-y-4 text-xs leading-relaxed">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+              <div>
+                <div class="text-sm font-bold text-slate-900">GLP-1 RA 对非糖尿病超重/肥胖人群 MACE 影响：立项可行性报告</div>
+                <div class="text-slate-400 mt-0.5 font-mono">Generated by 医路有AI Meta-Agent · 2026-11-19</div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-[#059669] border border-emerald-200 font-mono font-bold">综合推荐 4.6 / 5.0</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2.5 text-center">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="font-mono text-base font-bold text-[#1D4ED8]">HR 0.79</div>
+                <div class="text-slate-500">3-point 敏感性合并</div>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="font-mono text-base font-bold text-[#059669]">I² = 18.6%</div>
+                <div class="text-slate-500">低异质性（稳健）</div>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="font-mono text-base font-bold text-slate-900">IF 5–9</div>
+                <div class="text-slate-500">推荐目标投稿区间</div>
+              </div>
+            </div>
+            <div class="space-y-2 text-slate-700">
+              <p><strong>1. 创新切入点：</strong>近 24 个月已发表同类 Meta 均未纳入 2025–2026 最新大型 III 期双靶点心血管结局试验（SURMOUNT-CVO & REDEFINE-CV），样本总量扩充至 4.7 万例以上。</p>
+              <p><strong>2. 核心风险处置：</strong>初筛发现 2 篇文献采用 4-point MACE（纳入不稳定心绞痛住院），剔除后异质性 I² 由 54.2% 骤降至 18.6%，建议正文将“3-point MACE”设为主要分析，4-point 归入敏感性分析。</p>
+              <p><strong>3. 建议选刊梯度：</strong>首选 <em>European Journal of Preventive Cardiology</em> (IF ~8.4) / <em>Cardiovascular Diabetology</em> (IF ~8.5)；保底 <em>Diabetes, Obesity and Metabolism</em> (IF ~5.4)。</p>
+            </div>
+          </div>
+        `
+      },
+      xlsx: {
+        title: '《结构化数据初提底表.xlsx》在线预览',
+        html: `
+          <div class="space-y-3 text-xs">
+            <p class="text-slate-500">共包含 14 篇核心 RCT、22 列标准字段（含口径冲突标记列与原文页码列），以下展示前 5 行结构预览：</p>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+              <table class="w-full text-left border-collapse font-mono text-[11px]">
+                <thead>
+                  <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
+                    <th class="p-2">Trial</th><th class="p-2">N</th><th class="p-2">Drug</th><th class="p-2">MACE_Def</th><th class="p-2">HR</th><th class="p-2">CI_95</th><th class="p-2">Flag</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr><td class="p-2">SELECT</td><td class="p-2">17604</td><td class="p-2">Sema 2.4mg</td><td class="p-2">3-point</td><td class="p-2">0.80</td><td class="p-2">0.72-0.90</td><td class="p-2 text-[#059669]">OK</td></tr>
+                  <tr><td class="p-2">SURMOUNT-CVO</td><td class="p-2">13299</td><td class="p-2">Tirz 15mg</td><td class="p-2">3-point</td><td class="p-2">0.77</td><td class="p-2">0.68-0.87</td><td class="p-2 text-[#059669]">OK</td></tr>
+                  <tr><td class="p-2">REDEFINE-CV</td><td class="p-2">4218</td><td class="p-2">CagriSema</td><td class="p-2">3-point</td><td class="p-2">0.76</td><td class="p-2">0.64-0.91</td><td class="p-2 text-[#059669]">OK</td></tr>
+                  <tr class="bg-amber-50"><td class="p-2">OASIS-CV</td><td class="p-2">2410</td><td class="p-2">Oral Sema</td><td class="p-2">4-point</td><td class="p-2">0.94</td><td class="p-2">0.79-1.12</td><td class="p-2 text-[#D97706] font-bold">CONFLICT</td></tr>
+                  <tr class="bg-amber-50"><td class="p-2">ENLIGHTEN</td><td class="p-2">1580</td><td class="p-2">Lira 3.0mg</td><td class="p-2">4-point</td><td class="p-2">0.98</td><td class="p-2">0.81-1.19</td><td class="p-2 text-[#D97706] font-bold">CONFLICT</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `
+      },
+      csv: {
+        title: '《文献初筛剔除日志.csv》在线预览',
+        html: `
+          <div class="space-y-3 text-xs">
+            <p class="text-slate-500">完整记录 314 篇被剔除文献的 PMID、阶段与单行排除依据，可直接用于 PRISMA 2020 附表审计：</p>
+            <pre class="p-3.5 rounded-xl bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed overflow-x-auto">PMID,Stage,Category,Exclusion_Reason
+39104218,Title_Abstract,FollowUp_Short,"16-week follow-up &lt; 24w threshold; no adjudicated MACE"
+38921504,Title_Abstract,Non_RCT,"Retrospective real-world propensity-matched cohort"
+38740192,Full_Text,Population_Mismatch,"100% comorbid T2DM population"
+38411093,Title_Abstract,FollowUp_Short,"Phase 2 12-week dose-ranging trial; 0 MACE events"
+38192844,Title_Abstract,Non_RCT,"Secondary network meta-analysis (moved to collision list)"</pre>
+          </div>
+        `
+      },
+      prospero: {
+        title: '《PROSPERO 注册草稿要点》在线预览',
+        html: `
+          <div class="space-y-3 text-xs leading-relaxed">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 font-mono text-[11px] text-slate-700">
+              <div><strong class="text-[#1D4ED8]">[1. Review Title]</strong> Cardiovascular Efficacy of GLP-1 Receptor Agonists in Overweight or Obese Adults Without Diabetes: An Updated Systematic Review and Meta-Analysis of RCTs</div>
+              <div><strong class="text-[#1D4ED8]">[15. Review Question]</strong> Do GLP-1 and dual GIP/GLP-1 receptor agonists reduce 3-point MACE in non-diabetic adults with overweight/obesity?</div>
+              <div><strong class="text-[#1D4ED8]">[24. Main Outcome]</strong> Time to first 3-point MACE (CV death, non-fatal MI, non-fatal stroke).</div>
+              <div><strong class="text-[#1D4ED8]">[28. Strategy for Data Synthesis]</strong> DerSimonian-Laird random-effects model; prespecified sensitivity analysis excluding 4-point MACE studies and subgroup stratification by mono- vs dual-agonist.</div>
+            </div>
+          </div>
+        `
+      }
+    };
+
+    // =========================================================================
+    // 2. 全局交互状态
+    // =========================================================================
+    const state = {
+      view: 'skill',
+      // Skill 状态
+      activeDim: 'fidelity',
+      activeSliceTab: 'slice',
+      activeCite: 'p9',
+      // Agent 状态
+      activeStep: 1,
+      queryTab: 'pubmed',
+      gate1: { excludeOral: false, min52w: false, minN200: false },
+      exFilter: '全部',
+      onlyConflicts: false,
+      pythonLogOpen: true,
+      sensitivityExclude4pt: false, // 默认展示 14 篇 (HR 0.81, I² 54.2%)，勾选后切换为 12 篇 (HR 0.79, I² 18.6%)
+      // 自动演示状态
+      replaying: false,
+      replayTimer: null
+    };
+
+    // =========================================================================
+    // 3. 公共工具函数（严格禁止 alert/confirm，使用安全复制）
+    // =========================================================================
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(window.__tTimer);
+      window.__tTimer = setTimeout(() => el.classList.add('hidden'), 2400);
+    }
+
+    function safeCopy(text, msg) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(msg || '已复制到剪贴板');
+      } catch (err) {
+        showToast('已触发复制');
+      }
+    }
+
+    function openModal(title, bodyHtml, footerHtml) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = bodyHtml;
+      document.getElementById('modal-footer').innerHTML = footerHtml ||
+        `<button type="button" id="modal-default-close" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">关闭</button>`;
+      document.getElementById('modal-overlay').classList.remove('hidden');
+      const defClose = document.getElementById('modal-default-close');
+      if (defClose) defClose.addEventListener('click', closeModal);
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 4. 顶部视图切换
+    // =========================================================================
+    function switchMainView(target) {
+      if (state.replaying && target !== 'agent') stopReplay();
+      state.view = target;
+      const isSkill = target === 'skill';
+      document.getElementById('view-skill').classList.toggle('hidden', !isSkill);
+      document.getElementById('view-agent').classList.toggle('hidden', isSkill);
+
+      document.getElementById('switch-skill').className = isSkill
+        ? 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all bg-white text-[#1D4ED8] shadow-xs'
+        : 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900';
+
+      document.getElementById('switch-agent').className = !isSkill
+        ? 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all bg-white text-[#1D4ED8] shadow-xs'
+        : 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all text-slate-600 hover:text-slate-900';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // =========================================================================
+    // 5. SKILL 详情页渲染：雷达图 + 4 维度卡片 + 行内页码核验
+    // =========================================================================
+    function renderSkillEvaluation() {
+      // 坐标中心 (160, 125)，最大半径 R = 85
+      const cx = 160, cy = 125, R = 85;
+      const getPt = (axis, score) => {
+        const r = (score / 5.0) * R;
+        if (axis === 'top') return { x: cx, y: cy - r };
+        if (axis === 'right') return { x: cx + r, y: cy };
+        if (axis === 'bottom') return { x: cx, y: cy + r };
+        return { x: cx - r, y: cy };
+      };
+
+      const pts = SKILL_DIMS.map(d => ({ ...d, ...getPt(d.axis, d.score) }));
+      const polyStr = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+      const labelPos = {
+        top: { x: cx, y: cy - R - 14, anchor: 'middle' },
+        right: { x: cx + R + 12, y: cy + 4, anchor: 'start' },
+        bottom: { x: cx, y: cy + R + 20, anchor: 'middle' },
+        left: { x: cx - R - 12, y: cy + 4, anchor: 'end' }
+      };
+
+      const svg = document.getElementById('skill-radar-svg');
+      svg.innerHTML = `
+        <!-- 同心网格 -->
+        <g fill="none" stroke="#CBD5E1" stroke-width="1">
+          ${[1, 0.75, 0.5, 0.25].map(k => {
+            const r = R * k;
+            return `<polygon points="${cx},${cy-r} ${cx+r},${cy} ${cx},${cy+r} ${cx-r},${cy}" ${k < 1 ? 'stroke-dasharray="3,3"' : ''} />`;
+          }).join('')}
+          <line x1="${cx}" y1="${cy-R}" x2="${cx}" y2="${cy+R}" stroke="#E2E8F0" />
+          <line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="#E2E8F0" />
+        </g>
+
+        <!-- 数据轮廓面 -->
+        <polygon points="${polyStr}" fill="rgba(29, 78, 216, 0.13)" stroke="#1D4ED8" stroke-width="2" />
+
+        <!-- 顶点与交互高亮圈 -->
+        ${pts.map(p => {
+          const active = p.id === state.activeDim;
+          const lp = labelPos[p.axis];
+          return `
+            ${active ? `<circle cx="${p.x}" cy="${p.y}" r="11" fill="${p.color}" fill-opacity="0.18" />` : ''}
+            <circle class="radar-dot" data-dim="${p.id}" cx="${p.x}" cy="${p.y}" r="${active ? 6.5 : 5}" fill="${p.color}" stroke="#FFFFFF" stroke-width="2" />
+            <text data-dim="${p.id}" x="${lp.x}" y="${lp.y}" text-anchor="${lp.anchor}"
+              fill="${active ? p.color : '#475569'}"
+              font-weight="${active ? '700' : '500'}"
+              class="cursor-pointer text-[11px] select-none transition-colors">
+              ${p.name} ${p.score.toFixed(1)}
+            </text>
+          `;
+        }).join('')}
+      `;
+
+      const cur = SKILL_DIMS.find(d => d.id === state.activeDim);
+      document.getElementById('radar-caption').innerHTML = `
+        <span>当前选中：<strong class="text-slate-900">${cur.name}</strong></span>
+        <span class="font-mono font-bold" style="color:${cur.color}">${cur.score.toFixed(1)} / 5.0</span>
+      `;
+
+      // 右侧 4 个维度卡片
+      const list = document.getElementById('skill-dim-list');
+      list.innerHTML = SKILL_DIMS.map(d => {
+        const active = d.id === state.activeDim;
+        const isWarn = d.id === 'chart';
+        return `
+          <div data-dim="${d.id}" class="cursor-pointer rounded-xl border transition-all ${
+            active
+              ? (isWarn ? 'border-rose-400 bg-rose-50/20 ring-1 ring-rose-300' : 'border-[#1D4ED8] bg-blue-50/20 ring-1 ring-blue-200')
+              : 'border-slate-200 bg-white hover:border-slate-300'
+          }">
+            <div class="px-4 py-3.5 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${d.color}"></span>
+                <span class="text-sm font-bold text-slate-900">${d.name}</span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-medium border ${
+                  isWarn ? 'bg-rose-50 text-[#DC2626] border-rose-200' : 'bg-slate-50 text-slate-600 border-slate-200'
+                }">${d.badge}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-sm font-bold" style="color:${d.color}">${d.score.toFixed(1)} / 5.0</span>
+                <span class="text-xs text-slate-400">${active ? '▲' : '▼'}</span>
+              </div>
+            </div>
+            ${active ? `
+              <div class="px-4 pb-4 pt-3 border-t border-slate-200/80 bg-white rounded-b-xl space-y-2.5 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-1">
+                  <span class="sm:col-span-3 font-semibold text-slate-500">实测动作</span>
+                  <p class="sm:col-span-9 text-slate-700 leading-relaxed">${d.action}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-1">
+                  <span class="sm:col-span-3 font-semibold text-slate-500">实测数据</span>
+                  <p class="sm:col-span-9 font-mono text-slate-900 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 leading-relaxed">${d.metrics}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-1">
+                  <span class="sm:col-span-3 font-semibold text-[#1D4ED8]">评测员批注</span>
+                  <p class="sm:col-span-9 text-slate-700 leading-relaxed">${d.note}</p>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('[data-dim]').forEach(el => {
+        el.addEventListener('click', () => {
+          state.activeDim = el.dataset.dim;
+          renderSkillEvaluation();
+        });
+      });
+    }
+
+    function renderCiteVerify(key) {
+      state.activeCite = key;
+      const item = CITE_MAP[key] || CITE_MAP.p9;
+      const isWarn = item.type === 'warn';
+      const box = document.getElementById('inline-verify-box');
+
+      box.className = isWarn
+        ? 'rounded-xl border border-rose-300 bg-rose-50/60 p-3.5 transition-all'
+        : 'rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 transition-all';
+
+      box.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white ${isWarn ? 'bg-[#DC2626]' : 'bg-[#1D4ED8]'}">原文核验</span>
+            <span class="font-mono text-xs font-semibold text-slate-800">${item.loc}</span>
+          </div>
+          <span class="text-[11px] font-semibold ${isWarn ? 'text-[#DC2626]' : 'text-[#059669]'}">${item.badge}</span>
+        </div>
+        <blockquote class="font-mono text-[11px] text-slate-700 bg-white border ${isWarn ? 'border-rose-200' : 'border-blue-100'} rounded-lg p-3 leading-relaxed">
+          “${item.quote}”
+        </blockquote>
+        <p class="text-xs ${isWarn ? 'text-rose-900' : 'text-slate-600'} mt-2">${item.note}</p>
+      `;
+
+      document.querySelectorAll('.cite-chip').forEach(btn => {
+        const active = btn.dataset.cite === key;
+        const warnChip = btn.dataset.cite === 'p14';
+        if (warnChip) {
+          btn.className = active
+            ? 'cite-chip font-mono text-[11px] px-2 py-1 rounded-md border bg-[#DC2626] text-white border-rose-700 font-semibold transition-colors'
+            : 'cite-chip font-mono text-[11px] px-2 py-1 rounded-md border bg-rose-50 text-[#DC2626] border-rose-200 hover:bg-rose-100 font-semibold transition-colors';
+        } else {
+          btn.className = active
+            ? 'cite-chip font-mono text-[11px] px-2 py-1 rounded-md border bg-[#1D4ED8] text-white border-blue-800 font-semibold transition-colors'
+            : 'cite-chip font-mono text-[11px] px-2 py-1 rounded-md border bg-blue-50 text-[#1D4ED8] border-blue-200 hover:bg-blue-100 font-medium transition-colors';
+        }
+      });
+    }
+
+    function switchSliceTab(tab) {
+      state.activeSliceTab = tab;
+      document.getElementById('panel-slice').classList.toggle('hidden', tab !== 'slice');
+      document.getElementById('panel-stress').classList.toggle('hidden', tab !== 'stress');
+      document.querySelectorAll('.slice-tab-btn').forEach(btn => {
+        const active = btn.dataset.sliceTab === tab;
+        btn.className = active
+          ? 'slice-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-xs transition-all flex items-center gap-1.5'
+          : 'slice-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5';
+      });
+    }
+
+    // =========================================================================
+    // 6. AGENT 详情页渲染：左侧 5 步管线 + 右侧实时中间产物检视器
+    // =========================================================================
+    function renderAgentPipeline() {
+      const container = document.getElementById('agent-pipeline-list');
+      container.innerHTML = AGENT_STEPS.map((s, idx) => {
+        const step = idx + 1;
+        const active = state.activeStep === step;
+        const done = step < state.activeStep;
+        return `
+          <button type="button" data-step="${step}" class="w-full text-left rounded-xl border p-4 transition-all ${
+            active
+              ? 'bg-white border-[#1D4ED8] ring-2 ring-blue-600/15 shadow-xs'
+              : 'bg-white border-slate-200 hover:border-slate-300'
+          }">
+            <div class="flex items-start gap-3">
+              <span class="w-7 h-7 rounded-lg font-mono text-xs font-bold flex items-center justify-center shrink-0 ${
+                active ? 'bg-[#1D4ED8] text-white' : done ? 'bg-[#059669] text-white' : 'bg-slate-100 text-slate-600'
+              }">
+                ${done ? '✓' : s.num}
+              </span>
+              <div class="flex-1 min-w-0 space-y-1.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-sm font-bold ${active ? 'text-[#1D4ED8]' : 'text-slate-900'}">${s.title}</span>
+                  <span class="font-mono text-[11px] text-slate-400 shrink-0">${s.time}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[11px]">${s.tool}</span>
+                  ${s.gate ? `<span class="px-2 py-0.5 rounded bg-amber-50 border border-amber-300 text-[#D97706] text-[11px] font-semibold">✋ ${s.gate}</span>` : ''}
+                </div>
+                <p class="text-xs text-slate-500 leading-relaxed">${s.summary}</p>
+              </div>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      container.querySelectorAll('[data-step]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          stopReplay();
+          setAgentStep(Number(btn.dataset.step));
+        });
+      });
+    }
+
+    function updateReplayProgress() {
+      const s = AGENT_STEPS[state.activeStep - 1];
+      const pct = state.activeStep * 20;
+      document.getElementById('replay-step-text').textContent = `当前透视：Step ${s.num} / 05 · ${s.title}`;
+      document.getElementById('replay-pct-text').textContent = `${pct}%`;
+      document.getElementById('replay-bar-fill').style.width = `${pct}%`;
+    }
+
+    function renderInspector() {
+      const s = AGENT_STEPS[state.activeStep - 1];
+      const header = document.getElementById('inspector-header');
+      const body = document.getElementById('inspector-body');
+
+      header.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[#1D4ED8] text-white">STEP ${s.num}</span>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">${s.title}</h3>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-[11px]">
+            <span class="font-mono text-slate-500">工具来源：${s.tool}</span>
+            <span class="text-slate-300">·</span>
+            <span class="text-[#059669] font-semibold">中间产物可验真</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="ins-prev" ${state.activeStep === 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">上一步</button>
+          <button type="button" id="ins-next" ${state.activeStep === 5 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">下一步</button>
+        </div>
+      `;
+
+      document.getElementById('ins-prev').addEventListener('click', () => { stopReplay(); if (state.activeStep > 1) setAgentStep(state.activeStep - 1); });
+      document.getElementById('ins-next').addEventListener('click', () => { stopReplay(); if (state.activeStep < 5) setAgentStep(state.activeStep + 1); });
+
+      if (state.activeStep === 1) renderStep1(body);
+      else if (state.activeStep === 2) renderStep2(body);
+      else if (state.activeStep === 3) renderStep3(body);
+      else if (state.activeStep === 4) renderStep4(body);
+      else renderStep5(body);
+    }
+
+    // Step 01: PICOS + PubMed/Embase 检索式 + 人工确认闸口 1 动态估算命中数
+    function renderStep1(el) {
+      let pubHits = 412;
+      let dedupHits = 328;
+      if (state.gate1.excludeOral) { pubHits -= 46; dedupHits -= 38; }
+      if (state.gate1.min52w) { pubHits -= 82; dedupHits -= 64; }
+      if (state.gate1.minN200) { pubHits -= 34; dedupHits -= 26; }
+
+      el.innerHTML = `
+        <div class="space-y-5 animate-fade-up">
+          <div>
+            <div class="text-xs font-bold text-slate-800 mb-2">1. 自动结构化 PICOS 框架</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><strong class="font-mono text-[#1D4ED8] mr-1.5">P</strong>非糖尿病超重/肥胖成人 (BMI ≥ 27)</div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><strong class="font-mono text-[#1D4ED8] mr-1.5">I</strong>GLP-1 / 双靶点受体激动剂</div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><strong class="font-mono text-[#1D4ED8] mr-1.5">C</strong>安慰剂 / 标准生活方式管理</div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><strong class="font-mono text-[#1D4ED8] mr-1.5">O</strong>主要心血管不良事件（3-point MACE）</div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 overflow-hidden">
+            <div class="px-3.5 py-2 bg-slate-900 text-white flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <button type="button" data-qtab="pubmed" class="px-2.5 py-1 rounded-md font-mono text-xs font-semibold ${state.queryTab === 'pubmed' ? 'bg-[#1D4ED8] text-white' : 'text-slate-300 hover:bg-white/10'}">PubMed</button>
+                <button type="button" data-qtab="embase" class="px-2.5 py-1 rounded-md font-mono text-xs font-semibold ${state.queryTab === 'embase' ? 'bg-[#1D4ED8] text-white' : 'text-slate-300 hover:bg-white/10'}">Embase</button>
+              </div>
+              <button type="button" id="copy-bool-btn" class="px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs text-slate-200">复制检索式</button>
+            </div>
+            <pre class="p-3.5 bg-slate-950 text-blue-100 font-mono text-[11px] leading-relaxed overflow-x-auto custom-scroll">${BOOLEAN_QUERIES[state.queryTab]}</pre>
+            <div class="px-3.5 py-2.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <span class="text-slate-600">PubMed 估算命中 <strong class="text-slate-900">${pubHits}</strong> 篇</span>
+              <span class="text-[#059669] font-semibold">双库去重后预计进入初筛：${dedupHits} 篇</span>
+            </div>
+          </div>
+
+          <!-- 人工确认闸口 1 -->
+          <div class="rounded-xl border border-amber-300 bg-amber-50/70 p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-950">
+                <span class="px-2 py-0.5 rounded bg-[#D97706] text-white text-[11px]">✋ 人工确认闸口 1</span>
+                勾选限定条件实时微调命中规模
+              </span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-800">
+              <label class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-amber-200 cursor-pointer">
+                <input type="checkbox" data-g1="excludeOral" ${state.gate1.excludeOral ? 'checked' : ''} class="accent-[#D97706]" />
+                <span>剔除口服剂型</span>
+              </label>
+              <label class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-amber-200 cursor-pointer">
+                <input type="checkbox" data-g1="min52w" ${state.gate1.min52w ? 'checked' : ''} class="accent-[#D97706]" />
+                <span>仅限随访 ≥ 52 周</span>
+              </label>
+              <label class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-amber-200 cursor-pointer">
+                <input type="checkbox" data-g1="minN200" ${state.gate1.minN200 ? 'checked' : ''} class="accent-[#D97706]" />
+                <span>排除 N &lt; 200 试验</span>
+              </label>
+            </div>
+            <div class="flex justify-end">
+              <button type="button" id="g1-pass" class="px-4 py-2 rounded-lg bg-[#D97706] hover:bg-amber-700 text-white text-xs font-semibold transition-colors">
+                确认检索策略，进入第 2 步 →
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      el.querySelectorAll('[data-qtab]').forEach(b => b.addEventListener('click', () => { state.queryTab = b.dataset.qtab; renderStep1(el); }));
+      document.getElementById('copy-bool-btn').addEventListener('click', () => safeCopy(BOOLEAN_QUERIES[state.queryTab], `已复制 ${state.queryTab.toUpperCase()} 检索式`));
+      el.querySelectorAll('[data-g1]').forEach(cb => cb.addEventListener('change', () => { state.gate1[cb.dataset.g1] = cb.checked; renderStep1(el); }));
+      document.getElementById('g1-pass').addEventListener('click', () => { showToast('已锁定检索式并推进至 Step 02'); setAgentStep(2); });
+    }
+
+    // Step 02: 撞车排查表 + PRISMA 漏斗 + 可筛选剔除日志
+    function renderStep2(el) {
+      const cats = ['全部', '随访不足24周', '非RCT设计', '人群不符'];
+      const logs = state.exFilter === '全部' ? EXCLUSION_DATA : EXCLUSION_DATA.filter(x => x.reasonTag === state.exFilter);
+
+      el.innerHTML = `
+        <div class="space-y-5 animate-fade-up">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-800">1. 同类 Meta 撞车风险排查表</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[#059669] text-[11px] font-semibold">发现明确更新窗口</span>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <th class="py-2 px-3 font-semibold">近期同类 Meta</th>
+                    <th class="py-2 px-3 font-semibold">检索截止</th>
+                    <th class="py-2 px-3 font-semibold">未覆盖缺口（你的创新抓手）</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                  <tr>
+                    <td class="py-2 px-3 font-medium text-slate-900">Eur Heart J (2024)</td>
+                    <td class="py-2 px-3 font-mono">2023.12</td>
+                    <td class="py-2 px-3">缺失 2025 新发大型 III 期双靶点 CV 结局 RCT</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 px-3 font-mono text-slate-900">PROSPERO CRD42025061842</td>
+                    <td class="py-2 px-3 font-mono">2025.03</td>
+                    <td class="py-2 px-3">仅限定单药司美格鲁肽，未覆盖 Tirzepatide / CagriSema</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 px-3 font-medium text-slate-900">Diabetes Obes Metab (2025)</td>
+                    <td class="py-2 px-3 font-mono">2024.09</td>
+                    <td class="py-2 px-3">混入 4 篇糖尿病试验，未做纯非糖尿病肥胖队列隔离</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PRISMA 漏斗条 -->
+          <div class="space-y-2">
+            <div class="text-xs font-bold text-slate-800">2. PRISMA 初筛收敛漏斗（328 → 14 篇核心 RCT）</div>
+            <div class="grid grid-cols-4 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-lg bg-slate-100 border border-slate-200"><div class="font-mono font-bold text-slate-900">328</div><div class="text-[11px] text-slate-500">去重检索</div></div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><div class="font-mono font-bold text-slate-600">-281</div><div class="text-[11px] text-slate-500">题录剔除</div></div>
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200"><div class="font-mono font-bold text-slate-600">-33</div><div class="text-[11px] text-slate-500">全文剔除</div></div>
+              <div class="p-2.5 rounded-lg bg-blue-50 border border-blue-200"><div class="font-mono font-bold text-[#1D4ED8]">14 RCT</div><div class="text-[11px] text-[#1D4ED8] font-semibold">最终保留</div></div>
+            </div>
+          </div>
+
+          <!-- 可筛选剔除日志 -->
+          <div class="space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-800">3. 可审计剔除日志（按理由筛选）</span>
+              <div class="flex flex-wrap gap-1.5">
+                ${cats.map(c => `
+                  <button type="button" data-ex="${c}" class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    state.exFilter === c ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }">${c}</button>
+                `).join('')}
+              </div>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <th class="py-2 px-3 font-semibold w-28">PMID</th>
+                    <th class="py-2 px-3 font-semibold w-28">排除分类</th>
+                    <th class="py-2 px-3 font-semibold">文献标题与单行剔除依据</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${logs.map(row => `
+                    <tr class="hover:bg-slate-50/70">
+                      <td class="py-2 px-3 font-mono text-[11px] text-slate-500 align-top">${row.id}</td>
+                      <td class="py-2 px-3 align-top"><span class="px-2 py-0.5 rounded bg-rose-50 text-[#DC2626] border border-rose-200 text-[11px] font-medium whitespace-nowrap">${row.reasonTag}</span></td>
+                      <td class="py-2 px-3">
+                        <div class="font-medium text-slate-900">${row.title}</div>
+                        <div class="text-slate-500 mt-0.5">${row.detail}</div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      el.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => { state.exFilter = b.dataset.ex; renderStep2(el); }));
+    }
+
+    // Step 03: 核心 RCT 提取底表 + 一键筛选 2 篇口径冲突项
+    function renderStep3(el) {
+      const rows = state.onlyConflicts ? RCT_EXTRACTED.filter(r => r.conflict) : RCT_EXTRACTED;
+
+      el.innerHTML = `
+        <div class="space-y-4 animate-fade-up">
+          <div class="rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 text-xs text-amber-950 leading-relaxed">
+            <strong>⚠ 自动检出 2 篇结局口径冲突：</strong>
+            <span class="font-mono font-semibold">OASIS-CV</span> 与 <span class="font-mono font-semibold">ENLIGHTEN-Obese</span> 采用 <strong>4-point MACE</strong>（包含“不稳定心绞痛住院”），其余 12 篇采用标准 <strong>3-point MACE</strong>。已标黄提示，将在 Step 04 执行敏感性分析验证。
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-800">核心 RCT 指标初提底表（横向可滚动）</span>
+            <button type="button" id="btn-only-conflict" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              state.onlyConflicts
+                ? 'bg-[#D97706] text-white border-amber-700'
+                : 'bg-amber-50 text-[#D97706] border-amber-300 hover:bg-amber-100'
+            }">
+              ${state.onlyConflicts ? '✓ 当前仅看口径冲突项 (2篇) · 恢复全部' : '仅看口径冲突项 (2篇)'}
+            </button>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scroll">
+            <table class="w-full min-w-[660px] text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
+                  <th class="py-2.5 px-3 font-semibold">研究</th>
+                  <th class="py-2.5 px-3 font-semibold">干预药物</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">样本量</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">基线 BMI</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">随访</th>
+                  <th class="py-2.5 px-3 font-semibold">MACE 口径定义</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">HR (95% CI)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${rows.map(r => `
+                  <tr class="${r.conflict ? 'bg-amber-50/70' : 'hover:bg-slate-50/70'}">
+                    <td class="py-2.5 px-3 font-semibold text-slate-900 whitespace-nowrap">${r.trial} <span class="font-mono font-normal text-slate-400">(${r.year})</span></td>
+                    <td class="py-2.5 px-3 text-slate-700 whitespace-nowrap">${r.drug}</td>
+                    <td class="py-2.5 px-3 font-mono text-right text-slate-800">${r.n}</td>
+                    <td class="py-2.5 px-3 font-mono text-right text-slate-600">${r.bmi}</td>
+                    <td class="py-2.5 px-3 font-mono text-right text-slate-600">${r.fu}</td>
+                    <td class="py-2.5 px-3 whitespace-nowrap">
+                      ${r.conflict
+                        ? `<span class="px-2 py-0.5 rounded bg-amber-200/80 text-amber-950 font-semibold text-[11px]">⚠ 4-point MACE</span>`
+                        : `<span class="text-slate-600">${r.mace}</span>`}
+                    </td>
+                    <td class="py-2.5 px-3 font-mono text-right font-semibold ${r.conflict ? 'text-amber-900' : 'text-[#1D4ED8]'} whitespace-nowrap">${r.hr}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btn-only-conflict').addEventListener('click', () => {
+        state.onlyConflicts = !state.onlyConflicts;
+        renderStep3(el);
+      });
+    }
+
+    // Step 04: Python 沙盒日志 + 动态 SVG 森林图 + 人工确认闸口 2 实时重算
+    function renderStep4(el) {
+      const sens = state.sensitivityExclude4pt;
+      // 严格按业务要求：未勾选(14篇): HR 0.81 [0.74, 0.89], I² = 54.2%；勾选(12篇): HR 0.79 [0.73, 0.85], I² = 18.6%
+      const pooledHr = sens ? '0.79' : '0.81';
+      const pooledCi = sens ? '[0.73, 0.85]' : '[0.74, 0.89]';
+      const i2Val = sens ? '18.6%' : '54.2%';
+      const i2Badge = sens
+        ? '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-[#059669] text-[10px] font-bold">低异质性 · 高度稳健</span>'
+        : '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-[#D97706] text-[10px] font-bold">中等异质性 · 建议剔除冲突</span>';
+
+      // 森林图映射: x = 400 + (hr - 1.0) * 320
+      const diamondPts = sens
+        ? '313.6,176 332.8,169 352.0,176 332.8,183'  // 0.79 [0.73, 0.85]
+        : '316.8,176 339.2,169 364.8,176 339.2,183'; // 0.81 [0.74, 0.89]
+
+      el.innerHTML = `
+        <div class="space-y-4 animate-fade-up">
+          <!-- KPI 指标卡 -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200">
+              <div class="text-[11px] text-slate-500 font-medium">合并效应量 (Pooled HR)</div>
+              <div class="font-mono text-xl font-bold text-[#1D4ED8] mt-1">${pooledHr}</div>
+              <div class="font-mono text-[11px] text-slate-600">95% CI ${pooledCi} · p &lt; 0.001</div>
+            </div>
+            <div class="p-3.5 rounded-xl border ${sens ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50/50 border-amber-200'}">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[11px] text-slate-500 font-medium">异质性 I²</span>
+              </div>
+              <div class="font-mono text-xl font-bold ${sens ? 'text-[#059669]' : 'text-[#D97706]'} mt-1">${i2Val}</div>
+              <div class="mt-1">${i2Badge}</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="text-[11px] text-slate-500 font-medium">纳入研究数 / 模型</div>
+              <div class="font-mono text-xl font-bold text-slate-900 mt-1">${sens ? '12 篇' : '14 篇'}</div>
+              <div class="text-[11px] text-slate-500">DerSimonian-Laird 随机效应</div>
+            </div>
+          </div>
+
+          <!-- 人工确认闸口 2（前置突出，点击即可实时看到森林图与 I² 动画刷新） -->
+          <div class="rounded-xl border border-amber-300 bg-amber-50/70 p-4 space-y-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-[#D97706] text-white text-[11px] font-bold">✋ 人工确认闸口 2</span>
+              <span class="text-xs font-bold text-amber-950">敏感性分析决策拍板</span>
+            </div>
+            <label class="flex items-center gap-2.5 bg-white px-3.5 py-2.5 rounded-lg border border-amber-200 text-xs text-slate-800 cursor-pointer hover:border-amber-400 transition-colors">
+              <input type="checkbox" id="chk-sens-4pt" ${sens ? 'checked' : ''} class="w-4 h-4 accent-[#1D4ED8] rounded" />
+              <span><strong>勾选：剔除 2 篇 4-point MACE 口径冲突研究执行敏感性分析</strong>（实时重算 I² 与下方森林图）</span>
+            </label>
+          </div>
+
+          <!-- 动态 SVG 森林图 -->
+          <div class="rounded-xl border border-slate-200 p-4 bg-white">
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span class="font-bold text-slate-800">预跑森林图草图 (Forest Plot)</span>
+              <span class="font-mono text-[11px] text-slate-400">HR &lt; 1.0 支持 GLP-1 RA 心血管获益</span>
+            </div>
+            <div class="overflow-x-auto">
+              <svg viewBox="0 0 580 212" class="w-full min-w-[480px] h-auto font-mono text-[10px]">
+                <text x="8" y="15" fill="#64748B" font-weight="600">Study</text>
+                <text x="335" y="15" text-anchor="middle" fill="#64748B" font-weight="600">HR (95% CI)</text>
+                <text x="572" y="15" text-anchor="end" fill="#64748B" font-weight="600">Estimate [95% CI]</text>
+                <line x1="8" y1="22" x2="572" y2="22" stroke="#E2E8F0" />
+                <!-- 无效线 HR=1.0 (x=400) -->
+                <line x1="400" y1="24" x2="400" y2="190" stroke="#94A3B8" stroke-dasharray="4,3" />
+
+                <!-- SELECT 0.80 [0.72, 0.90] -->
+                <text x="8" y="42" fill="#0F172A">SELECT (2023)</text>
+                <line x1="310.4" y1="39" x2="368" y2="39" stroke="#1D4ED8" stroke-width="1.8" />
+                <rect x="332" y="35" width="8" height="8" fill="#1D4ED8" />
+                <text x="572" y="42" text-anchor="end" fill="#0F172A">0.80 [0.72, 0.90]</text>
+
+                <!-- SURMOUNT-CVO 0.77 [0.68, 0.87] -->
+                <text x="8" y="66" fill="#0F172A">SURMOUNT-CVO (2025)</text>
+                <line x1="297.6" y1="63" x2="358.4" y2="63" stroke="#1D4ED8" stroke-width="1.8" />
+                <rect x="322.4" y="59.5" width="7" height="7" fill="#1D4ED8" />
+                <text x="572" y="66" text-anchor="end" fill="#0F172A">0.77 [0.68, 0.87]</text>
+
+                <!-- REDEFINE-CV 0.76 [0.64, 0.91] -->
+                <text x="8" y="90" fill="#0F172A">REDEFINE-CV (2026)</text>
+                <line x1="284.8" y1="87" x2="371.2" y2="87" stroke="#1D4ED8" stroke-width="1.8" />
+                <rect x="320" y="84" width="6.5" height="6.5" fill="#1D4ED8" />
+                <text x="572" y="90" text-anchor="end" fill="#0F172A">0.76 [0.64, 0.91]</text>
+
+                <!-- OASIS-CV (4-pt conflict) 0.94 [0.79, 1.12] -->
+                <g class="forest-transition" opacity="${sens ? '0.28' : '1'}">
+                  <text x="8" y="114" fill="#D97706">OASIS-CV (4-pt 冲突)</text>
+                  <line x1="332.8" y1="111" x2="438.4" y2="111" stroke="#D97706" stroke-width="1.8" />
+                  <rect x="377.8" y="108" width="6" height="6" fill="#D97706" />
+                  <text x="572" y="114" text-anchor="end" fill="#D97706">${sens ? '已剔除' : '0.94 [0.79, 1.12]'}</text>
+                </g>
+
+                <!-- ENLIGHTEN (4-pt conflict) 0.98 [0.81, 1.19] -->
+                <g class="forest-transition" opacity="${sens ? '0.28' : '1'}">
+                  <text x="8" y="138" fill="#D97706">ENLIGHTEN (4-pt 冲突)</text>
+                  <line x1="339.2" y1="135" x2="460.8" y2="135" stroke="#D97706" stroke-width="1.8" />
+                  <rect x="390.6" y="132" width="5.5" height="5.5" fill="#D97706" />
+                  <text x="572" y="138" text-anchor="end" fill="#D97706">${sens ? '已剔除' : '0.98 [0.81, 1.19]'}</text>
+                </g>
+
+                <line x1="8" y1="156" x2="572" y2="156" stroke="#CBD5E1" />
+
+                <!-- 合并效应菱形 -->
+                <text x="8" y="179" fill="#0F172A" font-weight="700">Pooled (${sens ? '12 RCTs' : '14 RCTs'})</text>
+                <polygon class="forest-transition" points="${diamondPts}" fill="${sens ? '#059669' : '#1D4ED8'}" />
+                <text x="572" y="179" text-anchor="end" fill="${sens ? '#059669' : '#1D4ED8'}" font-weight="700">${pooledHr} ${pooledCi}</text>
+
+                <!-- X 轴 -->
+                <line x1="240" y1="194" x2="464" y2="194" stroke="#94A3B8" />
+                <text x="240" y="207" text-anchor="middle" fill="#64748B">0.5</text>
+                <text x="336" y="207" text-anchor="middle" fill="#64748B">0.8</text>
+                <text x="400" y="207" text-anchor="middle" fill="#0F172A" font-weight="600">1.0</text>
+                <text x="464" y="207" text-anchor="middle" fill="#64748B">1.2</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- 可折叠 Python 沙盒执行代码与日志 -->
+          <div class="rounded-xl border border-slate-200 overflow-hidden">
+            <button type="button" id="toggle-py-btn" class="w-full px-4 py-2.5 bg-slate-900 text-white flex items-center justify-between gap-2 text-xs">
+              <span class="font-mono text-slate-200">&gt;_ Python 沙盒执行日志（scipy / statsmodels 随机效应模型）</span>
+              <span class="text-slate-400">${state.pythonLogOpen ? '收起 ▲' : '展开 ▼'}</span>
+            </button>
+            ${state.pythonLogOpen ? `
+              <pre class="p-3.5 bg-slate-950 text-slate-200 font-mono text-[11px] leading-relaxed overflow-x-auto custom-scroll"><span class="text-slate-500"># Verified sandbox execution — DerSimonian-Laird Random Effects</span>
+import numpy as np
+from statsmodels.stats.meta_analysis import combine_effects
+
+res = combine_effects(log_hr, var_log_hr, method_re="dl")
+<span class="text-emerald-400"># STDOUT:
+[ALL 14 RCTs]         Pooled HR = 0.81 [0.74, 0.89], p &lt; 0.001, I² = 54.2%
+[3-pt MACE (n=12)]    Pooled HR = 0.79 [0.73, 0.85], p &lt; 0.001, I² = 18.6%  ${sens ? '← ACTIVE' : ''}</span></pre>
+            ` : ''}
+          </div>
+
+          <div class="flex justify-end">
+            <button type="button" id="g2-pass" class="px-4 py-2 rounded-lg bg-[#1D4ED8] hover:bg-blue-800 text-white text-xs font-semibold transition-colors">
+              确认预跑趋势，生成最终交付包 →
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('chk-sens-4pt').addEventListener('change', (e) => {
+        state.sensitivityExclude4pt = e.target.checked;
+        renderStep4(el);
+        showToast(state.sensitivityExclude4pt ? '已剔除 2 篇 4-point 冲突研究：I² 降至 18.6%' : '已恢复全部 14 篇合并：I² = 54.2%');
+      });
+      document.getElementById('toggle-py-btn').addEventListener('click', () => {
+        state.pythonLogOpen = !state.pythonLogOpen;
+        renderStep4(el);
+      });
+      document.getElementById('g2-pass').addEventListener('click', () => {
+        showToast('已完成沙盒审核，进入 Step 05 查看交付包');
+        setAgentStep(5);
+      });
+    }
+
+    // Step 05: 审稿人质疑预判 + 4 张可在线预览的交付物卡片
+    function renderStep5(el) {
+      const deliverables = [
+        { key: 'report', name: '《选题可行性评估报告》', desc: '含综合推荐分 4.6/5、创新叙事抓手与目标期刊选刊梯度', ext: 'PDF · 12 页' },
+        { key: 'xlsx', name: '《结构化数据初提底表.xlsx》', desc: '14 篇 RCT 完整 22 列字段，含 4-point 口径冲突标黄列', ext: 'XLSX · 142 KB' },
+        { key: 'csv', name: '《文献初筛剔除日志.csv》', desc: '314 条排除文献的 PMID 与单行排除依据，符合 PRISMA 审计', ext: 'CSV · 96 KB' },
+        { key: 'prospero', name: '《PROSPERO 注册草稿要点》', desc: '标准英文注册字段草稿，含预设亚组与敏感性分析计划', ext: 'DOCX · 48 KB' }
+      ];
+
+      el.innerHTML = `
+        <div class="space-y-5 animate-fade-up">
+          <div class="space-y-2.5">
+            <div class="text-xs font-bold text-slate-800">1. SCI 审稿人高频质疑预判与应对策略</div>
+            <div class="space-y-2 text-xs">
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <div class="font-bold text-[#DC2626]">质疑 1：单靶点（GLP-1）与双靶点（GIP/GLP-1）药物合并是否引入机制异质性？</div>
+                <div class="text-slate-700"><strong class="text-[#059669]">应对：</strong>交付底表已标注靶点分类，正文预设按作用靶点及给药途径分层亚组分析与 Meta 回归。</div>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <div class="font-bold text-[#DC2626]">质疑 2：纳入研究的 MACE 复合终点定义不一致（4-point vs 3-point）如何论证稳健性？</div>
+                <div class="text-slate-700"><strong class="text-[#059669]">应对：</strong>Step 04 沙盒已证实剔除 2 篇 4-point 研究后 HR 保持 0.79 且 I² 降至 18.6%，可直接写入敏感性分析。</div>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <div class="font-bold text-[#DC2626]">质疑 3：SELECT 试验权重占比偏高，结论是否被单一大型研究主导？</div>
+                <div class="text-slate-700"><strong class="text-[#059669]">应对：</strong>附带 Leave-one-out 逐一剔除法校验结果，剔除 SELECT 后合并 HR 仍为 0.78（95% CI 0.71–0.86）。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2.5">
+            <div class="text-xs font-bold text-slate-800">2. 最终交付立项包（点击可在线预览结构）</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              ${deliverables.map(d => `
+                <div class="rounded-xl border border-slate-200 p-4 bg-white flex flex-col justify-between gap-3 hover:border-blue-300 transition-colors">
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-bold text-slate-900">${d.name}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 leading-relaxed">${d.desc}</p>
+                  </div>
+                  <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span class="font-mono text-[11px] text-slate-400">${d.ext}</span>
+                    <button type="button" data-preview-doc="${d.key}" class="text-xs font-semibold text-[#1D4ED8] hover:underline">
+                      在线预览 →
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      el.querySelectorAll('[data-preview-doc]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const doc = DELIVERABLE_PREVIEWS[btn.dataset.previewDoc];
+          openModal(
+            doc.title,
+            doc.html,
+            `<button type="button" id="doc-sim-dl" class="px-4 py-2 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 text-white text-xs font-semibold">下载样张文件</button>
+             <button type="button" id="doc-close" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-100">关闭</button>`
+          );
+          document.getElementById('doc-close').addEventListener('click', closeModal);
+          document.getElementById('doc-sim-dl').addEventListener('click', () => {
+            closeModal();
+            showToast(`已开始下载样张：${doc.title.replace('在线预览', '')}`);
+          });
+        });
+      });
+    }
+
+    function setAgentStep(num) {
+      state.activeStep = num;
+      renderAgentPipeline();
+      updateReplayProgress();
+      renderInspector();
+    }
+
+    // 自动演示控制
+    function toggleReplay() {
+      if (state.replaying) {
+        stopReplay();
+        return;
+      }
+      state.replaying = true;
+      document.getElementById('replay-icon').textContent = '⏸';
+      document.getElementById('replay-label').textContent = '暂停自动演示';
+      document.getElementById('btn-replay-reset').classList.remove('hidden');
+      if (state.activeStep === 5) setAgentStep(1);
+      showToast('正在自动演示 5 步执行过程');
+
+      state.replayTimer = setInterval(() => {
+        if (state.activeStep < 5) {
+          setAgentStep(state.activeStep + 1);
+        } else {
+          stopReplay();
+          showToast('5 步案例演示已完成');
+        }
+      }, 3200);
+    }
+
+    function stopReplay() {
+      state.replaying = false;
+      clearInterval(state.replayTimer);
+      state.replayTimer = null;
+      document.getElementById('replay-icon').textContent = '▶';
+      document.getElementById('replay-label').textContent = '自动演示 5 步执行过程';
+    }
+
+    // =========================================================================
+    // 7. 极简 CTA 弹窗与抽屉事件绑定
+    // =========================================================================
+    // 顶部视图切换
+    document.getElementById('switch-skill').addEventListener('click', () => switchMainView('skill'));
+    document.getElementById('switch-agent').addEventListener('click', () => switchMainView('agent'));
+
+    // Skill 单主按钮：「使用此 Skill」→ 轻量极简使用弹窗
+    document.getElementById('btn-use-skill').addEventListener('click', () => {
+      openModal(
+        '使用此 Skill · SCI 临床文献 PICO 与结局指标提取',
+        `<div class="space-y-4">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-800">即用型结构化指令（已内置 4 项防幻觉规则）</span>
+              <button type="button" id="modal-copy-skill-cmd" class="text-xs font-semibold text-[#1D4ED8] hover:underline">一键复制指令</button>
+            </div>
+            <pre class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700 leading-relaxed whitespace-pre-wrap">${SKILL_INSTRUCTION_TEXT}</pre>
+          </div>
+          <div class="space-y-1.5">
+            <label for="quick-doi-input" class="block text-xs font-semibold text-slate-800">或直接粘贴文献 DOI / 摘要快速启动</label>
+            <input id="quick-doi-input" type="text" placeholder="例：10.1056/NEJMoa2307563 或粘贴待提取段落" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-[#1D4ED8]" />
+          </div>
+        </div>`,
+        `<button type="button" id="skill-modal-cancel" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-100">关闭</button>
+         <button type="button" id="skill-modal-go" class="px-5 py-2 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 text-white text-xs font-semibold">复制并前往对话 →</button>`
+      );
+
+      document.getElementById('modal-copy-skill-cmd').addEventListener('click', () => {
+        safeCopy(SKILL_INSTRUCTION_TEXT, 'Skill 指令已复制到剪贴板');
+      });
+      document.getElementById('skill-modal-cancel').addEventListener('click', closeModal);
+      document.getElementById('skill-modal-go').addEventListener('click', () => {
+        const extra = (document.getElementById('quick-doi-input').value || '').trim();
+        safeCopy(extra ? `${SKILL_INSTRUCTION_TEXT}\n\n【待处理文献】\n${extra}` : SKILL_INSTRUCTION_TEXT, '已复制 Skill 指令，正在打开对话工作台');
+        closeModal();
+      });
+    });
+
+    // Skill 测试集与打分细则弹窗
+    document.getElementById('btn-open-rubric').addEventListener('click', () => {
+      openModal(
+        '测试集样本清单与四维打分细则（Rubric）',
+        `<div class="space-y-4 text-xs leading-relaxed">
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div class="font-bold text-slate-900">盲测样本构成（共 20 篇 · 2023–2026）</div>
+            <p class="text-slate-600">NEJM 7 篇 · The Lancet 6 篇 · JAMA 5 篇 · BMJ 2 篇。覆盖心血管、肿瘤、内分泌及呼吸临床 RCT，刻意混入 4 篇阴性主要终点试验与 6 篇含复杂补充材料森林图附表的全文。</p>
+          </div>
+          <div class="space-y-2">
+            <div class="font-bold text-slate-900">标准化扣分红线</div>
+            <ul class="list-disc pl-4 space-y-1.5 text-slate-700">
+              <li><strong>学术忠实度（5.0）：</strong>核心数值每偏差 1 处扣 0.3 分；若将 P ≥ 0.05 阴性结果脑补为“改善趋势”，触发幻觉红线直扣 1.5 分。</li>
+              <li><strong>结构稳定度（5.0）：</strong>统一基座连续复测 3–5 轮，任一轮出现漏列或非表格输出即扣 0.5 分。</li>
+              <li><strong>图表抗压能力（5.0）：</strong>专项考察跨页小字号森林图与补充材料附表，每出现 1 处串位扣 0.8 分并强制标注必核红区。</li>
+              <li><strong>人工复核提效（5.0）：</strong>以 6 名临床硕博纯人工提取对比 Skill 提取后回源复核的中位省时率核算。</li>
+            </ul>
+          </div>
+        </div>`
+      );
+    });
+
+    // Skill 切片 Tab 与页码点击
+    document.querySelectorAll('.slice-tab-btn').forEach(btn => btn.addEventListener('click', () => switchSliceTab(btn.dataset.sliceTab)));
+    document.querySelectorAll('[data-cite]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderCiteVerify(btn.dataset.cite);
+        document.getElementById('inline-verify-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+
+    // Agent 单主按钮：「立即运行」→ 极简右侧抽屉
+    const drawerOverlay = document.getElementById('agent-drawer-overlay');
+    const closeDrawer = () => drawerOverlay.classList.add('hidden');
+
+    document.getElementById('btn-run-agent').addEventListener('click', () => {
+      drawerOverlay.classList.remove('hidden');
+    });
+    document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+    document.getElementById('drawer-cancel').addEventListener('click', closeDrawer);
+    drawerOverlay.addEventListener('click', (e) => { if (e.target === drawerOverlay) closeDrawer(); });
+
+    // 抽屉内微妙文字链：「填入演示课题试跑」
+    document.getElementById('btn-fill-demo').addEventListener('click', () => {
+      document.getElementById('input-topic').value = 'GLP-1 受体激动剂对非糖尿病超重/肥胖人群主要心血管不良事件（MACE）的影响';
+      document.getElementById('input-if').value = 'IF 5+ SCI（JCR Q1 / Q2）';
+      document.getElementById('input-extra').value = '优先纳入近 5 年大型 RCT，重点排查近期撞车风险';
+      showToast('已填入 GLP-1 演示课题参数');
+    });
+
+    document.getElementById('agent-run-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      closeDrawer();
+      setAgentStep(1);
+      if (!state.replaying) toggleReplay();
+      showToast('已提交课题并启动 5 步玻璃盒预研演示');
+    });
+
+    // Agent 回放按钮
+    document.getElementById('btn-replay-toggle').addEventListener('click', toggleReplay);
+    document.getElementById('btn-replay-reset').addEventListener('click', () => {
+      stopReplay();
+      setAgentStep(1);
+      document.getElementById('btn-replay-reset').classList.add('hidden');
+      showToast('已重置至 Step 01');
+    });
+
+    // 弹窗关闭
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+
+    // 初始化渲染
+    renderSkillEvaluation();
+    renderCiteVerify('p9');
+    setAgentStep(1);
+  </script>
+</body>
+</html>

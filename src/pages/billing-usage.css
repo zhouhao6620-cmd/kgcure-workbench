@@ -206,9 +206,11 @@ body:has(.bu-page) { min-width: 0; }
 .bu-summary-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 
 .bu-page .bu-period-tabs { flex-wrap: wrap; max-width: 100%; align-self: auto; border-bottom: 0; }
-.bu-page .bu-period-tabs > .tab { height: auto; min-height: 30px; padding: 4px 10px; margin: 0; line-height: 22px; }
+.bu-page .bu-period-tabs > .tab { height: var(--ds-filter-height, 36px); min-height: var(--ds-filter-height, 36px); padding: 0 var(--ds-filter-inline-padding, 16px); margin: 0; border-radius: 999px; background: var(--ds-nav-selected); color: var(--ds-secondary); font-size: 14px; line-height: 22px; font-weight: 500; }
+.bu-page .bu-period-tabs > .tab.is-active { background: var(--ds-ink); color: #fff; font-weight: 600; }
 .bu-page .bu-period-tabs > .tab.is-active::after { content: none; }
 .bu-page .bu-record-tabs { margin: 8px 0 16px; }
+.business-workspace :is(.approvals-view .approval-filters, .files-library .files-library-tabs, .bu-page .bu-view-tabs, .bu-page .bu-record-tabs) { margin-top: calc(24px + 6px); }
 
 .bu-donut-figure figcaption strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bu-analysis-notes { margin-top: 16px; }

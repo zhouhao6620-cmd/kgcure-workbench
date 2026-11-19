@@ -23,19 +23,23 @@ import {
   Image as ImageIcon,
   Layers,
   MessageCircle,
+  MoreHorizontal,
   Orbit,
-  RefreshCw,
+  Pencil,
+  Share2,
   ShieldCheck,
-  Star,
   Search,
+  Trash2,
   Upload,
   User,
   X,
 } from "lucide-react";
-import { AgentGlyph, Button, DocumentEmptyIllustration, EmptyState as WorkspaceEmptyState, IconButton, Modal, SkillGlyph, Tag } from "../design-preview/components.jsx";
+import { AgentGlyph, ApprovalEmptyIllustration, Button, EmptyState as WorkspaceEmptyState, IconButton, Modal, RecordEmptyIllustration, SearchEmptyIllustration, SkillGlyph, Tag, TrashEmptyIllustration } from "../design-preview/components.jsx";
+import { DeliveryFileIcon } from "../design-preview/ConversationPatterns.jsx";
 import { downloadText } from "../content/catalog.js";
 import { downloadWord } from "../design-preview/word-file.js";
-import { Badge, Btn, EmptyState, PageHead, Tabs, Toggle } from "../components.jsx";
+import { Badge, Btn, PageHead, Tabs } from "../components.jsx";
+import { Pagination } from "../design-system/Pagination.jsx";
 import "./membership-plans.css";
 
 const FILES = [
@@ -52,63 +56,137 @@ const FILES = [
   ["ASD遗传学选题报告.md", "M", "对话生成", "神经发育障碍", "2026/09/20 10:45", "18.3 KB"],
   ["SEER_宫颈癌肝转移_变量字典.xlsx", "X", "上传", "工作流推荐助手", "2026/10/16 09:12", "212.6 KB"],
 ];
+const DEMO_LIBRARY_FILES = FILES.map((row, index) => [...row, `demo-library:${index}`]);
+const FILES_LIBRARY_OVERRIDES_KEY = 'kgcure-my-files-overrides-v1';
 
-export function MyFiles({ onToast, sessions=[] }) {
+function fileLibraryHiddenIds() {
+  try { return JSON.parse(localStorage.getItem(FILES_LIBRARY_OVERRIDES_KEY) || '{}').hiddenIds || []; }
+  catch { return []; }
+}
+
+export function countMyFiles(sessions=[], libraryFiles=[]) {
+  const ids = new Set([
+    ...DEMO_LIBRARY_FILES.map(row => row[6]),
+    ...sessions.flatMap(session => (session.files || []).map(file => file.id)),
+    ...libraryFiles.map(file => file.id),
+  ]);
+  const hiddenIds = new Set(fileLibraryHiddenIds());
+  return [...ids].filter(id => !hiddenIds.has(id)).length;
+}
+
+export function MyFiles({ onToast, sessions=[], libraryFiles=[] }) {
   const [tab, setTab] = useState("最近使用");
-  const [favorite, setFavorite] = useState(false);
-  const [query,setQuery]=useState(''),[format,setFormat]=useState('全部'),[source,setSource]=useState('全部'),[favorites,setFavorites]=useState([]),[preview,setPreview]=useState(null),[uploads,setUploads]=useState([]);
+  const [page, setPage] = useState(1);
+  const [query,setQuery]=useState(''),[format,setFormat]=useState('全部'),[source,setSource]=useState('全部'),[preview,setPreview]=useState(null),[uploads,setUploads]=useState([]);
+  const [overrides,setOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem(FILES_LIBRARY_OVERRIDES_KEY)||'{}');}catch{return {};}});
+  const [openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareTarget,setShareTarget]=useState(null),[deleteTarget,setDeleteTarget]=useState(null),[renameValue,setRenameValue]=useState('');
+  const moreRef=useRef(null);
   const localFiles=sessions.flatMap(session=>session.files.map(file=>({...file,title:session.title,date:new Date(session.createdAt).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'})})));
-  const fileLookup=new Map(localFiles.map(file=>[file.id,file]));
-  const allRows=[...uploads,...localFiles.map(file=>[file.name,file.type==='DOCX'?'W':'M','本地任务说明',file.title,file.date,'本地生成',file.id]),...FILES];
-  const rows=allRows.filter(row=>tab!=='回收站'&&(!query||row[0].toLowerCase().includes(query.toLowerCase()))&&(format==='全部'||row[0].toLowerCase().endsWith('.'+format.toLowerCase()))&&(source==='全部'||row[2]===source)&&(!(favorite||tab==='我的收藏')||favorites.includes(row[6]||row[0])));
+  const preservedFiles=[...libraryFiles,...localFiles].filter((file,index,items)=>items.findIndex(item=>item.id===file.id)===index);
+  const fileLookup=new Map(preservedFiles.map(file=>[file.id,file]));
+  const preservedRows=preservedFiles.map(file=>[
+    file.name,
+    file.type==='DOCX'?'W':file.type==='PDF'?'P':file.type==='XLSX'?'X':file.type==='ZIP'?'Z':'M',
+    file.source||'文件库',
+    file.title||file.spaceName||'我的文件库',
+    file.date||'',
+    file.size||'',
+    file.id,
+  ]);
+  const baseRows=[...uploads,...preservedRows,...DEMO_LIBRARY_FILES];
+  const hiddenIds=overrides.hiddenIds||[];
+  const renamedFiles=overrides.names||{};
+  const allRows=baseRows.filter(row=>!hiddenIds.includes(row[6])).map(row=>[renamedFiles[row[6]]||row[0],...row.slice(1)]);
+  const fileTabItems=[
+    {key:'最近使用',label:<span className="files-library-tab-label">最近使用<span className="files-library-tab-count">{allRows.length}</span></span>},
+    {key:'全部文件',label:<span className="files-library-tab-label">全部文件<span className="files-library-tab-count">{allRows.length}</span></span>},
+    {key:'回收站',label:<span className="files-library-tab-label">回收站<span className="files-library-tab-count">0</span></span>},
+  ];
+  const rows=allRows.filter(row=>tab!=='回收站'&&(!query||row[0].toLowerCase().includes(query.toLowerCase()))&&(format==='全部'||row[0].toLowerCase().endsWith('.'+format.toLowerCase()))&&(source==='全部'||row[2]===source));
+  const pageCount=Math.max(1,Math.ceil(rows.length/10));
+  const currentPage=Math.min(page,pageCount);
+  const pagedRows=rows.slice((currentPage-1)*10,currentPage*10);
   function view(row){setPreview({name:row[0],content:fileLookup.get(row[6])?.content,type:fileLookup.get(row[6])?.type,source:row[2],date:row[4]});}
-  function download(row){const file=fileLookup.get(row[6]);if(!file){view(row);return;}file.type==='DOCX'?downloadWord(file.name,file.content):downloadText(file.name,file.content);}
+  function download(row){
+    const file=fileLookup.get(row[6]);
+    if(typeof file?.content!=='string'){
+      onToast('该文件仅保留记录，暂无可下载正文');
+      return;
+    }
+    file.type==='DOCX'?downloadWord(row[0],file.content):downloadText(row[0],file.content);
+  }
+  function beginRename(row){setOpenMoreId(null);setRenameTarget({id:row[6],name:row[0]});setRenameValue(row[0]);}
+  function renameFile(event){event.preventDefault();const nextName=renameValue.trim();if(!renameTarget||!nextName)return;setOverrides(current=>({...current,names:{...(current.names||{}),[renameTarget.id]:nextName}}));setRenameTarget(null);onToast('文件已重命名');}
+  function deleteFile(){if(!deleteTarget)return;setOverrides(current=>({...current,hiddenIds:[...new Set([...(current.hiddenIds||[]),deleteTarget.id])]}));if(preview?.name===deleteTarget.name)setPreview(null);setDeleteTarget(null);setOpenMoreId(null);onToast('文件已删除');}
+  useEffect(()=>{try{localStorage.setItem(FILES_LIBRARY_OVERRIDES_KEY,JSON.stringify(overrides));}catch{}},[overrides]);
+  useEffect(()=>{setPage(1);},[tab,query,format,source]);
+  useEffect(()=>{
+    if(!openMoreId)return;
+    function closeOutside(event){if(!moreRef.current?.contains(event.target)&&!event.target.closest('.files-library-more-trigger'))setOpenMoreId(null);}
+    function closeEscape(event){if(event.key==='Escape')setOpenMoreId(null);}
+    document.addEventListener('pointerdown',closeOutside);document.addEventListener('keydown',closeEscape);
+    return()=>{document.removeEventListener('pointerdown',closeOutside);document.removeEventListener('keydown',closeEscape);};
+  },[openMoreId]);
 
 
   return (
     <div className="view acct-view files-library">
-      <header className="acct-head"><h1>我的文件</h1><p>查找科研对话的交付文件和本地文件记录。</p></header>
-      <PageActions>
-        <IconButton label="刷新文件列表" onClick={() => onToast("已刷新")}><RefreshCw size={16}/></IconButton>
+      <header className="acct-head files-library-head"><div><h1>我的文件库</h1><p>查找科研对话的交付文件和本地文件记录。</p></div>
         <label className="sp-button sp-button-secondary ds-upload-button"><Upload size={16}/>添加本地文件
           <input type="file" multiple aria-label="添加到我的文件" onChange={e=>{
             const additions=Array.from(e.target.files||[]).map(file=>[file.name,'F','本地附件名称','未关联对话',new Date().toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'}),(file.size/1024).toFixed(1)+' KB',crypto.randomUUID()]);
             if(!additions.length)return;
-            setUploads(items=>[...additions,...items]);e.target.value='';
+            setUploads(items=>[...additions,...items]);setPage(1);e.target.value='';
             onToast('已记录本地文件名称，未上传文件正文');
           }}/>
         </label>
-      </PageActions>
-      <Tabs className="ds-detail-tabs files-library-tabs" items={["最近使用", "全部文件", "我的收藏", "回收站"]}
-        value={tab} onChange={setTab} ariaLabel="文件分类"/>
+      </header>
+      <div className="files-library-toolbar">
+        <Tabs className="ds-detail-tabs files-library-tabs" items={fileTabItems}
+          value={tab} onChange={setTab} ariaLabel="文件分类"/>
+      </div>
       {tab !== "回收站" && <div className="files-library-controls">
-        <label className="sp-search-field"><Search size={16}/><input aria-label="搜索文件名称" placeholder="搜索文件名称" value={query} onChange={e=>setQuery(e.target.value)}/></label>
-        <WorkspaceSelect label="文件来源筛选" value={source} onChange={setSource} options={[{value:'全部',label:'全部来源'},...new Set(allRows.map(row=>row[2]))]}/>
-        <WorkspaceSelect label="文件格式筛选" value={format} onChange={setFormat} options={[{value:'全部',label:'全部格式'},'MD','DOCX','PDF','PNG','CSV','XLSX','ZIP']}/>
-        {tab !== "我的收藏" && <Toggle checked={favorite} onChange={setFavorite} label="仅看收藏"/>}
+        <label className="sp-search-field files-library-search"><Search size={16}/><input aria-label="搜索文件名称" placeholder="搜索文件名称" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+        <div className="files-library-filter-group">
+          <WorkspaceSelect label="文件来源筛选" value={source} onChange={setSource} options={[{value:'全部',label:'全部来源'},...new Set(allRows.map(row=>row[2]))]}/>
+          <WorkspaceSelect label="文件格式筛选" value={format} onChange={setFormat} options={[{value:'全部',label:'全部格式'},'MD','DOCX','PDF','PNG','CSV','XLSX','ZIP']}/>
+        </div>
       </div>}
-      {rows.length ? <section aria-label="文件列表">
-        <p className="files-result-count" aria-live="polite">共 {rows.length} 个文件</p>
-        <ul className="files-library-list">{rows.map(row=>{
+      {rows.length ? <section aria-label="文件列表" className="files-library-results">
+        <header><p className="files-result-count" aria-live="polite">共 {rows.length} 个文件</p><span>按最近使用排序</span></header>
+        <ul className="files-library-list">{pagedRows.map(row=>{
           const [name,,origin,conversation,date,size,id]=row;
           const key=id||name;
-          const starred=favorites.includes(key);
-          return <li key={key}>
-            <FileText size={20} className="files-library-icon" aria-hidden="true"/>
-            <div className="files-library-name"><button type="button" title={name} onClick={()=>view(row)}>{name}</button><small title={conversation}>{origin} · {conversation}</small></div>
-            <div className="files-library-date"><span>{date}</span><small>{size}</small></div>
+          const formatLabel=name.split('.').at(-1)?.toUpperCase()||'FILE';
+          return <li className="files-library-row-card" key={key}>
+            <button type="button" className="files-library-main" title={name} aria-label={'预览 '+name} onClick={()=>view(row)}>
+              <DeliveryFileIcon type={formatLabel} name={name}/>
+              <span className="files-library-copy"><strong>{name}</strong><small><span>最新更新 {date}</span><span className="files-library-dot">·</span><span>{formatLabel}</span><span className="files-library-dot">·</span><span className="files-library-origin" title={origin+' · '+conversation+' · '+size}>{origin} · {conversation}</span></small></span>
+            </button>
             <div className="files-library-actions">
               <IconButton label={"预览 "+name} onClick={()=>view(row)}><Eye size={16}/></IconButton>
               {fileLookup.has(id)&&<IconButton label={"下载 "+name} onClick={()=>download(row)}><Download size={16}/></IconButton>}
-              <IconButton label={(starred?"取消收藏 ":"收藏文件 ")+name} aria-pressed={starred} onClick={()=>setFavorites(items=>starred?items.filter(x=>x!==key):[...items,key])}><Star size={16} fill={starred?"currentColor":"none"}/></IconButton>
+              <div className="workRecordMore" ref={openMoreId===id?moreRef:undefined}>
+                <button type="button" className="workRecordMoreButton files-library-more-trigger" aria-label={'更多操作 '+name} title="更多操作" aria-haspopup="menu" aria-expanded={openMoreId===id} onClick={()=>setOpenMoreId(openMoreId===id?null:id)}><MoreHorizontal size={18}/></button>
+                {openMoreId===id&&<div className="workRecordMoreMenu" role="menu" aria-label={'更多操作 '+name}>
+                  <button type="button" role="menuitem" onClick={()=>beginRename(row)}><Pencil size={15} aria-hidden="true"/><span>重命名</span></button>
+                  <button type="button" role="menuitem" onClick={()=>{setOpenMoreId(null);download(row);}}><Download size={15} aria-hidden="true"/><span>下载</span></button>
+                  <button type="button" role="menuitem" onClick={()=>{setOpenMoreId(null);setShareTarget({name,origin,conversation,date});}}><Share2 size={15} aria-hidden="true"/><span>分享</span></button>
+                  <button type="button" className="is-danger" role="menuitem" onClick={()=>{setOpenMoreId(null);setDeleteTarget({id,name});}}><Trash2 size={15} aria-hidden="true"/><span>删除</span></button>
+                </div>}
+              </div>
             </div>
           </li>;
         })}</ul>
-      </section> : <WorkspaceEmptyState icon={FolderOpen}
-        description={tab==="回收站"?"回收站里暂无文件。":tab==="我的收藏"?"收藏后的文件会显示在这里。":"调整关键词、来源或文件格式后再试。"}
-        onReset={tab!=="回收站"&&(query||format!=="全部"||source!=="全部"||favorite)?()=>{setQuery("");setFormat("全部");setSource("全部");setFavorite(false);}:undefined}>
-        {tab==="回收站"?"回收站为空":tab==="我的收藏"?"暂无收藏文件":"没有匹配的文件"}
+        <Pagination page={currentPage} total={pageCount} onChange={setPage} label="我的文件分页"/>
+      </section> : <WorkspaceEmptyState className={tab==="回收站"?"files-library-empty":undefined} icon={tab==="回收站"?TrashEmptyIllustration:(query||format!=="全部"||source!=="全部")?SearchEmptyIllustration:RecordEmptyIllustration}
+        description={tab==="回收站"?"回收站里暂无文件。":"调整关键词、来源或文件格式后再试。"}
+        onReset={tab!=="回收站"&&(query||format!=="全部"||source!=="全部")?()=>{setQuery("");setFormat("全部");setSource("全部");}:undefined}>
+        {tab==="回收站"?"回收站为空":"没有匹配的文件"}
       </WorkspaceEmptyState>}
+      {renameTarget&&<Modal title="重命名文件" onClose={()=>setRenameTarget(null)}><form onSubmit={renameFile}><label className="sp-field"><span>文件名称</span><input autoFocus required value={renameValue} onChange={event=>setRenameValue(event.target.value)}/></label><div className="sp-dialog-actions"><Button onClick={()=>setRenameTarget(null)}>放弃</Button><button type="submit" className="sp-button sp-button-primary">保存修改</button></div></form></Modal>}
+      {shareTarget&&<Modal title="分享文件" onClose={()=>setShareTarget(null)}><div className="ds-prose"><p>分享「{shareTarget.name}」</p><p>本地预览不会创建公开链接。真实产品中可生成仅空间成员可访问的分享入口。</p></div><div className="sp-dialog-actions"><Button onClick={()=>setShareTarget(null)}>完成</Button></div></Modal>}
+      {deleteTarget&&<Modal title="删除文件" onClose={()=>setDeleteTarget(null)}><div className="ds-prose"><p>删除「{deleteTarget.name}」后，将从我的文件列表中移除。</p></div><div className="sp-dialog-actions"><Button onClick={()=>setDeleteTarget(null)}>放弃</Button><Button variant="danger" onClick={deleteFile}>确认删除</Button></div></Modal>}
       {preview&&<Modal title={preview.name} wide onClose={()=>setPreview(null)}>{preview.content?<><pre className="sp-file-preview">{preview.content}</pre><Btn kind="primary" onClick={()=>preview.type==='DOCX'?downloadWord(preview.name,preview.content):downloadText(preview.name,preview.content)}>下载文件</Btn></>:<div className="ds-prose"><p>当前仅保留文件元数据，未取得此文件正文。</p><p>来源：{preview.source}<br/>记录时间：{preview.date}</p><p>此预览不会生成或下载伪造的原始文件。</p></div>}</Modal>}
     </div>
   );
@@ -458,7 +536,7 @@ export function Approvals({ onFiles }) {
       <header className="acct-head"><h1>我的审批</h1><p>查看发起的下载申请和待处理审批。</p></header>
       <Tabs className="sp-filter-chips approval-filters" items={["我发起的", "待我审批"]} value={tab} onChange={setTab} />
       <div className="billing-records">
-        <WorkspaceEmptyState icon={DocumentEmptyIllustration} description={tab === "我发起的" ? "发起文件下载申请后，可在这里查看进度。" : "收到文件下载申请后，可在这里处理。"} action={tab === "我发起的" && <Button onClick={onFiles}>前往我的文件 <ArrowRight size={16}/></Button>}>{tab === "我发起的" ? "暂无发起的申请" : "暂无待审批申请"}</WorkspaceEmptyState>
+        <WorkspaceEmptyState icon={ApprovalEmptyIllustration} description={tab === "我发起的" ? "发起文件下载申请后，可在这里查看进度。" : "收到文件下载申请后，可在这里处理。"} action={tab === "我发起的" && <Button onClick={onFiles}>前往我的文件 <ArrowRight size={16}/></Button>}>{tab === "我发起的" ? "暂无发起的申请" : "暂无待审批申请"}</WorkspaceEmptyState>
       </div>
     </div>
   );

@@ -4,11 +4,11 @@ import { MembershipBadge } from "./AccountControl.jsx";
 import { useState } from "react";
 import { Check, Copy, Heart, Info, Search, X } from "lucide-react";
 import { AGENTS, EXAMPLE_PROMPT, SKILLS } from "./data.js";
-import { SkillGlyph, AgentGlyph, StatusTag, AgentBadge, AgentCard, AgentParameters, Button, CaseCategory, cx, DocumentEmptyIllustration, EmptyState, IconButton, LoadingButton, NewBadge, SkillCard, Tag } from "./components.jsx";
+import { SkillGlyph, AgentGlyph, StatusTag, AgentBadge, AgentCard, AgentParameters, Button, CaseCategory, cx, EmptyState, IconButton, LoadingButton, NewBadge, SkillCard, Tag } from "./components.jsx";
 
 import { AgentIdentity, CaseGallery, DeliveryCard, RegressionConfig, TaskJourney } from "./ConversationPatterns.jsx";
 
-import { LayoutSpec, NavigationSpec, PromptSpec } from "./SpecPatterns.jsx";
+import { EmptyStateSpec, LayoutSpec, NavigationSpec, PromptSpec } from "./SpecPatterns.jsx";
 import { RecommendationHeading } from "../design-system/RecommendationHeading.jsx";
 
 const COLORS = [
@@ -69,11 +69,7 @@ export function ControlGallery({ onDetail, onCall, onNotice, onDelete, annotate,
     </section>
     <section className="sp-gallery-section" id="sp-agent-section"><div className="sp-section-heading"><div><h2>科研 Agent</h2><p>桌面三列。卡片上下 12px、左右 14px，内容组之间 8px。</p></div></div><div className="sp-agent-grid" data-testid="agent-grid">{AGENTS.map(item => <AgentCard key={item.id} item={item} onDetail={onDetail} onCall={onCall} />)}</div></section>
     <div id="case-spec"><CaseGallery onChoose={item => onDetail({ ...item, kind: 'case', online: true, steps: ['了解任务', '补充研究材料', '配置执行'], output: '示例成果结构', icon: item.id === 'analysis' ? 'chart' : item.id === 'grant' ? 'file' : 'book' })} /></div>
-    <section className="sp-gallery-section" id="spec-empty">
-      <div className="sp-section-heading"><h2>缺省态</h2></div>
-      <p className="sp-section-note">从上到下居中排列。大图标使用审批的 92 × 74 px 双层文档插图，标题 16/24 px、字重 600，描述 14/22 px、次级文字色。</p>
-      <EmptyState icon={DocumentEmptyIllustration} description="购买或兑换会员后，账单会显示在这里。">暂无账单记录</EmptyState>
-    </section>
+    <EmptyStateSpec/>
     <section className="sp-gallery-section" id="spec-chat">
       <div className="sp-section-heading"><div><h2>对话内任务组件</h2><p>Agent 名称 20px、说明 14px。研究方向标题 16px，任务链 Skill 标记 14px、单行高 34px。</p></div></div>
       <div className="sp-spec-chat-content">

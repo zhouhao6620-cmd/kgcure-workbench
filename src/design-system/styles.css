@@ -4,3 +4,6 @@
 @import '../design-preview/reference-adapter.css';
 @import '../design-preview/capability-cards.css';
 @import '../design-preview/account-control.css';
+@import './spaces.css';
+@import './workspace-details.css';
+@import './contribution.css';

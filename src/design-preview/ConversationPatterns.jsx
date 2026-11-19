@@ -2,7 +2,7 @@ import { sitePath } from "../site-path.js";
 import { ConversationPrompt, FollowUpQuestions } from '../design-system/ConversationPrompt.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Archive, Download, FolderInput, ImagePlus, ChevronRight, PenLine, ArrowUpRight, Check, ChevronDown, Circle, FileCheck2, FileText, Folder, FolderOpen, Layers, Loader2, Pause, Play, Square, Pencil, Search, Sparkles, Upload, Workflow, X } from 'lucide-react';
-import { SkillGlyph, StatusTag, AgentBadge, Button, CaseCategory } from './components.jsx';
+import { SkillGlyph, StatusTag, AgentBadge, Button, CaseCategory, SpaceDirectoryOptions } from './components.jsx';
 
 export function FilePanelToggle({ open, onToggle, controls, label = '文件面板' }) {
   return <button type="button" className="sp-file-toggle" aria-label={`${open ? '关闭' : '打开'}${label}`}
@@ -175,10 +175,10 @@ export function DeliveryCard({ file, delivery, onDownload }) {
    <button type="button" ref={trigger} aria-label={'保存 ' + file.name} title="保存到空间" popoverTarget={menuId} onClick={positionMenu}><FolderInput size={18} aria-hidden="true"/></button>
    <button type="button" aria-label={'下载 ' + file.name} title="下载" onClick={onDownload}><Download size={18} aria-hidden="true"/></button>
   </div>
-  <div className="sp-delivery-spaces" id={menuId} ref={menu} popover="auto" aria-label="保存到空间" role="group" onToggle={event=>setOpen(event.newState === 'open')}>
-   <p>保存到空间</p>
-   {spaces.map(space=><button key={space.id} type="button" onClick={()=>{menu.current.hidePopover();delivery.onSave(file, space.id);}}><Folder size={16} aria-hidden="true"/><span>{space.name}</span></button>)}
-   {!spaces.length && <p>暂无科研空间</p>}
+  <div className="sp-delivery-spaces" id={menuId} ref={menu} popover="auto" aria-label="保存到空间" role="menu" onToggle={event=>setOpen(event.newState === 'open')}>
+   <SpaceDirectoryOptions spaces={spaces} value={null} caption="保存到空间"
+    onPick={spaceId=>{menu.current.hidePopover();delivery.onSave(file, spaceId);}}
+    onNew={()=>{menu.current.hidePopover();delivery.onNewSpace?.();}} />
   </div>
  </article>;
 }

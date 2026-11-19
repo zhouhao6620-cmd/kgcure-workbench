@@ -8,6 +8,16 @@
 .ds-research-chat .sp-file-panel > header { min-height: 54px; padding: 8px 12px; border-bottom: 1px solid var(--ds-line); }
 .ds-chat-file-list { display: grid; gap: 8px; padding: 12px; }
 .ds-research-chat .sp-source-deliveries { margin-top: 12px; }
+.ds-real-config .sp-parameter-foot { flex-flow: row wrap; align-items: center; }
+.ds-real-config .sp-parameter-foot > .sp-button { align-self: center; margin-inline-start: 0; }
+.ds-real-config .sp-parameter-foot > span { flex: 0 1 auto; }
+.ds-real-config .sp-parameter-foot > .ds-config-error {
+  margin: 0 0 0 auto;
+  color: var(--sp-danger, #bf3542);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: right;
+}
 @media (max-width: 1279px) {
   .ds-research-chat .sp-file-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 292px; z-index: 45; box-shadow: -12px 0 32px #17253412; }
   .ds-chat-file-list .sp-source-delivery-card { padding: 8px; gap: 4px; }

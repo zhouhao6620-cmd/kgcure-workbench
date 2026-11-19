@@ -27,7 +27,7 @@ export const AGENTS = [
 ];
 
 export const ALL_CAPABILITIES = [...SKILLS, ...AGENTS];
-export const INITIAL_SPACES = [{ id: "personal", name: "个人会话" }, { id: "clinical", name: "临床研究课题组" }, { id: "meta", name: "Meta 分析课题" }];
+export const INITIAL_SPACES = [{ id: "clinical", name: "临床研究课题组" }, { id: "meta", name: "Meta 分析课题" }];
 export const EXAMPLE_PROMPT = "我想研究 GLP-1 受体激动剂与心血管结局，先帮我整理研究问题，再推荐合适的科研能力。";
 export const INITIAL_HISTORY = [
   { id: "example", title: "GLP-1 与心血管结局研究" },

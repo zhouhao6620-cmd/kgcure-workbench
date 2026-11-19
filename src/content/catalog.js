@@ -14,7 +14,7 @@ export const BUSINESS_SKILLS = catalog.filter(item => item.kind === 'skill');
 export const BUSINESS_AGENTS = catalog.filter(item => item.kind === 'agent');
 export const capabilityPath = item => '/workspace/' + (item.kind === 'skill' ? 'skills/' : 'agents/') + item.id;
 export const capabilityById = id => catalog.find(item => item.id === id);
-export const BUSINESS_SPACES = [{id:'personal',name:'个人会话'},{id:'db79430b945744a4aa9b3676d21f5fba',name:'神经发育障碍'}];
+export const BUSINESS_SPACES = [{id:'db79430b945744a4aa9b3676d21f5fba',name:'神经发育障碍'}];
 export const STORE_FEATURES = {
   skill: [
     { id: '1042', image: 'skill-literature', tone: 'blue', kicker: '循证研究', title: '让每一次检索，都有据可循', description: '从研究问题到可追溯的文献证据' },
