@@ -56,9 +56,9 @@
 .workLibraryBar nav button small {font:inherit;color:inherit;letter-spacing:inherit}
 .workRecords {display:grid;width:100%;gap:12px}
 .workRecordsEmpty.sp-empty {min-height:clamp(280px,calc(100dvh - 590px),430px);padding:32px 20px}
-.workRecordCard {position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;height:var(--ds-delivery-card-height);min-width:0;padding:12px 16px;border:1px solid var(--ds-line,#e2e5eb);border-radius:10px;background:white;color:inherit}
-.workRecordCard:hover {border-color:#c7d0dd}
-.workRecordCard.has-open-menu {z-index:30;border-color:#c7d0dd}
+.workRecordCard {position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;height:var(--ds-delivery-card-height);min-width:0;padding:12px 16px;border:1px solid var(--ds-card-line,#eef0f4);border-radius:10px;background:white;color:inherit;transition:background-color 160ms ease,border-color 160ms ease}
+.workRecordCard:hover {border-color:var(--ds-card-hover,#d5ddeb);background:#fafbfc}
+.workRecordCard.has-open-menu {z-index:30;border-color:var(--ds-card-hover,#d5ddeb)}
 .workRecordMove {position:relative;display:flex;flex:none;align-items:center}
 .workRecordMoveButton,.workRecordMoreButton {display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:6px;background:transparent;color:#a3abb7;cursor:pointer}
 .workRecordMoreButton {color:#7a8491}
@@ -104,6 +104,13 @@
 .workCapabilityFilters .sp-search-field {flex:1 1 180px;max-width:250px;height:44px}
 @media(max-width:480px){.workCapabilityFilters .sp-search-field {max-width:none}}
 .workChoices {display:grid;gap:4px;max-height:48vh;overflow:auto;margin:12px 0;padding-right:0;scrollbar-gutter:stable}
+#space-capability-choices {
+  padding-right: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-gutter: auto;
+}
+#space-capability-choices::-webkit-scrollbar {display:none}
 .workChoices> :is(div,li) {display:grid;grid-template-columns:24px minmax(0,1fr) 92px;column-gap:10px;align-items:center;min-width:0;padding:8px 0 8px 2px}
 .workChoices> :is(div,li)>span:nth-child(2) {display:block;min-width:0;width:100%;overflow:hidden}
 .workChoices> :is(div,li)>span:nth-child(2)>strong,

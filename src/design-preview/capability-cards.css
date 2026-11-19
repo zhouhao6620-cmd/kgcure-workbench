@@ -21,6 +21,7 @@
  overflow:hidden; box-shadow:none; transform:none;
  transition:border-color 160ms ease,box-shadow 160ms ease,transform 160ms ease;
 }
+.sp-design-app .sp-gray-capability { border-color:var(--ds-line); }
 .sp-design-app .sp-gray-capability .sp-card-hit {
  display:flex; flex-direction:column; align-items:stretch; gap:var(--sp-card-gap);
  padding:var(--sp-card-padding); min-height:136px; height:100%; width:100%; min-width:0;
