@@ -21,8 +21,9 @@
 .ds-draw-advanced h3{margin:0 0 10px;font-size:14px;line-height:22px;font-weight:600;color:#17191e;}
 .ds-draw-advanced section>div{display:flex;flex-wrap:wrap;gap:8px;}
 .ds-draw-advanced button{min-height:34px;padding:6px 12px;border:1px solid #e2e5eb;border-radius:8px;background:#fff;color:#626873;font:inherit;font-size:14px;line-height:22px;}
-.ds-draw-advanced button[aria-pressed=true]{border-color:#626873;background:#f5f6f8;color:#17191e;}
+.ds-draw-advanced button[aria-pressed=true]{border-color:var(--ds-ink);background:var(--ds-ink);color:#fff;}
 .ds-draw-advanced button:hover{background:#f5f6f8;}
+.ds-draw-advanced button[aria-pressed=true]:hover{border-color:var(--ds-ink);background:var(--ds-ink);color:#fff;}
 .ds-draw-controls button:focus-visible{outline:2px solid #8993a3;outline-offset:2px;}
 @media(max-width:699px){.ds-draw-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.ds-draw-controls>.sp-tool-select,.ds-draw-control>.sp-tool-select{justify-content:flex-start;width:100%;padding-inline:8px}.ds-draw-control:nth-child(2)>.ds-draw-menu{left:auto;right:0}}
 .ds-drawing-modes{display:flex;justify-content:center;gap:24px;width:calc(100% - var(--ds-composer-underlay-inset));padding:28px 20px 12px;margin:-16px auto 0;border-radius:0 0 24px 24px;background:#f5f5f6;}
