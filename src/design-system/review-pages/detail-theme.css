@@ -87,6 +87,10 @@ html { scroll-padding-top: 0; }
 .hero-actions .save-btn[aria-pressed="true"] .ic { fill:currentColor; }
 .detail-page .peer-heading { font-size:16px; line-height:24px; }
 .detail-page .peer-task, .detail-page .peer-task p, .detail-page .peer-task span { font-size:14px; line-height:22px; }
+.detail-page .right-rail .peer-slide :is(.peer-name-row > strong, .peer-name-row > time, .peer-tags > span, .peer-org, .capability-link) {
+  font-size:14px;
+}
+.detail-page .right-rail .peer-slide > .peer-org { line-height:22px; }
 .review-tabs-docked .anchor-nav { visibility:hidden; }
 .review-tabs-docked .detail-page .right-rail { top:12px; }
 .review-tabs-docked .detail-page :is(.content-section,.cases-section) { scroll-margin-top:12px; }
