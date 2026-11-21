@@ -1,8 +1,14 @@
 /* Shared visual rules for the review samples and workspace pages. */
 .sp-design-app:is(.ds-spec-preview, .business-workspace) :is(.sp-tag, .sp-skill-badge, .sp-agent-badge, .sp-membership-badge, .sp-new-badge),
-.sp-design-app:is(.ds-spec-preview, .business-workspace) :is(.sp-tag, .sp-skill-badge, .sp-agent-badge) > span { font-weight: 500; }
-.sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-gray-capability .sp-card-hit,
-.sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-gray-capability.sp-agent-card .sp-card-hit {
+.sp-design-app:is(.ds-spec-preview, .business-workspace) :is(.sp-tag, .sp-skill-badge, .sp-agent-badge) > span {
+  font-weight: var(--ds-tag-weight, var(--ds-tag-weight-medium));
+}
+.sp-design-app .wikiHero .wikiTags,
+.sp-design-app .sp-tag-spec-topics,
+.sp-design-app .sp-skill-card .sp-card-hit > .sp-skill-badge {
+  --ds-tag-weight: var(--ds-tag-weight-regular);
+}
+.sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-gray-capability:not(.sp-agent-card) .sp-card-hit {
   padding: var(--ds-capability-block-padding) var(--ds-capability-inline-padding);
   gap: var(--ds-capability-group-gap);
   min-height: 0;

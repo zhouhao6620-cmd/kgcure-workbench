@@ -10,7 +10,7 @@ export function useCapabilityFilters(items,storageKey){
 export function CapabilityFilters({ categories, category, onCategory, source, onSource, showSources = true, heading, count }) {
  const sources = showSources && <div className="sp-sort" role="group" aria-label="Skill 来源筛选">{['推荐', '独立测评', '开源社区'].map(item => <button type="button" key={item} aria-pressed={source === item} className={source === item ? 'is-active' : ''} onClick={() => onSource(item)}>{item}</button>)}</div>;
  return <>
-  {heading && <div className="ds-hub-heading">{heading}{sources}</div>}
-  <div className="sp-filter-bar"><div className="sp-filter-chips" role="group" aria-label="能力分类">{categories.map(item => <button type="button" key={item} className={'sp-filter' + (category === item ? ' is-active' : '')} aria-pressed={category === item} onClick={() => onCategory(item)}>{item}</button>)}</div>{heading ? count : sources}</div>
+  {heading && <div className="ds-hub-heading">{heading}{count}{sources}</div>}
+  <div className="sp-filter-bar"><div className="sp-filter-chips" role="group" aria-label="能力分类">{categories.map(item => <button type="button" key={item} className={'sp-filter' + (category === item ? ' is-active' : '')} aria-pressed={category === item} onClick={() => onCategory(item)}>{item}</button>)}</div>{!heading && sources}</div>
  </>;
 }

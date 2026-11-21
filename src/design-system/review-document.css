@@ -1,0 +1,22 @@
+.business-workspace .ds-secondary-scroll:has(.ds-review-document, .ds-review-document-status) {
+  padding: 0;
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+.ds-review-document {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+  background: #fff;
+}
+.ds-review-document-status {
+  margin: 32px auto;
+  color: var(--ds-secondary);
+  font-size: 14px;
+}
+.ds-secondary-navigation { flex: 1; min-width: 0; }
+.ds-review-tabs { display:flex; gap:clamp(12px,2vw,28px); overflow:auto; scrollbar-width:none; }
+.ds-review-tabs button { flex:none; min-height:44px; padding:0; border:0; border-bottom:2px solid transparent; background:none; color:var(--ds-secondary); font-size:14px; }
+.ds-review-tabs button[aria-current] { border-color:var(--ds-ink); color:var(--ds-ink); font-weight:600; }

@@ -191,7 +191,7 @@
  min-height: 42px;
  padding: 8px 12px;
  border: 1px solid var(--ds-line);
- border-radius: 9px;
+ border-radius: var(--ds-radius-quick-entry);
  background: #fff;
  color: var(--ds-primary);
  text-align: left;
@@ -199,8 +199,8 @@
 }
 .ds-home-shortcut.is-agent { color: #805d26; }
 .ds-home-shortcut > svg { flex-shrink: 0; }
-.ds-home-shortcut > strong { font-size: 14px; line-height: 22px; font-weight: 500; }
-.ds-home-shortcut-copy { color: var(--ds-secondary); font-size: 14px; line-height: 22px; }
+.ds-home-shortcut > strong { font-size: 14px; line-height: 22px; font-weight: var(--ds-tag-weight-medium); }
+.ds-home-shortcut-copy { color: var(--ds-secondary); font-size: 14px; line-height: 22px; font-weight: var(--ds-tag-weight-regular); }
 .ds-home-shortcut:hover { background: #f9fafc; border-color: var(--ds-card-hover); }
 .ds-home-shortcut:focus-visible { outline: 2px solid var(--ds-primary); outline-offset: 1px; }
 

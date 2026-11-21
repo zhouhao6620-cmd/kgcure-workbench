@@ -210,7 +210,7 @@ export function BillingUsage({ view, tier, resetUsed, onUseReset, showRecords, o
   }, [showRecords]);
 
   return <div className="view acct-view account-flat bu-page">
-    <header className="acct-head bu-page-heading"><h1>账单与用量</h1><Tag>示例数据</Tag></header>
+    <header className="acct-head bu-page-heading"><h1>账单与用量</h1></header>
     <div className="bu-view-bar">
       <Tabs className="ds-detail-tabs bu-view-tabs" items={BILLING_VIEWS} value={view} ariaLabel="权益视图" onChange={next => {
         if (next === view) return;

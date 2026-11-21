@@ -1,16 +1,17 @@
 import { sitePath } from "../site-path.js";
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
-  ArrowRight, ArrowUpRight, BookOpen, ChartNoAxesCombined, ChevronLeft, ChevronRight,
-  ClipboardCheck, FileText, FlaskConical, Handshake, ListChecks, Search, ShieldCheck, X,
+  ArrowUpRight, BookOpen, ChartNoAxesCombined, ChevronLeft, ChevronRight,
+  ClipboardCheck, FileText, FlaskConical, Handshake, ListChecks, Search, X,
 } from 'lucide-react';
 import { CapabilityFilters, useCapabilityFilters } from './CapabilityFilters.jsx';
 import { HighlightedTitle } from './Typography.jsx';
 import { Pagination } from './Pagination.jsx';
 import { PageActions } from './SecondaryPageShell.jsx';
-import { AgentCard, SkillCard, Modal, Button, EmptyState, IconButton, SearchEmptyIllustration } from '../design-preview/components.jsx';
-import { BUSINESS_SKILLS, BUSINESS_AGENTS, STORE_FEATURES, capabilityById, capabilityPath } from '../content/catalog.js';
+import { AgentCard, SkillCard, EmptyState, IconButton, SearchEmptyIllustration } from '../design-preview/components.jsx';
+import { BUSINESS_SKILLS, BUSINESS_AGENTS, STORE_FEATURES, capabilityPath } from '../content/catalog.js';
 import { useRouter } from '../router.jsx';
+import { EVALUATION_PATH, REVIEW_CAPABILITIES } from '../content/review-capabilities.js';
 import { COMMUNITY_SKILL_EXAMPLES } from '../content/community-skill-examples.js';
 import './catalog.css';
 
@@ -27,7 +28,7 @@ const STORE_SKILLS = BUSINESS_SKILLS.flatMap((item, index) => {
   return example ? [item, example] : [item];
 });
 
-function StoreFeatures({ kind, type, onNavigate }) {
+function StoreFeatures({ kind, type, previewId, onOpenPreview, onUnavailable }) {
   const track = useRef(null);
   const [edges, setEdges] = useState({ start: true, end: false });
   const FeatureIcon = FEATURE_ICONS[kind];
@@ -61,12 +62,14 @@ function StoreFeatures({ kind, type, onNavigate }) {
   return <div className="ds-feature-carousel">
     <div className="ds-feature-track" ref={track} role="region" aria-label={`${type} 精选`}>
       {STORE_FEATURES[kind].map(feature => <button type="button" key={feature.id}
-        className="ds-feature" data-tone={feature.tone} onClick={() => onNavigate(capabilityPath(capabilityById(feature.id)))}>
+        className="ds-feature" data-tone={feature.tone}
+        onClick={feature.id === previewId ? onOpenPreview : onUnavailable}>
         <span className="ds-feature-art" aria-hidden="true">
           {feature.image ? <img src={sitePath(`/store-art/${feature.image}.webp`)} alt=""/> : <FeatureIcon size={54} strokeWidth={1.15}/>}
         </span>
         <span className="ds-feature-copy"><small>{feature.kicker}</small><strong>{feature.title}</strong><span>{feature.description}</span></span>
-        <ArrowUpRight className="ds-feature-open" size={16} aria-hidden="true"/>
+        {feature.id === previewId ? <ArrowUpRight className="ds-feature-open" size={16} aria-hidden="true"/>
+          : <span className="ds-feature-open ds-feature-unavailable">暂无接入</span>}
       </button>)}
     </div>
     <IconButton className="ds-feature-prev" label="上一张精选" disabled={edges.start} onClick={() => move(-1)}><ChevronLeft size={17}/></IconButton>
@@ -74,18 +77,76 @@ function StoreFeatures({ kind, type, onNavigate }) {
   </div>;
 }
 
-export function CapabilityStore({ kind, onNavigate, onRecommend }) {
+function ChannelAssessmentCard({ kind, preview }) {
+  const id = useId();
+  const isSkill = kind === 'skill';
+  const heading = isSkill ? '科研场景真实能力评测标准' : 'Agent科研真实任务结果交付评测标准';
+  const description = isSkill
+    ? '面向真实科研场景，核对结果准确性、信息完整性与证据可追溯性。'
+    : '从任务目标到最终交付，核对任务有效性、流程完整性与证据可靠性。';
+  const query = new URLSearchParams({ mode: kind });
+  if (preview) query.set('preview', preview);
+  return <a className="ds-channel-assessment" data-kind={kind}
+    href={sitePath(EVALUATION_PATH) + '?' + query} target="_blank" rel="noopener noreferrer"
+    aria-labelledby={id + '-title'} aria-describedby={id + '-description ' + id + '-target'}>
+    <span className="sr-only" id={id + '-target'}>在新标签页打开</span>
+    <span className="ds-channel-assessment-copy">
+      <strong id={id + '-title'}>{heading}</strong>
+      <span id={id + '-description'}>{description}</span>
+    </span>
+    <span className="ds-channel-assessment-art" aria-hidden="true">
+      {isSkill ?
+        <svg viewBox="0 0 276 128" fill="none" focusable="false">
+          <g className="assessment-guide">
+            <circle cx="150" cy="64" r="60" strokeDasharray="1 5"/>
+            <path d="M150 2v124M86 64h128M108 122h84M60 45h25m130 38h26"/>
+            <path d="M150 14 198 49 180 105h-60l-18-56 48-35Zm0 13 35 26-13 42h-44l-13-42 35-26Zm0 13 23 17-9 27h-28l-9-27 23-17Zm0 12 12 8-5 15h-14l-5-15 12-8ZM150 64l48-15m-48 15 30 41m-30-41-30 41m30-41-48-15"/>
+            <path strokeDasharray="2 4" d="M59 81h43m89-58h44v14m-36 64h36"/>
+            <path d="M51 78v6m-3-3h6m192-46v7m-3.5-3.5h7M224 111h8m-4-4v8"/>
+          </g>
+          <path className="assessment-data" d="m150 22 42 29-17 46-48 1-17-47 40-29Z"/>
+          <path className="assessment-flow assessment-overlay" d="m150 38 27 19-8 31-35-2-9-28 25-20Z"/>
+          <g className="assessment-points">
+            <circle cx="150" cy="22" r="2.9"/><circle cx="192" cy="51" r="2.9"/><circle cx="175" cy="97" r="2.9"/>
+            <circle cx="127" cy="98" r="2.9"/><circle cx="110" cy="51" r="2.9"/>
+          </g>
+        </svg> :
+        <svg viewBox="0 0 276 128" fill="none" focusable="false">
+          <g className="assessment-guide">
+            <path d="M30 64h216M64 12v104m74-104v104m74-104v104M42 22h192M42 106h192"/>
+            <path strokeDasharray="2 4" d="M64 45V23h74v22m0 38v23h74V83M27 48h24m178 34h23"/>
+            <path d="M20 45v6m-3-3h6m237 31v6m-3-3h6"/>
+            <rect x="114" y="41" width="48" height="46" rx="11"/>
+            <rect x="188" y="41" width="48" height="46" rx="11"/>
+          </g>
+          <path className="assessment-flow" d="M84 64h34m-12-3 3 3-3 3m52-3h34m-12-3 3 3-3 3"/>
+          <rect className="assessment-node" x="44" y="45" width="40" height="38" rx="9"/>
+          <rect className="assessment-node" x="118" y="45" width="40" height="38" rx="9"/>
+          <rect className="assessment-node assessment-node-final" x="192" y="45" width="40" height="38" rx="9"/>
+          <path className="assessment-flow" d="M58 56h9l4 4v12H58V56Zm9 0v4h4m-10 4h7m-7 4h7m64-9h12m-12 5h12m-12 5h12m63-5 4 4 7-8"/>
+          <g className="assessment-points">
+            <circle cx="64" cy="22" r="2.8"/><circle cx="138" cy="22" r="2.8"/>
+            <circle cx="138" cy="106" r="2.8"/><circle cx="212" cy="106" r="2.8"/>
+          </g>
+        </svg>}
+    </span>
+  </a>;
+}
+
+export function CapabilityStore({ kind, onNavigate, onRecommend, onToast }) {
   const router = useRouter();
   const isSkill = kind === 'skill';
   const type = isSkill ? 'Skill' : 'Agent';
-  const items = isSkill ? STORE_SKILLS : BUSINESS_AGENTS;
+  const reviewExample = REVIEW_CAPABILITIES.find(item => item.kind === kind);
+  const items = [reviewExample, ...(isSkill ? STORE_SKILLS : BUSINESS_AGENTS)];
+  const openPreview = () => onNavigate(capabilityPath(reviewExample));
+  const notifyUnavailable = () => onToast('暂无接入');
   const description = isSkill ? '发现、评测和使用专业科研 AI 技能' : '探索专业科研工作流，让复杂任务更高效地完成';
   const { query, setQuery, category, setCategory, source, setSource, list: filtered, reset } = useCapabilityFilters(items, `kgcure-store-${kind}`);
   const [page, setPage] = useState(() => {
     try { return Math.max(1, Number(sessionStorage.getItem(`kgcure-store-page-${kind}`)) || 1); }
     catch { return 1; }
   });
-  const [review, setReview] = useState(false);
   const grid = useRef(null);
   const hub = useRef(null);
   const returnToHub = useRef(false);
@@ -121,8 +182,7 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
     sessionStorage.setItem(`kgcure-store-page-${kind}`, String(current));
   }, [current, kind]);
   useEffect(() => {
-    const item = capabilityById(router.get('ability'));
-    if (item) onNavigate(capabilityPath(item));
+    if (router.get('ability') === reviewExample.id) openPreview();
   }, [router.search]);
 
   function updateFilter(setFilter, value) {
@@ -137,20 +197,20 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
   }
 
   return <div className="sp-sheet ds-capability-store"><div className="sp-gallery-section">
-    <PageActions>{isSkill && <a className="sp-button sp-button-secondary ds-contribute-link" href={sitePath("/workspace/contribute")} target="_blank" rel="noreferrer"><Handshake size={16} aria-hidden="true"/>社区贡献</a>}</PageActions>
+    <PageActions>
+      <a className="sp-button sp-button-secondary ds-contribute-link"
+        href={sitePath('/workspace/contribute' + (isSkill ? '' : '?kind=agent'))} target="_blank" rel="noopener noreferrer">
+        <Handshake size={16} aria-hidden="true"/>社区贡献
+      </a>
+    </PageActions>
     <div className="sp-section-heading ds-store-heading">
       <div><h1>{!isSkill && <img className="ds-store-robot" src={sitePath("/design-preview/agent-robot.webp")} alt=""/>}<HighlightedTitle>{`科研 ${type}`}</HighlightedTitle></h1><p>{description}</p></div>
-      <label className="sp-search-field ds-store-search"><Search size={16}/><input aria-label={`搜索科研 ${type}`} placeholder={`搜索 ${isSkill ? 'Skill、科研方法' : 'Agent、科研任务'}`} value={query} onChange={event => updateFilter(setQuery, event.target.value)}/>{query && <IconButton label="清空搜索" onClick={() => updateFilter(setQuery, '')}><X size={14}/></IconButton>}</label>
+      <label className="sp-search-field sp-capability-query ds-store-search"><Search size={16}/><input aria-label={`搜索科研 ${type}`} placeholder={`搜索 ${isSkill ? 'Skill、科研方法' : 'Agent、科研任务'}`} value={query} onChange={event => updateFilter(setQuery, event.target.value)}/>{query && <IconButton label="清空搜索" onClick={() => updateFilter(setQuery, '')}><X size={14}/></IconButton>}</label>
     </div>
-    <StoreFeatures kind={kind} type={type} onNavigate={onNavigate}/>
-    {isSkill ? <button type="button" className="ds-review-strip" onClick={() => setReview(true)}>
-      <span className="ds-review-symbol"><ShieldCheck size={24}/></span>
-      <span className="ds-review-copy"><strong>数愈科研专业评测</strong><small>方法是否适用？结果能否复核？交付是否完整？</small></span>
-      <svg width="84" height="58" viewBox="0 0 84 58" fill="none" aria-hidden="true">
-        <g stroke="#bcb1dd"><path d="M42 2 69 21 59 53H25L15 21Z M42 12 59 24 53 44H31L25 24Z M42 22 49 27 46 35H38L35 27Z"/><path d="M42 30V2 M42 30 69 21 M42 30 59 53 M42 30 25 53 M42 30 15 21"/></g>
-        <path d="M42 7 62 23 52 44 29 48 23 24Z" fill="#8570df33" stroke="#8066d0" strokeWidth="1.6"/>
-      </svg><ArrowRight size={18} aria-hidden="true"/>
-    </button> : <section className="ds-task-directions">
+    <StoreFeatures kind={kind} type={type} previewId={reviewExample.id}
+      onOpenPreview={openPreview} onUnavailable={notifyUnavailable}/>
+    <ChannelAssessmentCard kind={kind} preview={router.get('preview')}/>
+    {!isSkill && <section className="ds-task-directions">
       <div className="ds-section-title"><h2>按科研任务查找</h2><span>从研究目标出发，找到适合的 Agent</span></div>
       <div>{TASKS.map(task => <button type="button" key={task.name} onClick={() => onRecommend?.(task)}><task.icon className="ds-task-direction-icon" data-tone={task.tone} size={22} strokeWidth={1.8} aria-hidden="true"/><strong>{task.name}</strong><small>{task.description}</small><ArrowUpRight size={16}/></button>)}</div>
     </section>}
@@ -160,7 +220,8 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
         heading={<h2 id={`ds-${kind}-hub`} tabIndex={-1}>{type} Hub</h2>}
         count={<p className="ds-result-caption" aria-live="polite">{catalogCount > 0 || demoCount === 0 ? <>{query.trim() ? '找到' : '共'} <strong>{catalogCount}</strong> 项 {type}{demoCount > 0 && ' · '}</> : null}{demoCount > 0 && <span>{demoCount} 项演示</span>}</p>}/>
       <div ref={grid} className={isSkill ? 'sp-skill-grid' : 'sp-agent-grid'}>
-        {visible.map(item => <Card key={item.id} item={item} onDetail={() => onNavigate(capabilityPath(item))}/>)}
+        {visible.map(item => <Card key={item.id} item={item} context="channel" unavailable={item.id !== reviewExample.id}
+          onDetail={openPreview} onUnavailable={notifyUnavailable}/>)}
       </div>
       {!filtered.length &&
         <EmptyState icon={SearchEmptyIllustration}
@@ -170,5 +231,5 @@ export function CapabilityStore({ kind, onNavigate, onRecommend }) {
         </EmptyState>}
       <Pagination page={current} total={pageCount} onChange={changePage} label="能力列表分页"/>
     </section>
-  </div>{review && <Modal title="数愈科研专业评测" onClose={() => setReview(false)}><div className="ds-prose"><p>科研能力的收录、专业评测与线上可用是三个独立状态。</p><h3>评测关注的问题</h3><ul><li>研究方法是否适用于所给任务和材料？</li><li>结果、证据和关键步骤能否复核？</li><li>交付是否完整，适用条件和限制是否清楚？</li></ul><p>当前目录暂无可核验的正式评测报告。</p><Button onClick={() => { setReview(false); updateFilter(setSource, '独立测评'); }}>查看已评测能力</Button></div></Modal>}</div>;
+  </div></div>;
 }

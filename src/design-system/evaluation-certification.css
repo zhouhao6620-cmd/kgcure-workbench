@@ -1,0 +1,12 @@
+.evaluation-certification {
+  --evaluation-ink: #697382;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--evaluation-ink);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.evaluation-certification[data-certification="skill"] { --evaluation-ink: #21734e; }
+.evaluation-certification > svg { width: 14px; height: 14px; flex: none; }

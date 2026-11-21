@@ -324,7 +324,7 @@ export function WorkflowAssistantChat({ onOpenWorkflow, onToast }) {
         </div>
 
         <div className="rec-list">
-          {RECOMMENDATIONS.map(([cat,title,desc,score])=><SkillCard key={title} item={{id:title,name:title,description:desc,category:cat,kind:'skill',score:null,verified:false,icon:'file',tone:'blue',online:true}} context="chat" onDetail={()=>onOpenWorkflow?.(title)} onCall={()=>onOpenWorkflow?.(title)}/>)}
+          {RECOMMENDATIONS.map(([cat,title,desc])=><SkillCard key={title} item={{id:title,name:title,description:desc,category:cat,kind:'skill',score:null,verified:false,icon:'file',tone:'blue',online:true,previewExclusive:title==='基金申报书审核'}} context="chat" onDetail={()=>onOpenWorkflow?.(title)} onCall={()=>onOpenWorkflow?.(title)}/>)}
         </div>
 
         <FollowUpQuestions outlined

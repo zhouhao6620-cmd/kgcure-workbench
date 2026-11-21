@@ -1,6 +1,6 @@
 import { sitePath } from "../site-path.js";
 import { useEffect, useId, useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronRight, ClipboardCheck, Coins, CreditCard, Crown, Gift, Languages, LogOut, User } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, ClipboardCheck, Coins, CreditCard, Crown, Gift, Heart, Languages, LogOut, User } from 'lucide-react';
 import './account-control.css';
 import { QuotaProgress } from '../design-system/QuotaProgress.jsx';
 import { SAMPLE_QUOTA_REMAINING, SAMPLE_RESET } from '../pages/billing-usage-data.js';
@@ -12,7 +12,7 @@ export function MembershipBadge({tier='free'}) {
 }
 const GROUPS = [
  [{label:'账单与用量',icon:CreditCard,target:'/workspace/membership'},{label:'积分充值',icon:Coins,target:'/workspace/recharge'}],
- [{label:'个人资料',icon:User,target:'/workspace/profile'},{label:'我的审批',icon:ClipboardCheck,target:'/workspace/approvals'},{label:'邀请好友',icon:Gift,target:'invite'}]
+ [{label:'个人资料',icon:User,target:'/workspace/profile'},{label:'我的收藏',icon:Heart,target:'/workspace/my-favorites'},{label:'我的审批',icon:ClipboardCheck,target:'/workspace/approvals'},{label:'邀请好友',icon:Gift,target:'invite'}]
 ];
 export function AccountControl({nickname='周浩',tier='free',quotaRemaining=SAMPLE_QUOTA_REMAINING,onNavigate,onAction,onNotice,visible=true}) {
  const [open,setOpen]=useState(false),[languageOpen,setLanguageOpen]=useState(false),[languagePosition,setLanguagePosition]=useState({});
@@ -53,7 +53,7 @@ export function AccountControl({nickname='周浩',tier='free',quotaRemaining=SAM
      <span className="sp-account-quota-reset"><time dateTime={SAMPLE_RESET.dateTime}>{SAMPLE_RESET.date}</time>重置</span>
     </>}
    </button>
-   {GROUPS.map((group,i)=><div className="sp-account-menu-group" role="group" key={i}>{group.map(({label,icon:Icon,target})=><button key={label} role="menuitem" type="button" className="sp-account-menu-item" onClick={()=>choose(target)}><Icon size={18}/><span>{label}</span></button>)}</div>)}
+   {GROUPS.map((group,i)=><div className="sp-account-menu-group" role="group" key={i}>{group.map(({label,icon:Icon,target})=><button key={label} role="menuitem" type="button" className={target === 'invite' ? 'sp-account-menu-item sp-account-invite' : 'sp-account-menu-item'} onClick={()=>choose(target)}><Icon size={18}/><span>{label}</span></button>)}</div>)}
    <div className="sp-account-menu-group" role="group"><button data-language-trigger type="button" role="menuitem" className="sp-account-menu-item" aria-haspopup="menu" aria-expanded={languageOpen} onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();setLanguagePosition({left:window.innerWidth>=660?Math.min(rect.right+16,window.innerWidth-224):Math.max(16,Math.min(rect.left,window.innerWidth-224)),top:Math.max(12,Math.min(rect.top,window.innerHeight-130))});setLanguageOpen(v=>!v);requestAnimationFrame(()=>wrapper.current?.querySelector('[role=menuitemradio][aria-checked=true]')?.focus());}}><Languages size={18}/><span>Language</span><ChevronRight size={14}/></button></div>
    <div className="sp-account-menu-group" role="group"><button role="menuitem" type="button" className="sp-account-menu-item is-danger" onClick={()=>choose('logout')}><LogOut size={18}/><span>退出登录</span></button></div>
   </div>}

@@ -9,6 +9,12 @@
  --ds-sidebar:#f9fafb;
  --ds-nav-selected:#f0f2f5;
  --ds-message:#edf3fe;
+ --ds-invite-surface:#fdfaf3;
+ --ds-invite-border:#eee3ce;
+ --ds-invite-ink:#60451e;
+ --ds-invite-secondary:#715b3e;
+ --ds-invite-icon-surface:#f5ead3;
+ --ds-invite-icon:#856027;
  --ds-button-height:38px;
  --ds-button-compact:34px;
  --ds-filter-height:36px;
@@ -16,7 +22,10 @@
  --ds-delivery-card-height:80px;
  --ds-chat-title-size:14px;
  --ds-radius-control:6px;
- --ds-radius-tag:4px;
+ --ds-radius-tag:2px;
+ --ds-radius-quick-entry:4px;
+ --ds-tag-weight-regular:400;
+ --ds-tag-weight-medium:500;
  --ds-radius-card:10px;
  --ds-first-level-width:1000px;
  --ds-first-level-title-size:34px;

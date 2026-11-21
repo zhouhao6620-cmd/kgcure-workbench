@@ -27,7 +27,7 @@ const NEEDS = [
   ['科研绘图', Image], ['基金申报', FileText], ['研究方案设计', ClipboardList],
   ['Meta 分析', Sigma], ['科研汇报', Presentation], ['其他', Ellipsis],
 ];
-const MAX_NEEDS = 3;
+const MAX_NEEDS = 6;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export function PersonalVerification({ onSubmit, onToast }) {

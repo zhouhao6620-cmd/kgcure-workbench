@@ -27,6 +27,9 @@
 .sp-account-menu-item > svg { color:#717b88; }
 .sp-account-menu-item > small { color:#8a929e; font-size:12px; font-weight:400; }
 .sp-account-menu-item:hover,.sp-account-languages button:hover { background:#f5f6f8; }
+.sp-account-menu-item.sp-account-invite { color:var(--ds-invite-ink); }
+.sp-account-menu-item.sp-account-invite > svg { color:var(--ds-invite-icon); }
+.sp-account-menu-item.sp-account-invite:hover { background:var(--ds-invite-surface); }
 .sp-account-menu-item.is-danger,.sp-account-menu-item.is-danger > svg { color:#cf3740; }
 .sp-account-menu-item.is-danger:hover { background:#fff3f3; }
 @media(pointer:coarse) { .sp-account-menu-item,.sp-account-languages button { min-height:40px; } }

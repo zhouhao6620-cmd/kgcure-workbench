@@ -15,9 +15,9 @@ export const MODELS = [
 // All evaluation and availability fields below are explicit preview fixtures.
 export const SKILLS = [
   { id: "literature", kind: "skill", name: "文献智能检索", description: "检索相关研究，整理可追溯的文献证据。", category: "文献检索", icon: "book", tone: "blue", score: 4.8, verified: true, reviewed: true, community: true, online: true, usage: 2480 },
-  { id: "statistics", kind: "skill", name: "通用统计分析", description: "选择统计方法，整理规范的结果与图表。", category: "统计分析", icon: "chart", tone: "violet", score: 4.7, verified: true, reviewed: true, community: false, online: true, usage: 1860 },
+  { id: "statistics", kind: "skill", name: "通用统计分析", description: "选择统计方法，整理规范的结果与图表。", category: "统计分析", icon: "chart", tone: "violet", score: 4.7, verified: true, reviewed: true, community: false, online: true, usage: 1860, previewExclusive: true },
   { id: "writing", kind: "skill", name: "学术论文润色", description: "优化论文语言表达，保留原意与专业术语。", category: "论文写作", icon: "pen", tone: "teal", score: 4.6, verified: false, reviewed: true, community: true, online: true, usage: 3200 },
-  { id: "grant-review", kind: "skill", name: "基金申报书审核", description: "从创新性与可行性出发，提出修改建议。", category: "基金申报", icon: "file", tone: "sand", score: null, verified: false, reviewed: false, community: true, online: false, usage: 0 },
+  { id: "grant-review", kind: "skill", name: "基金申报书审核", description: "从创新性与可行性出发，提出修改建议。", category: "基金申报", icon: "file", tone: "sand", score: null, verified: false, reviewed: false, community: true, online: false, usage: 0, previewExclusive: true },
 ];
 
 export const AGENTS = [

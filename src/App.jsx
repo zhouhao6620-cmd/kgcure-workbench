@@ -32,10 +32,12 @@ import {
 } from "lucide-react";
 import { categories, researchWorkflows, shortcuts } from "./data.js";
 import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge, countMyFiles } from "./pages/account.jsx";
+import { MyFavorites } from './pages/MyFavorites.jsx';
 import { PersonalVerification } from "./pages/PersonalVerification.jsx";
 import { BillingUsage } from "./pages/BillingUsage.jsx";
 import { SAMPLE_QUOTA_REMAINING } from "./pages/billing-usage-data.js";
 import { DrawingChat, MultiStepChat, WorkflowAssistantChat } from "./pages/chats.jsx";
+import { Login } from "./pages/Login.jsx";
 import { LandingPage } from "./pages/landing.jsx";
 import { DrawingPage, ServicePage } from "./pages/services.jsx";
 import { ResearchSpaceDetail, ResearchSpaceList } from "./pages/spaces.jsx";
@@ -45,13 +47,15 @@ import { BusinessFrame } from "./design-system/BusinessFrame.jsx";
 import { CapabilityStore } from "./design-system/CapabilityStore.jsx";
 import { BusinessHome } from "./design-system/BusinessHome.jsx";
 import { DesignPreview } from "./design-preview/DesignPreview.jsx";
-import { CapabilityDetail, CapabilitySearch } from './design-system/CapabilityDetail.jsx';
+import { ReviewDocument } from './design-system/ReviewDocument.jsx';
+import { EVALUATION_PATH } from './content/review-capabilities.js';
 import { ResearchConversation, makeSession } from './design-system/ResearchConversation.jsx';
 import { ResearchSpaces, initialResearchSpaces } from './design-system/ResearchSpaces.jsx';
 import { ContributionPage } from './design-system/ContributionPage.jsx';
 import { CapabilityCase } from './design-system/CapabilityCase.jsx';
 import { SecondaryPageShell } from './design-system/SecondaryPageShell.jsx';
-import { capabilityById, capabilityPath, downloadText } from './content/catalog.js';
+import { capabilityById, capabilityPath, downloadText, hasPreviewDetail } from './content/catalog.js';
+import { isCapabilityFavoriteStorageEvent, readCapabilityFavorites, writeCapabilityFavorite } from './content/capability-favorites.js';
 import { canUseCapability, EXCLUSIVE_AGENT_REQUIREMENT, previewMembershipTier } from './content/membership.js';
 import { Button, Modal } from './design-preview/components.jsx';
 
@@ -494,11 +498,34 @@ function NewChatPage({ mode, onNavigate, onToast }) {
   );
 }
 
+const CAPABILITY_DETAIL_PATH = /^\/workspace\/(skills|agents)\/[^/]+$/;
+const LEGACY_DETAIL_PATH = /^\/workspace\/workflows\/template\/([^/]+)$/;
+
 export function App() {
   const router = useRouter();
   const path = router.path;
   const previewTier = router.get('preview');
   const tier = previewMembershipTier(previewTier);
+  const [favoriteIds, setFavoriteIds] = useState(readCapabilityFavorites);
+  useEffect(() => {
+    const sync = event => {
+      if (event.storageArea === localStorage && isCapabilityFavoriteStorageEvent(event)) {
+        setFavoriteIds(readCapabilityFavorites());
+      }
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
+  function updateFavorite(id, saved) {
+    try {
+      writeCapabilityFavorite(id, saved);
+      setFavoriteIds(readCapabilityFavorites());
+      return true;
+    } catch {
+      showToast('当前浏览器无法保存收藏');
+      return false;
+    }
+  }
   const [localSessions,setLocalSessions]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-sessions-v2')||'[]');}catch{return [];}});
   const [spaces,setSpaces]=useState(initialResearchSpaces);
   const [libraryFiles,setLibraryFiles]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-file-library-files-v1')||'[]');}catch{return [];}});
@@ -526,11 +553,7 @@ export function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [capabilitySearchOpen, setCapabilitySearchOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  const [guest, setGuest] = useState(() => {
-    try { return window.localStorage.getItem("kgcure-guest") === "1"; } catch { return false; }
-  });
   const [resetUsed, setResetUsed] = useState(false);
   const [verificationPreview, setVerificationPreview] = useState(null);
   const [restrictedAgent, setRestrictedAgent] = useState(null);
@@ -567,15 +590,9 @@ export function App() {
     showToast((hasContent ? '文件已保存到「' : '文件记录已保存到「') + space.name + '」');
   }
 
-  function setGuestState(next) {
-    setGuest(next);
-    try { window.localStorage.setItem("kgcure-guest", next ? "1" : "0"); } catch {}
-  }
-
   function navigate(target) {
     if (target === "/welcome") {
       setVerificationPreview(null);
-      setGuestState(true);
       router.navigate("/");
       setMobileOpen(false);
       setAccountOpen(false);
@@ -595,7 +612,6 @@ export function App() {
     scrollRef.current?.scrollTo({ top: 0 });
     setMobileOpen(false);
     setAccountOpen(false);
-    setCapabilitySearchOpen(false);
   }, [path]);
 
   useEffect(() => () => { if (toastTimer.current) window.clearTimeout(toastTimer.current); }, []);
@@ -619,12 +635,21 @@ export function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const legacy = path.match(LEGACY_DETAIL_PATH);
+    const item = legacy && capabilityById(legacy[1]);
+    const detail = CAPABILITY_DETAIL_PATH.test(path);
+    if (!item && !(detail && router.get('view') === 'catalog')) return;
+    const params = new URLSearchParams(router.search);
+    if (params.get('view') === 'catalog') params.delete('view');
+    const search = params.size ? '?' + params.toString() : '';
+    router.navigate((item ? capabilityPath(item) : path) + search, { replace: true });
+  }, [path, router.search, router.navigate, router.get]);
+
   const mode = router.get("task") === "research" ? "research" : "chat";
   const isCase = path.startsWith("/workspace/workflows/") && path.includes("/cases/") && !capabilityById(path.split("/")[4]);
-  const isCapabilityDetail = /^\/workspace\/(skills|agents)\/[^/]+$/.test(path)
-    || (/^\/workspace\/workflows\/template\/[^/]+$/.test(path) && Boolean(capabilityById(path.split('/')[4])));
   const isChat = path.startsWith("/workspace/chats/") && path !== "/workspace/chats/new";
-  const isHome = path === "/workspace" || path === "/" || path === "/workspace/chats/new";
+  const isHome = path === "/workspace" || path === "/workspace/chats/new";
   const isStore = ["/workspace/skills", "/workspace/agents", "/workspace/workflows", "/workspace/research-space"].includes(path);
   const isFirstLevel = isHome || ["/workspace/evidence-search", "/workspace/topic-selection", "/workspace/grant-application", "/workspace/scientific-drawing", "/workspace/skills", "/workspace/agents", "/workspace/research-space", "/workspace/workflows"].includes(path);
 
@@ -692,21 +717,48 @@ export function App() {
 
   function renderStandard() {
     if (isHome) return <BusinessHome key={router.search} onStart={startTask} onNavigate={navigate} onToast={showToast} onRequireCapability={requireCapabilityAccess}/>;
-    if (path === "/workspace/skills" || path === "/workspace/agents") return <CapabilityStore onRecommend={task=>startTask({text:'我希望'+task.name+'，请先帮我推荐合适的科研能力。',origin:{category:task.category}})} key={path} kind={path.endsWith('skills')?'skill':'agent'} onNavigate={navigate}/>;
-    if (path === '/workspace/contribute') return <ContributionPage onToast={showToast}/>;
+    if (path === "/workspace/skills" || path === "/workspace/agents") return <CapabilityStore onRecommend={task=>startTask({text:'我希望'+task.name+'，请先帮我推荐合适的科研能力。',origin:{category:task.category}})} key={path} kind={path.endsWith('skills')?'skill':'agent'} onNavigate={navigate} onToast={showToast}/>;
+    if (path === '/workspace/contribute') {
+      const kind = router.get('kind') === 'agent' ? 'agent' : 'skill';
+      return <ContributionPage key={kind} kind={kind} onToast={showToast}/>;
+    }
     if (path.startsWith('/workspace/cases/')) {const [, , ,abilityId,caseId]=path.split('/');return <CapabilityCase item={capabilityById(abilityId)} caseId={caseId} onNavigate={navigate} onRun={runCapability}/>;}
-    if (/^\/workspace\/(skills|agents)\//.test(path)) {const id=path.split('/').at(-1),item=capabilityById(id) || (path.startsWith('/workspace/skills/') && COMMUNITY_SKILL_EXAMPLES.find(example=>example.id===id));return item?<CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onRun={runCapability}/>:<div className="view ds-page-empty"><h1>未找到该能力</h1><button onClick={()=>navigate('/workspace/skills')}>返回商店</button></div>;}
+    if (path === EVALUATION_PATH) return <ReviewDocument kind="evaluation" mode={router.get('mode')} title="科研能力评测标准"/>;
+    if (CAPABILITY_DETAIL_PATH.test(path)) {
+      const id = path.split('/').at(-1);
+      const isSkill = path.startsWith('/workspace/skills/');
+      const item = capabilityById(id) || (isSkill && COMMUNITY_SKILL_EXAMPLES.find(example => example.id === id));
+      if (!item || item.kind !== (isSkill ? 'skill' : 'agent')) {
+        return <div className="view ds-page-empty"><h1>未找到该能力</h1><button onClick={() => navigate(isSkill ? '/workspace/skills' : '/workspace/agents')}>返回商店</button></div>;
+      }
+      if (!hasPreviewDetail(item)) {
+        return <div className="view ds-page-empty"><h1>暂无接入</h1><p>{item.name}</p>
+          <Button onClick={() => navigate(isSkill ? '/workspace/skills' : '/workspace/agents')}>返回频道</Button></div>;
+      }
+      const unrated = isSkill && router.get('assessment') === 'unrated';
+      return <ReviewDocument key={item.id + ':' + unrated} kind={item.kind} title={item.name} item={item} unrated={unrated}
+        canLaunch={canUseCapability(item, tier)} onRun={runCapability} favorite={favoriteIds.has(item.id)} onFavorite={updateFavorite}
+        onCase={(ability, entry) => {
+          if (typeof entry === 'string') {
+            startTask({ ability, space: router.get('space') || null,
+              origin: router.get('folder') ? { folderId: router.get('folder') } : undefined,
+              text: '案例演示：' + entry });
+          } else {
+            navigate('/workspace/cases/' + ability.id + '/' + entry.id + router.search);
+          }
+        }}/>;
+    }
     if (path === "/workspace/evidence-search") return <ServicePage showCaseType key="evidence" onStart={startTask} kind="evidence" onToast={showToast} />;
     if (path === "/workspace/topic-selection") return <ServicePage showCaseType key="topic" onStart={startTask} kind="topic" onToast={showToast} />;
     if (path === "/workspace/grant-application") return <ServicePage showCaseType key="grant" onStart={startTask} kind="grant" onToast={showToast} />;
     if (path === "/workspace/scientific-drawing") return <DrawingPage onStart={startTask} onOpenChat={() => navigate("/workspace/chats/e9dd87e0-b232-479d-b0a9-5ba249a76a78")} onToast={showToast} />;
     if (path === "/workspace/research-space") return <ResearchSpaces spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
     if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
-    if (path === "/workspace/workflows") return <CapabilityStore onRecommend={task=>startTask({text:task.name,origin:{category:task.category}})} key="legacy-agents" kind="agent" onNavigate={navigate}/>;
+    if (path === "/workspace/workflows") return <CapabilityStore onRecommend={task=>startTask({text:task.name,origin:{category:task.category}})} key="legacy-agents" kind="agent" onNavigate={navigate} onToast={showToast}/>;
     if (path.startsWith("/workspace/workflows/template/")) {
       const sourceId=path.split('/')[4],item=capabilityById(sourceId);
       if(item&&path.includes('/cases/'))return <CapabilityCase item={item} caseId={path.split('/').at(-1)} onNavigate={navigate} onRun={runCapability}/>;
-      if(item)return <CapabilityDetail key={item.id} item={item} tier={tier} onNavigate={navigate} onRun={runCapability}/>;
+      if(item)return null;
       return (
         <WorkflowDetail
           onBack={() => navigate("/workspace/workflows")}
@@ -717,6 +769,11 @@ export function App() {
       );
     }
     if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} libraryFiles={libraryFiles} onToast={showToast} />;
+    if (path === '/workspace/my-favorites') {
+      const items = [...favoriteIds].map(id => capabilityById(id) || COMMUNITY_SKILL_EXAMPLES.find(item => item.id === id)).filter(Boolean);
+      return <MyFavorites kind={router.get('kind') === 'agent' ? 'agent' : 'skill'} items={items}
+        onNavigate={navigate} onFavorite={updateFavorite} onToast={showToast}/>;
+    }
     if (path === "/workspace/profile") return <ProfilePage onToast={showToast}
       verified={router.get('verification') === 'verified'}
       verification={verificationPreview} reviewSubmission={router.get('verification') === 'submitted'}
@@ -796,10 +853,14 @@ export function App() {
     },
   }} />{toast && <div className="toast" role="status">{toast}</div>}</>;
 
-  if (guest || path === "/welcome") {
+  if (path === '/login') {
+    return <Login onBack={() => navigate('/')} onLogin={() => navigate('/workspace')}/>;
+  }
+
+  if (path === '/' || path === '/welcome') {
     return (
       <div className="app-bare">
-        <LandingPage onLogin={(target) => { setGuestState(false); router.navigate(typeof target==='string'?target:"/workspace/chats/new"); }} />
+        <LandingPage onLogin={target => navigate(typeof target === 'string' ? target : '/login')}/>
         {toast ? <div className="toast" role="status">{toast}</div> : null}
       </div>
     );
@@ -820,12 +881,8 @@ export function App() {
 
   return (
     <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={spaces} onSpaces={setSpaces}>
-      {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef} onCapabilitySearch={isCapabilityDetail ? () => setCapabilitySearchOpen(true) : undefined}>{renderStandard()}</SecondaryPageShell>}
+      {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
-      {isCapabilityDetail && capabilitySearchOpen && <CapabilitySearch onClose={() => setCapabilitySearchOpen(false)} onChoose={item => {
-        setCapabilitySearchOpen(false);
-        navigate(capabilityPath(item) + router.search);
-      }}/>}
       {restrictedAgent && <Modal title={restrictedAgent.name} onClose={() => setRestrictedAgent(null)}>
         <p>{EXCLUSIVE_AGENT_REQUIREMENT}</p>
         <div className="sp-dialog-actions"><Button onClick={() => setRestrictedAgent(null)}>关闭</Button><Button variant="primary" onClick={() => navigate('/workspace/membership-plans')}>查看会员权益</Button></div>

@@ -21,7 +21,7 @@ const COLORS = [
 const SECTIONS = [
   ["spec-layout", "页面布局"], ["spec-type", "颜色与字号"], ["sp-buttons-tags", "按钮与标签"],
   ["spec-navigation", "分页与菜单"], ["sp-skill-section", "科研 Skill"], ["sp-agent-section", "科研 Agent"],
-  ["case-spec", "科研案例"], ["spec-empty", "缺省态"], ["spec-chat", "对话组件"], ["sp-icon-library", "图标"],
+  ["case-spec", "科研案例"], ["spec-empty", "缺省态"], ["spec-chat", "对话组件"], ["sp-icon-library", "图标"], ["sp-semantic-tags", "能力标识与标签"],
 ];
 
 function TypographySpec({onNotice}) {
@@ -64,10 +64,10 @@ export function ControlGallery({ onDetail, onCall, onNotice, onDelete, annotate,
     <section className="sp-gallery-section" id="sp-skill-section"><div className="sp-section-heading"><div><h2>科研 Skill</h2><p>桌面四列。卡片上下 12px、左右 14px，内容组之间 8px。</p></div><label className="sp-search-field"><Search size={16} /><input aria-label="搜索示例 Skill" placeholder="搜索 Skill" value={query} onChange={event => setQuery(event.target.value)} />{query && <IconButton label="清空 Skill 搜索" onClick={() => setQuery("")}><X size={14} /></IconButton>}</label></div>
       <CapabilityFilters categories={["全部","文献检索","统计分析","论文写作","基金申报"]} category={category} onCategory={setCategory} source={source} onSource={setSource}/>
 
-      {list.length ? <div className="sp-skill-grid" data-testid="skill-grid">{list.map(item => <SkillCard key={item.id} item={item} onDetail={onDetail} onCall={onCall} />)}</div> : <EmptyState onReset={reset}>没有匹配的 Skill</EmptyState>}
+      {list.length ? <div className="sp-skill-grid" data-testid="skill-grid">{list.map(item => <SkillCard key={item.id} item={item} context="spec" onDetail={onDetail} onCall={onCall} />)}</div> : <EmptyState onReset={reset}>没有匹配的 Skill</EmptyState>}
       <p className="sp-section-note"><Info size={13} />能力、评分、核验状态和使用量均为评审样例，不代表实际核验或上线状态。</p>
     </section>
-    <section className="sp-gallery-section" id="sp-agent-section"><div className="sp-section-heading"><div><h2>科研 Agent</h2><p>桌面三列。卡片上下 12px、左右 14px，内容组之间 8px。</p></div></div><div className="sp-agent-grid" data-testid="agent-grid">{AGENTS.map(item => <AgentCard key={item.id} item={item} onDetail={onDetail} onCall={onCall} />)}</div></section>
+    <section className="sp-gallery-section" id="sp-agent-section"><div className="sp-section-heading"><div><h2>科研 Agent</h2><p>桌面三列。卡片最小高度 190px，内边距 14px，内容组间距 10px。</p></div></div><div className="sp-agent-grid" data-testid="agent-grid">{AGENTS.map(item => <AgentCard key={item.id} item={item} onDetail={onDetail} onCall={onCall} />)}</div></section>
     <div id="case-spec"><CaseGallery onChoose={item => onDetail({ ...item, kind: 'case', online: true, steps: ['了解任务', '补充研究材料', '配置执行'], output: '示例成果结构', icon: item.id === 'analysis' ? 'chart' : item.id === 'grant' ? 'file' : 'book' })} /></div>
     <EmptyStateSpec/>
     <section className="sp-gallery-section" id="spec-chat">
@@ -95,7 +95,15 @@ export function ControlGallery({ onDetail, onCall, onNotice, onDelete, annotate,
       </div>
     </section>
     <IconLibrary/>
-    <section className="sp-gallery-section" id="sp-semantic-tags"><div className="sp-section-heading"><div><h2>能力标识与语义标签</h2><p>类型标识区分能力，语义标签说明状态。案例分类、会员、NEW 与同类标签统一使用 4px 圆角。</p></div></div><div className="sp-identity-spec"><div><SkillGlyph size={32}/><Tag>Skill</Tag><p>叠层能力 · 单项科研技能</p></div><div><AgentGlyph size={32}/><AgentBadge/><p>机器人 · 多步骤科研任务</p></div></div><div className="sp-semantic-grid">{[{status:'success',label:'已完成',text:'任务成功、配置已确认'},{status:'processing',label:'处理中',text:'正在运行、等待结果'},{status:'warning',label:'待确认',text:'需要补充输入或人工确认'},{status:'error',label:'执行失败',text:'操作失败、需要修正或重试'},{status:'info',label:'参考信息',text:'提示、说明与来源信息'},{status:'neutral',label:'未开始',text:'尚未执行或暂未上线'}].map(x=><div key={x.status}><StatusTag status={x.status}>{x.label}</StatusTag><p>{x.text}</p></div>)}</div><div className="sp-component-row sp-tag-examples"><Tag tone="green">2.0.0</Tag><Tag tone="violet">实验能力</Tag><Tag tone="gold">精选模板</Tag>{["free","basic","plus","pro"].map(tier=><MembershipBadge key={tier} tier={tier}/>)}<NewBadge/><CaseCategory>文献检索</CaseCategory></div><p className="sp-section-note">版本与分类使用文字标签；紫色、金色表示属性，不代替成功或警告状态。</p></section>
+    <section className="sp-gallery-section" id="sp-semantic-tags"><div className="sp-section-heading"><div><h2>能力标识与语义标签</h2><p>身份标识用 2px 圆角和 500 字重。主题标签与卡片角标用 2px 圆角和 400 字重。</p></div></div><div className="sp-identity-spec"><div><SkillGlyph size={32}/><Tag>Skill</Tag><p>叠层能力 · 单项科研技能</p></div><div><AgentGlyph size={32}/><AgentBadge/><p>机器人 · 多步骤科研任务</p></div></div>
+      <p className="sp-section-note">主题标签用 400 字重。支持选择时，通过底色、边框和文字颜色反馈选中状态。</p>
+      <div className="sp-component-row sp-tag-spec-topics"><Tag>论文精读</Tag><Tag>科研选题</Tag><Tag>可行性评估</Tag></div>
+      <p className="sp-section-note">快捷入口用 4px 圆角，名称用 500 字重，说明用 400 字重。</p>
+      <div className="sp-component-row">
+        <button type="button" className="ds-home-shortcut is-skill" onClick={() => onNotice("已选择「文献检索」")}><SkillGlyph size={16}/><strong>文献检索</strong></button>
+        <button type="button" className="ds-home-shortcut is-agent" onClick={() => onNotice("已选择「构建预测模型」")}><AgentGlyph size={16}/><strong>构建预测模型</strong><span className="ds-home-shortcut-copy">规划建模与验证流程</span></button>
+      </div>
+      <div className="sp-semantic-grid">{[{status:'success',label:'已完成',text:'任务成功、配置已确认'},{status:'processing',label:'处理中',text:'正在运行、等待结果'},{status:'warning',label:'待确认',text:'需要补充输入或人工确认'},{status:'error',label:'执行失败',text:'操作失败、需要修正或重试'},{status:'info',label:'参考信息',text:'提示、说明与来源信息'},{status:'neutral',label:'未开始',text:'尚未执行或暂未上线'}].map(x=><div key={x.status}><StatusTag status={x.status}>{x.label}</StatusTag><p>{x.text}</p></div>)}</div><div className="sp-component-row sp-tag-examples"><Tag tone="green">2.0.0</Tag><Tag tone="violet">实验能力</Tag><Tag tone="gold">精选模板</Tag>{["free","basic","plus","pro"].map(tier=><MembershipBadge key={tier} tier={tier}/>)}<NewBadge/><CaseCategory>文献检索</CaseCategory></div><p className="sp-section-note">版本与分类使用文字标签；紫色、金色表示属性，不代替成功或警告状态。</p></section>
     <section className="sp-gallery-section"><div className="sp-section-heading"><div><h2>表单与即时反馈</h2><p>有明确标签、可见焦点和具体的错误恢复提示。</p></div></div><div className="sp-form-example"><form noValidate onSubmit={event => { event.preventDefault(); if (!task.trim()) { setFormError(true); setSaved(false); return; } setSaved(true); setFormError(false); }}><label className="sp-field"><span>任务名称 <span className="sp-required">*</span></span><input aria-label="示例任务名称" value={task} placeholder="例如：临床研究文献筛选" onChange={event => { setTask(event.target.value); setFormError(false); setSaved(false); }} aria-invalid={formError} aria-describedby="sp-example-field-help" /><small id="sp-example-field-help" className={formError ? "sp-field-error" : ""}>{formError ? "请填写任务名称后再保存。" : "建议用研究对象与任务目标命名。"}</small></label><button type="submit" className="sp-button sp-button-primary">保存示例</button>{saved && <span role="status" className="sp-inline-success"><Check size={15} />已保存「{task.trim()}」的本地示例</span>}</form><div className="sp-info-sample"><Info size={17} /><div><strong>说明信息</strong><p>附件只在本地记录文件名；模型调用、真实上传与账户权限不在本次样板内。</p></div></div></div></section>
     <footer className="sp-gallery-footer">以本页确认的规则作为后续业务页验收基线。</footer>
   </div></div>;

@@ -30,6 +30,7 @@
 .sp-source-intents { margin-bottom:20px; }
 .sp-source-intents button.selected b, .sp-source-intents button.selected span { font-weight:600; }
 :is(.sp-agent-config, .sp-config-card) input, :is(.sp-agent-config, .sp-config-card) select, :is(.sp-agent-config, .sp-config-card) textarea { font-family:inherit; font-size:14px; line-height:22px; font-weight:400; }
+.sp-design-app .sp-refined-config .sp-field :is(input,textarea) { color:var(--ds-ink); }
 :is(.sp-agent-config, .sp-config-card) .sp-config-upload { position:relative; display:flex; justify-content:center; align-items:center; min-height:84px; }
 :is(.sp-agent-config, .sp-config-card) .sp-config-upload input { position:absolute; inset:0; width:100%; height:100%; padding:0; opacity:0; }
 :is(.sp-agent-config, .sp-config-card) .sp-config-upload > span { font-size:14px; }

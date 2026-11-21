@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ChevronDown, ChevronRight, Crown, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
+import { createElement, useEffect, useId, useRef, useState } from "react";
+import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ChevronDown, ChevronRight, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
+import { agentGlyph, evaluationAlertGlyph, evaluationShieldGlyph, exclusiveGlyph, pluginGlyph, skillGlyph } from "../design-system/capability-glyphs.js";
+import { certifiedEvaluationLabel, hasEvaluationCertification, missingEvaluationLabel } from '../content/review-capabilities.js';
+import '../design-system/evaluation-certification.css';
 import deepseekIcons from "./deepseek-icons.json";
 import { AGENTS, MODELS, SKILLS } from "./data.js";
 
@@ -26,30 +29,21 @@ export function IconButton({ label, children, className, ...props }) {
  return <button type="button" title={tooltip ? undefined : label} aria-label={label} data-tooltip={tooltip ? text : undefined} className={cx("sp-icon-button", tooltip && "sp-deepseek-action", className)} {...props}>{kind ? <DeepSeekIcon name={kind}/> : children}</button>;
 }
 
-// Shared capability identities. Design artboard is 108 × 108; render sizes stay optical.
-export function SkillGlyph({size=20,...props}) {
- return <svg width={size} height={size} viewBox="0 0 108 108" fill="none" stroke="currentColor" strokeWidth="6.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-  <path d="M54 14 95 36.5 54 59 13 36.5 54 14Z"/>
-  <path d="m13 51.5 41 22.5 41-22.5"/>
-  <path d="m13 67 41 22.5L95 67"/>
+function CapabilityGlyph({ design, size = 20, ...props }) {
+ return <svg width={size} height={size} viewBox={design.viewBox} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props} data-capability-glyph="" strokeWidth={design.strokeWidth}>
+  {design.shapes.map(([tag, attributes], index) => createElement(tag, { ...attributes, key: index }))}
  </svg>;
 }
-export function AgentGlyph({size=20,...props}) {
- return <svg width={size} height={size} viewBox="0 0 108 108" fill="none" stroke="currentColor" strokeWidth="6.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-  <rect x="19" y="28" width="70" height="56" rx="18"/>
-  <path d="M54 16v12M8 47v18m92-18v18"/>
-  <circle cx="54" cy="14" r="4" fill="currentColor" stroke="none"/>
-  <circle cx="40" cy="53" r="4.2" fill="currentColor" stroke="none"/>
-  <circle cx="68" cy="53" r="4.2" fill="currentColor" stroke="none"/>
-  <path d="M37 68c10 8 24 8 34 0"/>
- </svg>;
-}
+export function SkillGlyph(props) { return <CapabilityGlyph design={skillGlyph} {...props}/>; }
+export function AgentGlyph(props) { return <CapabilityGlyph design={agentGlyph} {...props}/>; }
+export function PluginGlyph(props) { return <CapabilityGlyph design={pluginGlyph} {...props}/>; }
 export function SkillBadge() { return <span className="sp-skill-badge"><SkillGlyph size={18}/><span>Skill</span></span>; }
 export function Tag({ children, tone = "neutral", icon:Icon }) {
  if(children==='Skill')return <SkillBadge/>;
  return <span className={cx("sp-tag", "sp-tag-" + tone)}>{Icon&&<Icon size={14}/>}<span>{children}</span></span>;
 }
-export function AgentExclusiveBadge() { return <Tag tone="violet" icon={Crown}>专享</Tag>; }
+function ExclusiveGlyph(props) { return <CapabilityGlyph design={exclusiveGlyph} {...props}/>; }
+export function ExclusiveBadge() { return <span className="sp-tag sp-tag-violet sp-exclusive-badge"><ExclusiveGlyph size={14}/><span>专享</span></span>; }
 export function NewBadge() { return <span className="sp-new-badge">NEW</span>; }
 export function CaseCategory({ children }) {
   return <span className="ds-case-category">
@@ -71,23 +65,51 @@ export function StarRating({ score }) {
  return <span className="sp-five-rating" aria-label={rated?`${score.toFixed(1)} / 5 星，示例评分`:'暂无评分'}><span className="sp-five-stars" aria-hidden="true">{Array.from({length:5},(_,i)=><span className="sp-rating-star" key={i}><Star size={14}/><span style={{width:`${rated?Math.max(0,Math.min(1,score-i))*100:0}%`}}><Star size={14}/></span></span>)}</span><b>{rated?score.toFixed(1):'待评'}</b></span>;
 }
 
-export function SkillCard({ item, context = "store", onDetail, onCall }) {
+function EvaluationCardFooter({ item, id, compact }) {
+  const certified = hasEvaluationCertification(item);
+  const label = compact
+    ? (certified ? '实测认证' : '未认证')
+    : (certified ? certifiedEvaluationLabel : missingEvaluationLabel);
+  return <span className="sp-gray-badges" data-compact={compact || undefined}>
+    <span id={id} className="evaluation-certification" data-certification={certified ? 'skill' : 'missing'}>
+      <CapabilityGlyph design={certified ? evaluationShieldGlyph : evaluationAlertGlyph} size={14}/>
+      <span>{label}</span>
+    </span>
+    {!compact && item.demo && <span>演示</span>}
+  </span>;
+}
+
+export function SkillCard({ item, context = "store", onDetail, onCall, unavailable = false, onUnavailable }) {
+ const certificationId = useId();
  const isChat=context==='chat';
- return <article className="sp-skill-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit" onClick={()=>isChat&&item.online?onCall(item):onDetail(item)} aria-label={isChat&&item.online?'使用 '+item.name:'查看 '+item.name+'详情'}>
- <span className="sp-gray-top"><AbilityIcon item={item} size={24} vivid/><span className="sp-gray-heading"><strong title={item.name}>{item.name}</strong><StarRating score={item.score}/></span></span>
+ const isChatOrSpec=isChat||context==='spec';
+ const showExclusive=item.exclusive||(item.previewExclusive&&(isChatOrSpec||(context==='channel'&&item.demo)));
+ const showTypeBadge=!isChatOrSpec&&context!=='channel'&&!showExclusive;
+ const actionLabel=isChat&&item.online?'使用 '+item.name:'查看 '+item.name+'详情';
+ return <article className="sp-skill-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit"
+  data-unavailable={unavailable || undefined} disabled={unavailable && !onUnavailable} aria-describedby={certificationId}
+  onClick={unavailable ? onUnavailable : () => isChat&&item.online?onCall(item):onDetail(item)}
+  aria-label={unavailable?item.name+'，暂无接入':actionLabel+(showExclusive?'，专享':'')}>
+ <span className="sp-gray-top"><AbilityIcon item={item} size={24} vivid/><span className="sp-gray-heading"><strong title={item.name}>{item.name}</strong><StarRating score={item.score}/></span>{showExclusive&&<ExclusiveBadge/>}</span>
  <span className="sp-card-description" title={item.description}>{item.description}</span>
- <SkillBadge/><span className="sp-gray-bottom"><span className="sp-gray-badges"><span className={item.verified?'sp-verification is-verified':'sp-verification'}>{item.verified?<CircleCheck size={13}/>:<CircleAlert size={13}/>}{item.community ? (item.verified ? '社区贡献 · 已通过测评' : '社区贡献 · 待评测') : item.verified ? '已通过测评' : (item.sourceLabel || '数愈收录 · 待评测')}</span>{item.demo && <span>演示</span>}</span><span className="sp-gray-action" aria-hidden="true"><ArrowUp size={16}/></span></span>
+ {showTypeBadge&&<SkillBadge/>}<span className="sp-gray-bottom"><EvaluationCardFooter item={item} id={certificationId} compact={context === "channel"}/>{unavailable?<span className="sp-card-unavailable">暂无接入</span>:<span className="sp-gray-action" aria-hidden="true"><ArrowUp size={16}/></span>}</span>
  </button></article>;
 }
-export function AgentCard({ item, context = "store", onDetail, onCall }) {
+export function AgentCard({ item, context = "store", onDetail, onCall, unavailable = false, onUnavailable }) {
  const isChat=context==='chat';
  const stages=item.steps.length>3?[item.steps[0],item.steps[Math.floor(item.steps.length/2)],item.steps.at(-1)]:item.steps;
  const actionLabel = isChat ? '启动 '+item.name : '查看 '+item.name+'详情';
- return <article className="sp-agent-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit" onClick={()=>isChat?onCall(item):onDetail(item)} aria-label={actionLabel + (item.exclusive ? '，专享' : '')}>
- <span className="sp-gray-top"><span className="sp-agent-card-icon" aria-hidden="true"><AgentGlyph size={24}/></span><span className="sp-gray-heading"><strong title={item.name}>{item.name}</strong><small>{item.category}{item.steps.length ? ` · ${item.steps.length} 步工作流` : " · 流程待补充"}</small></span>{item.exclusive && <AgentExclusiveBadge/>}</span>
+ return <article className="sp-agent-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit"
+  data-unavailable={unavailable || undefined} disabled={unavailable && !onUnavailable}
+  onClick={unavailable ? onUnavailable : () => isChat?onCall(item):onDetail(item)}
+  aria-label={unavailable?item.name+'，暂无接入':actionLabel + (item.exclusive ? '，专享' : '')}>
+ <span className="sp-gray-top"><span className="sp-agent-card-icon" aria-hidden="true"><AgentGlyph size={24}/></span><span className="sp-gray-heading"><strong title={item.name}>{item.name}</strong><small>{item.category}{item.steps.length > 0 && ` · ${item.steps.length}大能力`}</small></span>{item.exclusive && <ExclusiveBadge/>}</span>
  <span className="sp-card-description" title={item.description}>{item.description}</span>
  {item.steps.length > 0 && <span className="sp-gray-flow" aria-label={"完整流程："+item.steps.join("、")} title={item.steps.join(" → ")}>{stages.map(step=><span key={step}><i aria-hidden="true"/><span>{step}</span></span>)}</span>}
- <span className="sp-gray-bottom sp-gray-agent-bottom"><span className="sp-gray-output"><FileText size={16}/><span><small>预期交付</small><strong>{item.output}</strong></span></span><span className="sp-gray-action sp-gray-launch" aria-hidden="true"><ArrowUp size={16}/></span></span>
+ <span className="sp-gray-bottom sp-gray-agent-bottom">
+   <span className="sp-gray-output"><FileText size={16}/><span><small>预期交付</small><strong>{item.output}</strong></span></span>
+   {unavailable?<span className="sp-card-unavailable">暂无接入</span>:<span className="sp-gray-action sp-gray-launch" aria-hidden="true"><ArrowUp size={16}/></span>}
+ </span>
  </button></article>;
 }
 
@@ -165,7 +187,7 @@ export function Composer({ chat = false, draft, onDraft, model, onModel, ability
     const selected = ability?.kind === kind;
     const Icon = isSkill ? SkillGlyph : AgentGlyph;
     return <div className="sp-picker-anchor"><button type="button" className={cx("sp-tool-select", selected && "is-selected")} aria-label={isSkill ? "选择科研 Skill" : "选择科研 Agent"} aria-expanded={open === kind} aria-haspopup="menu" onClick={event => toggle(kind, event.currentTarget)}><Icon size={15} /><span className="sp-ability-select-label">{selected ? ability.name : <><span className="sp-label-prefix">科研 </span>{isSkill ? "Skill" : "Agent"}</>}</span><ChevronDown size={12} /></button>
-      {open === kind && <div className="sp-popover sp-capability-picker" style={menuPosition} aria-label={isSkill ? "科研 Skill 选择面板" : "科研 Agent 选择面板"}><label className="sp-capability-search"><Search size={16} /><input autoFocus onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const first = filtered.find(item => item.online); if (first) { onAbility(ability?.id === first.id ? null : first); setOpen(null); } } if (event.key === "ArrowDown") { event.preventDefault(); event.currentTarget.closest(".sp-capability-picker")?.querySelector("button[role=menuitemradio]:not(:disabled)")?.focus(); } }} value={capabilityQuery} onChange={event => setCapabilityQuery(event.target.value)} aria-label={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} placeholder={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} />{capabilityQuery && <IconButton label="清空能力搜索" onClick={() => setCapabilityQuery("")}><X size={13} /></IconButton>}</label><div className="sp-capability-results" role="menu">{filtered.length ? filtered.map(item => <button type="button" role="menuitemradio" aria-checked={ability?.id === item.id} disabled={!item.online} className="sp-menu-choice sp-capability-option" key={item.id} onClick={() => { onAbility(ability?.id === item.id ? null : item); setOpen(null); }}><span className="sp-capability-kind-icon"><Icon size={19} strokeWidth={1.7} /></span><span><span className="sp-agent-title"><strong>{item.name}</strong>{item.exclusive && <AgentExclusiveBadge/>}</span><small>{item.online ? item.description : "尚未上线，暂不可调用"}</small></span>{ability?.id === item.id && <Check size={15} />}</button>) : <p className="sp-picker-empty">没有匹配的{isSkill ? " Skill" : " Agent"}</p>}</div><button type="button" className="sp-capability-view-all" onClick={() => { setOpen(null); onViewAll?.(kind); }}>{isSkill ? "查看全部 Skill" : "查看全部Agent"}</button></div>}
+      {open === kind && <div className="sp-popover sp-capability-picker" style={menuPosition} aria-label={isSkill ? "科研 Skill 选择面板" : "科研 Agent 选择面板"}><label className="sp-capability-search sp-capability-query"><Search size={16} /><input autoFocus onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const first = filtered.find(item => item.online); if (first) { onAbility(ability?.id === first.id ? null : first); setOpen(null); } } if (event.key === "ArrowDown") { event.preventDefault(); event.currentTarget.closest(".sp-capability-picker")?.querySelector("button[role=menuitemradio]:not(:disabled)")?.focus(); } }} value={capabilityQuery} onChange={event => setCapabilityQuery(event.target.value)} aria-label={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} placeholder={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} />{capabilityQuery && <IconButton label="清空能力搜索" onClick={() => setCapabilityQuery("")}><X size={13} /></IconButton>}</label><div className="sp-capability-results" role="menu">{filtered.length ? filtered.map(item => <button type="button" role="menuitemradio" aria-checked={ability?.id === item.id} disabled={!item.online} className="sp-menu-choice sp-capability-option" key={item.id} onClick={() => { onAbility(ability?.id === item.id ? null : item); setOpen(null); }}><span className="sp-capability-kind-icon"><Icon size={19}/></span><span><span className="sp-agent-title"><strong>{item.name}</strong>{item.exclusive && <ExclusiveBadge/>}</span><small>{item.online ? item.description : "尚未上线，暂不可调用"}</small></span>{ability?.id === item.id && <Check size={15} />}</button>) : <p className="sp-picker-empty">没有匹配的{isSkill ? " Skill" : " Agent"}</p>}</div><button type="button" className="sp-capability-view-all" onClick={() => { setOpen(null); onViewAll?.(kind); }}>{isSkill ? "查看全部 Skill" : "查看全部Agent"}</button></div>}
     </div>;
   }
   return <div className={cx("sp-compose-block", chat ? "sp-compose-chat" : "sp-compose-home", annotate && "sp-measured")} ref={wrapper} data-measure={chat ? "输入框 776 × 124px" : "首页输入框 776 × 176px"}>

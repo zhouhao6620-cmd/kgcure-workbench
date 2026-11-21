@@ -1,10 +1,10 @@
 import { sitePath } from "../site-path.js";
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, Bot, Check, Download, FileText, Folder, FolderInput, FolderOpen, Layers, Link2, MessageSquare, MinusCircle, MoreHorizontal, Pencil, Plus, Search, Share2, Target, Trash2, Upload, UserRound, Users, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check, Download, FileText, Folder, FolderInput, FolderOpen, Layers, Link2, MessageSquare, MinusCircle, MoreHorizontal, Pencil, Plus, Search, Share2, Target, Trash2, Upload, UserRound, Users, X } from 'lucide-react';
 import { AgentGlyph, Button, EmptyState, IconButton, Modal, SkillGlyph, SpaceEmptyIllustration, Tag } from '../design-preview/components.jsx';
 import { DeliveryFileIcon } from '../design-preview/ConversationPatterns.jsx';
 import { HighlightedTitle } from './Typography.jsx';
-import { capabilityById, capabilityPath, downloadText } from '../content/catalog.js';
+import { capabilityById, capabilityPath, downloadText, hasPreviewDetail } from '../content/catalog.js';
 import { downloadWord } from '../design-preview/word-file.js';
 import { Pagination } from './Pagination.jsx';
 import './spaces.css';
@@ -252,8 +252,8 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
      <header>
       <h1>{space.name}</h1>
       <div className="workSpaceMeta">
-       <span className="workSpaceMetaItem"><Target size={16} aria-hidden="true"/><span>研究目标</span><strong>{space.goal||'科研任务、共享成果与团队协作'}</strong></span>
-       <span className="workSpaceMetaItem"><Layers size={16} aria-hidden="true"/><span>常用科研能力</span><strong>{capabilities.length} 项</strong></span>
+       <span className="workSpaceMetaItem"><Target size={16} strokeWidth={1.65} aria-hidden="true"/><span>研究目标</span><strong>{space.goal||'科研任务、共享成果与团队协作'}</strong></span>
+       <span className="workSpaceMetaItem"><SkillGlyph size={16}/><span>常用科研能力</span><strong>{capabilities.length} 项</strong></span>
       </div>
      </header>
      <div className="workSpaceMemberAvatars" aria-label={`${displayedMembers.length} 位成员`}>{displayedMembers.map((member,index)=><MemberAvatar key={member.name+index} member={member} tone={index}/>)}<span className="workMemberOverflowBadge" title={`共 ${displayedMembers.length} 位成员`} aria-label={`共 ${displayedMembers.length} 位成员`}>{displayedMembers.length}+</span></div>
@@ -262,11 +262,11 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
      <span className="workSpaceFolder" aria-hidden="true"><SpaceFolderMark/></span>
     </div>
    </div>
-   <nav aria-label="常用可用能力">{capabilities.map(item=><button className={'ds-home-shortcut is-'+item.kind} key={item.id} title={item.description} onClick={()=>onNavigate(capabilityPath(item)+'?space='+encodeURIComponent(space.id)+(folder==='all'?'':'&folder='+encodeURIComponent(folder)))}>{item.kind==='skill'?<SkillGlyph size={16}/>:<AgentGlyph size={16}/>}<strong>{item.name}</strong></button>)}{!capabilities.length&&<button type="button" className="ds-home-shortcut is-empty-capability" onClick={()=>open('capability')}><Plus size={16} aria-hidden="true"/><strong>添加常用科研能力</strong></button>}</nav>
+   <nav aria-label="常用可用能力">{capabilities.map(item=><button className={'ds-home-shortcut is-'+item.kind} key={item.id} title={item.description} disabled={!hasPreviewDetail(item)} onClick={()=>onNavigate(capabilityPath(item)+'?space='+encodeURIComponent(space.id)+(folder==='all'?'':'&folder='+encodeURIComponent(folder)))}>{item.kind==='skill'?<SkillGlyph size={16}/>:<AgentGlyph size={16}/>}<strong>{item.name}</strong>{!hasPreviewDetail(item)&&<small>暂无接入</small>}</button>)}{!capabilities.length&&<button type="button" className="ds-home-shortcut is-empty-capability" onClick={()=>open('capability')}><Plus size={16} aria-hidden="true"/><strong>添加常用科研能力</strong></button>}</nav>
    <div className="workSpaceActions">
     <div className="workSpaceUtilityActions">
-     <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('manage')}><Users size={16}/>空间成员管理</Button>
-     <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('capability')}><Bot size={16}/>科研能力管理</Button>
+     <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('manage')}><Users size={16} strokeWidth={1.65} aria-hidden="true"/>空间成员管理</Button>
+     <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('capability')}><SkillGlyph size={16}/>科研能力管理</Button>
     </div>
     <div><Button aria-disabled="true" tabIndex={-1}><Upload size={16} aria-hidden="true"/>上传文件</Button><Button variant="primary" aria-disabled="true" tabIndex={-1}><Plus size={16} aria-hidden="true"/>创建新任务</Button></div>
    </div>
@@ -471,7 +471,7 @@ function CapabilityChoices({selected,onToggle}){
     <button type="button" className={'sp-filter'+(kind==='skill'?' is-active':'')} aria-pressed={kind==='skill'} aria-controls="space-capability-choices" onClick={()=>setKind('skill')}>科研 Skill</button>
     <button type="button" className={'sp-filter'+(kind==='agent'?' is-active':'')} aria-pressed={kind==='agent'} aria-controls="space-capability-choices" onClick={()=>setKind('agent')}>科研 Agent</button>
    </div>
-   <label className="sp-search-field"><Search size={16} aria-hidden="true"/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="搜索能力名称" aria-label="搜索可添加能力"/></label>
+   <label className="sp-search-field sp-capability-query"><Search size={16} aria-hidden="true"/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="搜索能力名称" aria-label="搜索可添加能力"/></label>
   </div>
   <div id="space-capability-choices" className="workChoices" key={kind}>{options.map(item=>{
    const added=selected.includes(item.id);

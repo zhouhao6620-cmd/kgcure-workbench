@@ -1,0 +1,157 @@
+/* The parent supplies the sidebar and toolbar. Keep the authored document grid. */
+html { color-scheme: light; }
+.work-area { margin-left: 0; }
+body { color: var(--ds-ink); }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 3px;
+}
+.kind-badge .ds-icon, .capability-link .ds-icon { width: 16px; height: 16px; }
+.task-start .ds-icon, .task-start .ic { width: 20px; height: 20px; flex: none; }
+.task-start .ic { stroke-width: 1.85; }
+.arch-step-icon .arch-icon { width: 24px; height: 24px; }
+.primary-btn { background: var(--ds-primary); }
+.primary-btn:hover { background: var(--ds-primary-hover); }
+body[data-page="skill"] .task-start {
+  background: var(--ds-primary);
+  border-color: var(--ds-primary);
+}
+body[data-page="skill"] .task-start:hover {
+  background: var(--ds-primary-hover);
+  border-color: var(--ds-primary-hover);
+}
+body[data-page="agent"] .task-start {
+  background: var(--ds-ink);
+  border-color: var(--ds-ink);
+}
+body[data-page="agent"] .task-start:hover {
+  background: #282c33;
+  border-color: #282c33;
+}
+.secondary-btn { color: var(--ds-ink); }
+.primary-btn, .secondary-btn, .panel-link { font-size: 14px; }
+.kind-badge, .category-badge { font-size: 12px; font-weight: 400; }
+/* The workbench toolbar sits outside the scrolling document. */
+html { scroll-padding-top: 0; }
+.detail-page :is(.content-section, .cases-section) { scroll-margin-top: 62px; }
+.hero h1 { font-weight: 600; }
+.hero-lead { font-size: 16px; }
+.hero-rating .panel-link { font-size: 14px; }
+.rating-note, .peer-task p { font-size: 12px; }
+.hero-capability span, .ability-card p, .feature-highlight strong, .repository,
+.repository-root, .repository-tree strong, .fit-boundaries li, .sample-case strong,
+.method-block h4, .protocol-coverage strong, .protocol-step strong, .pen-points li,
+.peer-task, .arch-board, .arch-repo-root strong, .arch-step p { font-size: 14px; }
+.ability-card h3, .materials-heading h3, .materials-group--final .materials-heading h3 { font-size: 16px; }
+.hero-kpis strong { font-size: 18px; }
+@media (max-width: 1023px) {
+  .hero h1 { font-size: 30px; }
+  .hero-lead { font-size: 14px; }
+}
+@media (max-width: 760px) { .hero h1 { font-size: 28px; } }
+@media (max-width: 480px) { .hero h1 { font-size: 26px; } }
+.hero-kicker {
+  display:flex; align-items:center; flex-wrap:nowrap; justify-content:flex-start;
+  gap:8px; min-width:0; overflow-x:auto; scrollbar-width:none;
+}
+.hero-kicker > :is(.kind-badge,.detail-exclusive) {
+  display:inline-flex; align-items:center; flex:none; gap:6px;
+  box-sizing:border-box; height:30px; min-height:30px; padding:0 9px;
+  border:1px solid var(--ds-line); border-radius:var(--ds-radius-tag);
+  background:#f5f6f8; color:var(--ds-secondary);
+  font-family:inherit; font-size:14px; font-weight:var(--ds-tag-weight-medium); line-height:20px;
+  white-space:nowrap;
+}
+.hero-tags button.category-badge {
+  border-radius:var(--ds-radius-tag);
+  font-weight:var(--ds-tag-weight-regular);
+}
+.hero-tags button.category-badge[aria-pressed="true"] {
+  background:#fff;
+  color:var(--ds-ink);
+  border-color:#c9ced7;
+}
+.hero-kicker .kind-badge.skill { background:#fff; color:var(--ds-ink); }
+.hero-kicker .kind-badge.skill svg { color:var(--ds-primary); }
+.hero-kicker .kind-badge.agent { background:#15171d; border-color:#15171d; color:#fff; }
+.hero-kicker .kind-badge.agent svg { color:#e8c775; }
+.hero-kicker .detail-exclusive { background:#f2edfa; color:#7542bf; border-color:#eadff8; }
+.hero-kicker .detail-exclusive svg { width:16px; height:16px; stroke-width:1.65; }
+@media(max-width:480px) {
+  .hero-kicker { gap:5px; }
+  .hero-kicker > :is(.kind-badge,.detail-exclusive) { gap:4px; padding-inline:5px; font-size:12px; }
+  .hero-kicker :is(.kind-badge,.detail-exclusive) svg { width:14px; height:14px; }
+}
+.hero-actions .save-btn[aria-pressed="false"] { border-color:var(--ds-line); background:#fff; color:var(--ds-ink); }
+.hero-actions .save-btn[aria-pressed="true"] { border-color:#efbfd0; background:#fdf0f5; color:#b93262; }
+.hero-actions .save-btn[aria-pressed="true"] .ic { fill:currentColor; }
+.detail-page .peer-heading { font-size:16px; line-height:24px; }
+.detail-page .peer-task, .detail-page .peer-task p, .detail-page .peer-task span { font-size:14px; line-height:22px; }
+.review-tabs-docked .anchor-nav { visibility:hidden; }
+.review-tabs-docked .detail-page .right-rail { top:12px; }
+.review-tabs-docked .detail-page :is(.content-section,.cases-section) { scroll-margin-top:12px; }
+.hero-tags span.category-badge { padding:5px 12px; border-radius:var(--ds-radius-tag); background:#f5f6f8; color:var(--ds-secondary); }
+.catalog-detail-copy { white-space:pre-line; }
+.catalog-detail-input h3 { margin:0 0 4px; font-size:14px; }
+.catalog-detail-steps { padding-left:20px; margin:8px 0 0; line-height:1.8; }
+.catalog-detail-metrics { display:grid; grid-template-columns:max-content 1fr; gap:6px 16px; }
+.catalog-detail-metrics dd { margin:0; }
+#catalog-cases .actual-case-card { height:auto; min-height:38px; margin:0 8px 8px 0; white-space:normal; text-align:left; }
+.follow-actions.catalog-detail-follow { display:none; }
+@media (max-width:760px) {
+  .follow-actions.catalog-detail-follow:not([hidden]) { display:grid; grid-template-columns:1fr; }
+}
+
+.ev7-radar figcaption {
+  align-self:stretch; text-align:center;
+  color:var(--ds-ink); font-size:16px; font-weight:600; line-height:24px;
+}
+.skill-evaluation-notes {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
+  margin:16px 0 0;
+}
+.skill-evaluation-note {
+  min-width:0; padding:14px 16px;
+  border:1px solid; border-radius:var(--ds-radius-card);
+}
+.skill-evaluation-scope { background:#f0faf4; border-color:#cce8d6; color:#216445; }
+.skill-evaluation-review { background:#fff6eb; border-color:#f0dbc2; color:#855319; }
+.skill-evaluation-note dt {
+  display:flex; align-items:center; gap:7px; margin:0 0 5px;
+  font-size:14px; line-height:22px; font-weight:600;
+}
+.skill-evaluation-note dt svg {
+  flex:none; width:16px; height:16px; fill:none; stroke:currentColor;
+  stroke-width:1.65; stroke-linecap:round; stroke-linejoin:round;
+}
+.skill-evaluation-note dd { margin:0; color:var(--ds-secondary); font-size:14px; line-height:22px; }
+@container ev7-evaluation (max-width:480px) {
+  .skill-evaluation-notes { grid-template-columns:minmax(0,1fr); }
+}
+
+.arch-demo-toolbar :is(.arch-demo-status,.arch-demo-count,.arch-demo-button) { font-size:14px; line-height:20px; }
+.arch-demo-toolbar .arch-demo-button {
+  box-sizing:border-box; height:var(--ds-button-compact); min-height:var(--ds-button-compact); padding-block:0;
+}
+.arch-demo-toolbar .arch-demo-button .arch-icon { width:14px; height:14px; }
+
+
+.hero-rating .hero-certification-link {
+  width:100%;
+  color:#21734e;
+}
+.hero-certification-link:hover .evaluation-certification { text-decoration:underline; }
+.hero-rating-unmeasured .rating-large { min-height:62px; align-items:center; }
+.hero-rating-unmeasured .rating-large strong {
+  color:#626873;
+  font-size:24px;
+  line-height:32px;
+  letter-spacing:normal;
+}
+.hero-rating-unmeasured .rating-stars { color:#d8dde6; }
+.hero-rating-unmeasured .mini-labels strong { color:#697382; }
+.hero-rating-unmeasured .mini-track { background:#e5e9ef; }
+.hero-certification-note { width:100%; margin-top:auto; padding-top:21px; }
+@media(max-width:760px) {
+  .hero-certification-note { margin-top:17px; padding-top:0; }
+}

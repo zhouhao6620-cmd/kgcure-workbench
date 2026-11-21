@@ -1,19 +1,29 @@
 import rawCatalog from './catalog.json';
+import { REVIEW_CAPABILITIES } from './review-capabilities.js';
 import { EDITORIAL, AGENT_CORRECTIONS } from './editorial.js';
 import { skillAssessmentExample } from './skill-assessment-examples.js';
 const catalog=rawCatalog.map(item=>({...item,...(EDITORIAL[item.id]||{}),...(AGENT_CORRECTIONS[item.id]||{}),sourceIntro:item.intro,sourceSteps:item.steps,sourceDeliverables:item.deliverables,adapted:Boolean(EDITORIAL[item.id]||AGENT_CORRECTIONS[item.id])}));
 // Prototype assignments for reviewing the Agent entitlement flow.
 const previewExclusiveAgentIds = new Set(['1138', '1001', '1142']);
+// Visual examples for conversation Skill cards.
+const previewExclusiveSkillIds = new Set(['1028', '54e55c02d102417994d786a0239a5103']);
 for (const item of catalog) {
   if (item.kind === 'agent') item.exclusive = previewExclusiveAgentIds.has(item.id);
+  if (item.kind === 'skill' && previewExclusiveSkillIds.has(item.id)) item.previewExclusive = true;
   const assessment = skillAssessmentExample(item.id);
   if (assessment) Object.assign(item, { assessment, score: assessment.score, reviewed: true, sourceLabel: '已评测 · 演示' });
 }
 export const CAPABILITIES = catalog;
-export const BUSINESS_SKILLS = catalog.filter(item => item.kind === 'skill');
-export const BUSINESS_AGENTS = catalog.filter(item => item.kind === 'agent');
+export const BUSINESS_SKILLS = CAPABILITIES.filter(item => item.kind === 'skill');
+export const BUSINESS_AGENTS = CAPABILITIES.filter(item => item.kind === 'agent');
 export const capabilityPath = item => '/workspace/' + (item.kind === 'skill' ? 'skills/' : 'agents/') + item.id;
-export const capabilityById = id => catalog.find(item => item.id === id);
+const previewCapabilityIds = new Set([
+  ...REVIEW_CAPABILITIES.map(item => item.id),
+  ...BUSINESS_SKILLS.slice(0, 2).map(item => item.id),
+  ...BUSINESS_AGENTS.slice(0, 2).map(item => item.id),
+]);
+export const hasPreviewDetail = item => previewCapabilityIds.has(item?.id);
+export const capabilityById = id => CAPABILITIES.find(item => item.id === id) || REVIEW_CAPABILITIES.find(item => item.id === id);
 export const BUSINESS_SPACES = [{id:'db79430b945744a4aa9b3676d21f5fba',name:'神经发育障碍'}];
 export const STORE_FEATURES = {
   skill: [

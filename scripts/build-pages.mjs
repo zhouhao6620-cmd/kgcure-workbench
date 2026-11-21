@@ -13,10 +13,15 @@ await build({ base: `/${repository}/`, build: { outDir } });
 const index = join(outDir, "index.html");
 const directRoutes = [
   "design-system",
+  "login",
+  "welcome",
   "workspace",
   "workspace/chats/new",
   "workspace/skills",
   "workspace/agents",
+  "workspace/skills/sci-paper-evidence-review",
+  "workspace/agents/research-topic-feasibility",
+  "workspace/evaluation-standards",
   "workspace/evidence-search",
   "workspace/topic-selection",
   "workspace/grant-application",
