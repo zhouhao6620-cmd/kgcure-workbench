@@ -42,7 +42,6 @@
 .business-workspace .chat-composer-wrap .sp-compose-block { margin-inline:auto; }
 .business-workspace .chat-side { flex-basis:300px; border-color:var(--ds-card-line); }
 .business-workspace .chat-side .sp-source-delivery-card { width:100%; }
-.business-workspace .chat-side .sp-delivery-info strong { font-size:12px; }
 .business-workspace .file-grid.one { width:370px; max-width:100%; }
 .business-workspace .file-grid > * { min-width:0; }
 .business-workspace .rec-list { grid-template-columns:repeat(3,minmax(0,1fr)); }

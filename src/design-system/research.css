@@ -5,7 +5,7 @@
 .ds-origin-context{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;line-height:20px;color:#8795aa;margin:0 0 20px}.ds-origin-context>span+span:before{content:'·';padding-right:10px}
 
 .ds-research-chat .sp-file-panel { width: 440px; flex: 0 0 440px; max-width: calc(100% - 32px); }
-.ds-research-chat .sp-file-panel > header { min-height: 54px; padding: 8px 12px; border-bottom: 1px solid var(--ds-line); }
+.ds-research-chat .sp-file-panel > header { min-height: 60px; padding: 8px 12px; border-bottom: 1px solid var(--ds-line); }
 .ds-chat-file-list { display: grid; gap: 8px; padding: 12px; }
 .ds-research-chat .sp-source-deliveries { margin-top: 12px; }
 .ds-real-config .sp-parameter-foot { flex-flow: row wrap; align-items: center; }
@@ -20,6 +20,4 @@
 }
 @media (max-width: 1279px) {
   .ds-research-chat .sp-file-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 292px; z-index: 45; box-shadow: -12px 0 32px #17253412; }
-  .ds-chat-file-list .sp-source-delivery-card { padding: 8px; gap: 4px; }
-  .ds-chat-file-list .sp-delivery-actions { gap: 0; }
 }

@@ -117,8 +117,6 @@
 .ds-spec-preview .sp-chain-tool small { font-size: 14px; line-height: 22px; }
 @media (max-width: 1279px) {
   .ds-spec-preview { --spec-file-width: 292px; }
-  .ds-spec-preview .sp-spec-file-list .sp-source-delivery-card { padding: 8px; gap: 4px; }
-  .ds-spec-preview .sp-spec-file-list .sp-delivery-actions { gap: 0; }
 }
 @media (max-width: 1023px) {
   .ds-spec-preview { --spec-top: 88px; }
