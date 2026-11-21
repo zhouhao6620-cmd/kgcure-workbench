@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Bookmark, ChevronDown, FolderOpen, Languages } from 'lucide-react';
+import { Bookmark, ChevronDown, Languages, LibraryBig } from 'lucide-react';
 import { ApprovalEmptyIllustration, Button, EmptyState, RecordEmptyIllustration, SearchEmptyIllustration, SpaceEmptyIllustration } from './components.jsx';
 import { ConversationPrompt, FollowUpHeading } from '../design-system/ConversationPrompt.jsx';
 import { LanguageOptions } from '../design-system/LanguageOptions.jsx';
@@ -16,7 +16,7 @@ export const SIZE_NOTES = [
   ['商店与列表页顶距', '桌面 96px · 窄屏 88px', 'Skill、Agent、科研空间列表从工作区顶部量到标题行框。长列表滚动时沿用同一起点。'],
   ['商店列表分页', '每页最多 6 行', '按当前列数计算每页卡片数。桌面 Skill 最多 24 张，Agent 最多 18 张。翻页后回到 Hub 标题。'],
   ['详情与账户页顶距', '操作栏下 36px · 窄屏 28px', '从 60px 固定操作栏底部量到内容区。能力详情、案例、空间详情、文件与账户页共用。'],
-  ['右侧文件抽屉', '宽屏 440px · 紧凑 292px', '对话头栏用 18px 开口文件夹图标和 14px「文件」文字，窄屏仅显示图标。展开时入口使用浅蓝底和蓝色图标。低于 1280px 改为覆盖式抽屉，宽度最多为可用宽度减 32px。'],
+  ['右侧文件抽屉', '宽屏 440px · 紧凑 292px', '对话头栏用 18px 书脊图标和 14px「文件」文字，两者与分享图标同色。窄屏仅显示图标，展开时入口使用浅蓝底。没有文件时，72px 灰阶文件夹插画和标题在抽屉正文垂直居中。低于 1280px 改为覆盖式抽屉，宽度最多为可用宽度减 32px。'],
   ['交付物卡片', '高 80px · 正文双列等分', '正文随阅读列缩放，752px 阅读列下每张 370px，列间距 12px。窄屏和抽屉单列，卡片标题 14px，说明 12px。'],
   ['未登录大首页', '最大 1120px', '沿用官网版式与原有设计元素。'],
 ];
@@ -65,7 +65,7 @@ export function LayoutSpec({ onNotice, onPreviewScene, onPreviewDrawer }) {
       <Button small onClick={() => onPreviewScene('evidence')}>频道标签</Button>
       <Button small onClick={() => onPreviewScene('grant')}>基金申报</Button>
       <Button small onClick={() => onPreviewScene('drawing')}>绘图配置</Button>
-      <Button small onClick={onPreviewDrawer}><FolderOpen size={18} aria-hidden="true"/>文件抽屉</Button>
+      <Button small onClick={onPreviewDrawer}><LibraryBig size={18} strokeWidth={1.7} aria-hidden="true"/>文件抽屉</Button>
     </div>
     <h3 className="sp-spec-subheading">二级页标题区与操作栏</h3>
     <div className="sp-spec-secondary">

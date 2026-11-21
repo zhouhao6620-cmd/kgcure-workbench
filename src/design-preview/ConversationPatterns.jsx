@@ -1,13 +1,13 @@
 import { sitePath } from "../site-path.js";
 import { ConversationPrompt, FollowUpQuestions } from '../design-system/ConversationPrompt.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
-import { Archive, Download, FolderInput, ImagePlus, ChevronRight, PenLine, ArrowUpRight, Check, ChevronDown, Circle, FileCheck2, FileText, Folder, FolderOpen, Layers, Loader2, Pause, Play, Square, Pencil, Search, Sparkles, Upload, Workflow, X } from 'lucide-react';
+import { Archive, Download, FolderInput, ImagePlus, ChevronRight, PenLine, ArrowUpRight, Check, ChevronDown, Circle, FileCheck2, FileText, Folder, Layers, LibraryBig, Loader2, Pause, Play, Square, Pencil, Search, Sparkles, Upload, Workflow, X } from 'lucide-react';
 import { SkillGlyph, StatusTag, AgentBadge, Button, CaseCategory, SpaceDirectoryOptions } from './components.jsx';
 
 export function FilePanelToggle({ open, onToggle, controls, label = '文件面板' }) {
   return <button type="button" className="sp-file-toggle" aria-label={`${open ? '关闭' : '打开'}${label}`}
     aria-expanded={open} aria-controls={open ? controls : undefined} onClick={onToggle}>
-    <FolderOpen size={18} aria-hidden="true"/><span>文件</span>
+    <LibraryBig size={18} strokeWidth={1.7} aria-hidden="true"/><span>文件</span>
   </button>;
 }
 

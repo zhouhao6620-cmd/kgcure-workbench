@@ -321,9 +321,11 @@
 .sp-file-card strong { font-size: 12px; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .sp-file-card small { color: #6b7280; font-size: 12px; }
 .sp-file-panel { width: 300px; flex: 0 0 300px; border-left: 1px solid var(--sp-line); background: #fff; overflow-y: auto; z-index: 27; }
+.sp-file-panel:has(> .sp-file-empty) { display: grid; grid-template-rows: auto 1fr; }
 .sp-file-panel > header { display: flex; align-items: center; justify-content: space-between; padding: 16px 14px 8px 20px; }
 .sp-file-panel h2 { font-size: 14px; line-height: 22px; font-weight: 500; }
-.sp-file-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 100px 25px 30px; text-align: center; color: #6b7280; }
+.sp-file-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 25px; text-align: center; color: #6b7280; }
+.sp-file-empty > .sp-empty-art { width: 72px; height: 72px; flex: none; }
 .sp-file-empty strong { color: #535e70; font-size: 14px; font-weight: 500; }
 .sp-file-empty p { font-size: 12px; line-height: 21px; }
 .sp-side-file { display: flex; align-items: center; gap: 10px; width: calc(100% - 24px); margin: 12px; padding: 12px; border: 1px solid var(--sp-line); border-radius: 10px; background: #fff; text-align: left; }

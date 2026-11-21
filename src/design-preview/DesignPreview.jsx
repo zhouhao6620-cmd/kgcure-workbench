@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Award, Blocks, BookOpen, Check, ChevronDown, ChevronRight, Copy, Download, FileText, Folder, Heart, Info, Layers, Lightbulb, MessageCirclePlus, MessageSquarePlus, MoreHorizontal, Orbit, Palette, PanelLeft, Plus, Ruler, Search, Share2, ThumbsUp, Trash2, User, Workflow, X } from "lucide-react";
 import { useRouter } from "../router.jsx";
 import { AGENTS, ALL_CAPABILITIES, demoMessages, EXAMPLE_PROMPT, HOME_COPY, INITIAL_HISTORY, INITIAL_SPACES, makePreviewFile, MODELS, SKILLS } from "./data.js";
-import { SkillGlyph, AgentGlyph, AbilityIcon, AgentBadge, AgentCard, AgentParameters, Button, Composer, cx, EmptyState, IconButton, Modal, SkillCard, Tag } from "./components.jsx";
+import { SkillGlyph, AgentGlyph, AbilityIcon, AgentBadge, AgentCard, AgentParameters, Button, Composer, cx, EmptyState, IconButton, Modal, SkillCard, Tag, SpaceEmptyIllustration } from "./components.jsx";
 import { downloadWord } from "./word-file.js";
 import "../design-system/styles.css";
 import { HistorySearch } from "../design-system/HistorySearch.jsx";
@@ -201,7 +201,7 @@ export function DesignPreview({ delivery }) {
         <header><h2>文件 · {visibleFiles.length}</h2><IconButton label="关闭文件抽屉" onClick={() => setFileOpen(false)}><X size={18} aria-hidden="true"/></IconButton></header>
         {visibleFiles.length ? <div className="sp-spec-file-list">{visibleFiles.map(file => (
           <DeliveryCard key={file.id} file={file} delivery={delivery} onDownload={() => downloadFile(file)}/>
-        ))}</div> : <div className="sp-file-empty"><FileText size={28} strokeWidth={1.4} /><strong>当前还没有文件</strong><p>试用一个 Agent，查看交付文件的呈现方式。</p></div>}
+        ))}</div> : <div className="sp-file-empty"><SpaceEmptyIllustration /><strong>当前还没有文件</strong><p>试用一个 Agent，查看交付文件的呈现方式。</p></div>}
       </aside>}</div>}
       {annotate && <div className="sp-measure-legend"><Ruler size={13} /><span>左侧导航 260</span><span>输入框 776</span><span>阅读列 752</span>{fileOpen && <span>文件抽屉 440 / 292</span>}<span>工作区内容 1000</span><span>单位 px，均为最大宽度或固定尺寸</span></div>}
     </main>
