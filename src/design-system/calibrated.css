@@ -173,6 +173,7 @@
   .business-workspace .ds-first-level .sp-home-intro h1 { text-wrap: auto; }
 }
 
+.sp-design-app :is(.sp-share-action, .sp-file-toggle) { color: var(--sp-secondary); }
 .sp-design-app .sp-file-toggle {
   display: inline-flex;
   align-items: center;
@@ -183,12 +184,11 @@
   border: 0;
   border-radius: var(--ds-radius-control);
   background: transparent;
-  color: var(--ds-ink);
   font-size: 14px;
   font-weight: 400;
 }
 .sp-design-app .sp-file-toggle:hover { background: #e7eaf0; }
-.sp-design-app .sp-file-toggle[aria-expanded='true'] { background: #edf2ff; color: var(--ds-primary); }
+.sp-design-app .sp-file-toggle[aria-expanded='true'] { background: #edf2ff; }
 @media (max-width: 699px) {
   .sp-design-app .sp-file-toggle { width: 34px; padding: 0; }
   .sp-design-app .sp-file-toggle span { display: none; }

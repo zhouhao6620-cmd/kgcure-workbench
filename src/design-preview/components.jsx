@@ -1,5 +1,5 @@
 import { createElement, useEffect, useId, useRef, useState } from "react";
-import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ChevronDown, ChevronRight, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
+import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ChevronDown, ChevronRight, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Share2, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
 import { agentGlyph, evaluationAlertGlyph, evaluationShieldGlyph, exclusiveGlyph, pluginGlyph, skillGlyph } from "../design-system/capability-glyphs.js";
 import { certifiedEvaluationLabel, hasEvaluationCertification, missingEvaluationLabel } from '../content/review-capabilities.js';
 import '../design-system/evaluation-certification.css';
@@ -26,7 +26,9 @@ export function IconButton({ label, children, className, ...props }) {
  const kind = /收起导航|展开导航/.test(label) ? 'panel' : /搜索.*对话/.test(label) ? 'search' : /复制示例回复/.test(label) ? 'copy' : /分享.*对话/.test(label) ? 'share' : null;
  const text = label === '复制示例回复' ? '复制' : label === '分享示例对话' || label === '分享当前示例对话' ? '分享' : label;
  const tooltip = kind || /有帮助|重新生成/.test(label);
- return <button type="button" title={tooltip ? undefined : label} aria-label={label} data-tooltip={tooltip ? text : undefined} className={cx("sp-icon-button", tooltip && "sp-deepseek-action", className)} {...props}>{kind ? <DeepSeekIcon name={kind}/> : children}</button>;
+ const isShare = kind === 'share';
+ const icon = isShare ? <Share2 size={16} aria-hidden="true"/> : kind ? <DeepSeekIcon name={kind}/> : children;
+ return <button type="button" title={tooltip ? undefined : label} aria-label={label} data-tooltip={tooltip ? text : undefined} className={cx("sp-icon-button", tooltip && "sp-deepseek-action", isShare && "sp-share-action", className)} {...props}>{icon}</button>;
 }
 
 function CapabilityGlyph({ design, size = 20, ...props }) {
