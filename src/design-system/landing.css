@@ -10,7 +10,7 @@
 .kg-portal button{font:inherit;cursor:pointer}
 .kg-portal [id]{scroll-margin-top:62px}
 .portal-shell{width:min(1120px,calc(100% - 88px));margin-inline:auto}
-.portal-header{position:sticky;top:0;z-index:12;background:#f1f2f4f5;backdrop-filter:blur(10px)}
+.portal-header{position:sticky;top:0;z-index:12;background:rgb(255 255 255 / 85%);backdrop-filter:blur(10px)}
 .portal-header:has(nav a[href="#top"][aria-current]){background:transparent;backdrop-filter:none}
 .portal-header>.portal-shell{height:var(--portal-header-height);display:flex;align-items:center;justify-content:space-between}
 .portal-brand{display:block;width:121px;height:auto}
