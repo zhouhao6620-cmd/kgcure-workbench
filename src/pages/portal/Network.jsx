@@ -16,7 +16,7 @@ export default function Network() {
   return <section id="partners" className="portal-section portal-network" aria-labelledby="portal-partners-title"><div className="portal-shell">
     <header className="portal-intro">
       <h2 id="portal-partners-title"><span>众多机构与<span className="portal-partners-emphasis">科研同行</span>，</span><span>都在选择数愈KGcure</span></h2>
-      <p>三甲医院、全球药械企业、高校、医疗科技企业</p>
+      <p>三甲医院、全球药械企业、高校、生物公司都在用</p>
     </header>
     <div className="portal-reel">
       {Array.from({length:rowCount},(_,row)=>{

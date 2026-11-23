@@ -1,6 +1,7 @@
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { build } from "vite";
+import { capabilityDemos, capabilityDemoPath } from "../src/content/capability-demos.js";
 
 const repository = process.argv[2];
 if (!repository || !/^[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/.test(repository)) {
@@ -17,6 +18,7 @@ const directRoutes = [
   "welcome",
   "workspace",
   "workspace/chats/new",
+  ...Object.keys(capabilityDemos).map(id => capabilityDemoPath(id).slice(1)),
   "workspace/skills",
   "workspace/agents",
   "workspace/skills/sci-paper-evidence-review",

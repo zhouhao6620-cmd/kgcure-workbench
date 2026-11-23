@@ -65,7 +65,7 @@ function withSkillEvaluationCertification(html, certified) {
   return '<!doctype html>\n' + page.documentElement.outerHTML;
 }
 
-export function ReviewDocument({ kind, title, mode = 'skill', item, unrated = false, canLaunch = true, onRun, onCase, favorite = false, onFavorite }) {
+export function ReviewDocument({ kind, title, mode = 'skill', item, unrated = false, canLaunch = true, onRun, onDemo, onCase, favorite = false, onFavorite }) {
   const certified = kind === 'skill' && !unrated && hasEvaluationCertification(item);
   const frame = useRef(null);
   const [navigation, setNavigation] = useState(null);
@@ -106,6 +106,7 @@ export function ReviewDocument({ kind, title, mode = 'skill', item, unrated = fa
       const { action, value } = event.data;
       if (action === 'navigation' && Array.isArray(value?.labels)) setNavigation(value);
       if (action === 'run') onRun(item);
+      if (action === 'demo') onDemo?.(item);
       const cases = item.reviewCases || item.cases;
       if (action === 'case' && Number.isInteger(value) && cases?.[value]) {
         onCase(item, cases[value]);
@@ -116,7 +117,7 @@ export function ReviewDocument({ kind, title, mode = 'skill', item, unrated = fa
     }
     window.addEventListener('message', handle);
     return () => window.removeEventListener('message', handle);
-  }, [item, onRun, onCase, onFavorite, favorite]);
+  }, [item, onRun, onDemo, onCase, onFavorite, favorite]);
 
   if (document.failed) return <p className="ds-review-document-status" role="alert">页面加载失败，请刷新后重试。</p>;
   if (!document.html) return <p className="ds-review-document-status" role="status">正在加载页面…</p>;

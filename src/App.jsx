@@ -37,6 +37,7 @@ import { PersonalVerification } from "./pages/PersonalVerification.jsx";
 import { BillingUsage } from "./pages/BillingUsage.jsx";
 import { SAMPLE_QUOTA_REMAINING } from "./pages/billing-usage-data.js";
 import { DrawingChat, MultiStepChat, WorkflowAssistantChat } from "./pages/chats.jsx";
+import { CapabilityDemo } from './pages/CapabilityDemo.jsx';
 import { Login } from "./pages/Login.jsx";
 import { LandingPage } from "./pages/landing.jsx";
 import { DrawingPage, ServicePage } from "./pages/services.jsx";
@@ -49,6 +50,7 @@ import { BusinessHome } from "./design-system/BusinessHome.jsx";
 import { DesignPreview } from "./design-preview/DesignPreview.jsx";
 import { ReviewDocument } from './design-system/ReviewDocument.jsx';
 import { EVALUATION_PATH } from './content/review-capabilities.js';
+import { capabilityDemoPath, capabilityDemoPrefix, capabilityDemos, capabilityDemoTitle } from './content/capability-demos.js';
 import { ResearchConversation, makeSession } from './design-system/ResearchConversation.jsx';
 import { ResearchSpaces, initialResearchSpaces } from './design-system/ResearchSpaces.jsx';
 import { ContributionPage } from './design-system/ContributionPage.jsx';
@@ -650,6 +652,9 @@ export function App() {
   const isCase = path.startsWith("/workspace/workflows/") && path.includes("/cases/") && !capabilityById(path.split("/")[4]);
   const isChat = path.startsWith("/workspace/chats/") && path !== "/workspace/chats/new";
   const isHome = path === "/workspace" || path === "/workspace/chats/new";
+  const demoItem = path.startsWith(capabilityDemoPrefix) ? capabilityById(path.slice(capabilityDemoPrefix.length)) : null;
+  const demo = demoItem && capabilityDemos[demoItem.id];
+  const demoSession = demo ? { id: path.split('/').at(-1), title: capabilityDemoTitle, readOnly: true } : null;
   const isStore = ["/workspace/skills", "/workspace/agents", "/workspace/workflows", "/workspace/research-space"].includes(path);
   const isFirstLevel = isHome || ["/workspace/evidence-search", "/workspace/topic-selection", "/workspace/grant-application", "/workspace/scientific-drawing", "/workspace/skills", "/workspace/agents", "/workspace/research-space", "/workspace/workflows"].includes(path);
 
@@ -738,6 +743,7 @@ export function App() {
       const unrated = isSkill && router.get('assessment') === 'unrated';
       return <ReviewDocument key={item.id + ':' + unrated} kind={item.kind} title={item.name} item={item} unrated={unrated}
         canLaunch={canUseCapability(item, tier)} onRun={runCapability} favorite={favoriteIds.has(item.id)} onFavorite={updateFavorite}
+        onDemo={capabilityDemos[item.id] ? ability => navigate(capabilityDemoPath(ability.id) + router.search) : undefined}
         onCase={(ability, entry) => {
           if (typeof entry === 'string') {
             startTask({ ability, space: router.get('space') || null,
@@ -835,6 +841,8 @@ export function App() {
         showToast('请在科研空间页新建空间');
       },
     };
+    if (demo) return <CapabilityDemo key={id} item={demoItem} demo={demo} delivery={delivery}
+      onToast={showToast} onRun={() => runCapability(demoItem)}/>;
     if(session)return <ResearchConversation key={id} session={session} tier={tier} onRequireCapability={requireCapabilityAccess} onUpdate={next=>setLocalSessions(items=>items.map(x=>x.id===next.id?{...next,updatedAt:Date.now()}:x))} onNavigate={navigate} delivery={delivery}/>;
     if (id === "e9dd87e0-b232-479d-b0a9-5ba249a76a78") return <DrawingChat onToast={showToast} delivery={delivery} />;
     if (id === "d00e51b8-6552-4d64-9042-9c537a7f8c61") {
@@ -880,7 +888,7 @@ export function App() {
   }
 
   return (
-    <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={spaces} onSpaces={setSpaces}>
+    <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={demoSession ? [demoSession, ...visibleHistory] : visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={spaces} onSpaces={setSpaces}>
       {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
       {restrictedAgent && <Modal title={restrictedAgent.name} onClose={() => setRestrictedAgent(null)}>

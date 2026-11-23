@@ -1036,14 +1036,7 @@ body[data-page="skill"] .task-start:hover{background:#2f55e7;border-color:#2f55e
   const schedulePosition=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(refreshPosition);}};
   window.addEventListener('scroll',schedulePosition,{passive:true});
   window.addEventListener('resize',schedulePosition,{passive:true});
-  document.querySelector('.demo-link')?.addEventListener('click',e=>{
-    if(e.currentTarget.dataset.demoPage==='agent'&&window.KGcureArchitectureDemo){
-      document.querySelector('#agent-architecture').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
-      window.KGcureArchitectureDemo.replay();
-    }else{
-      signal('case',0);
-    }
-  });
+  document.querySelector('.demo-link')?.addEventListener('click',()=>signal('demo'));
   refreshPosition();
 })();
 </script><script>(function () {

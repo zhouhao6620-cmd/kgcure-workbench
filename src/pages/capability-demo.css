@@ -1,0 +1,77 @@
+.sp-composer.capability-demo-dock {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-style: dashed;
+  border-color: #dfe3e9;
+  background: #f5f6f8;
+}
+
+.capability-demo-dock > p {
+  margin: 0;
+  text-align: center;
+  color: #667085;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.capability-demo-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.capability-demo-actions .sp-button { min-height: 36px; padding-inline: 12px; font-size: 14px; }
+.capability-demo-actions .sp-button:not(.sp-button-primary) { color: #596579; background: #fff; }
+.capability-demo-actions .sp-button:not(.sp-button-primary):hover { background: #eef0f3; }
+.capability-demo-actions .sp-button[data-kind="agent"] { background: var(--ds-ink); border-color: var(--ds-ink); }
+.capability-demo-actions .sp-button[data-kind="agent"]:hover { background: #282c33; border-color: #282c33; }
+.capability-demo-actions svg { flex: none; }
+
+@media (max-width: 359px) {
+  .capability-demo-actions .sp-button { padding-inline: 7px; }
+}
+
+.capability-demo-identity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sp-blue);
+  font-size: 14px;
+  line-height: 22px;
+  margin-bottom: 5px;
+}
+
+.capability-demo-identity svg { flex: none; }
+.capability-demo-identity[data-kind="agent"] { color: var(--ds-ink); }
+
+.capability-demo-configuration {
+  margin-block: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--ds-card-line);
+  border-radius: 12px;
+  background: #f8f9fb;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.capability-demo-configuration header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.capability-demo-configuration dl { display: grid; gap: 8px; margin: 12px 0 0; }
+.capability-demo-configuration dl > div { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; }
+.capability-demo-configuration dt { font-weight: 600; }
+.capability-demo-configuration dd { margin: 0; color: #596579; }
+
+.capability-demo-steps {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding-left: 24px;
+  font-size: 14px;
+}
+
+.capability-demo-steps summary { cursor: pointer; }
+.capability-demo-steps summary span { font-weight: 600; }
+.capability-demo-steps small { margin-left: 8px; color: #667085; font-size: 12px; }
+.capability-demo-steps details p { margin: 0; color: #596579; }

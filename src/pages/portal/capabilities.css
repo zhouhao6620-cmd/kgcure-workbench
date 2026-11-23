@@ -111,8 +111,9 @@
 
 .cap-features li {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 4px 7px;
+  align-content: center;
   align-items: center;
   padding: 11px 0;
 }
@@ -123,7 +124,6 @@
 
 .cap-feature-icon {
   display: grid;
-  min-height: 26px;
   place-items: center;
   color: var(--cap-feature-icon);
 }
@@ -141,26 +141,29 @@
 .cap-features a svg { margin-left: 4px; vertical-align: -1px; color: var(--cap-feature-icon); }
 
 .cap-features li p {
-  margin-top: 4px;
+  grid-column: 1 / -1;
   color: var(--cap-copy);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.65;
 }
 
-@media (1000px <= width <= 1080px) {
-  .cap-value .cap-features { margin-inline: 9px; }
-  .cap-features li { gap: 6px; }
+@media (600px <= width <= 699px), (min-width: 1200px) {
+  .cap-value .cap-features { margin-inline: 12px; }
+  .cap-features li p { font-size: 12px; }
 }
 
-@media (max-width: 999px) {
+@media (max-width: 1199px) {
   .cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cap-value-copy { padding-inline: 16px; }
-  .cap-value .cap-features { margin-inline: 16px; }
 }
 
-@media (max-width: 535px) {
-  .cap-grid { grid-template-columns: minmax(0, 1fr); gap: 13px; }
+@media (max-width: 599px) {
+  .cap-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .cap-value-copy { min-height: 110px; padding-inline: 17px; }
   .cap-value-icon { right: 12px; }
   .cap-value .cap-features { margin-inline: 17px; }
+}
+
+@media (max-width: 339px) {
+  .cap-value .cap-features { margin-inline: 10px; }
 }

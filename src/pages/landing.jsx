@@ -94,7 +94,7 @@ export function LandingPage({onLogin}) {
       <section className="portal-hero"><div className="portal-shell">
         <div className="portal-message">
           <h1><span className="portal-title-lead">一站式可信</span>{' '}学术科研工作台</h1>
-          <p>从选题到成稿，一站覆盖科研全流程与各类场景。<br className="hero-break"/>用可追溯的证据和可复核的方法，支撑研究结论。</p>
+          <p>从选题到成稿，专业科研工具与智能体开箱即用。<br className="hero-break"/>工具经实测，结论可溯源，分析可复核。</p>
           <div className="portal-actions"><button className="org-login" onClick={()=>onLogin('/login?identity=hospital')}><Building2 size={16}/>医院 / 机构登录</button><button className="person-login" onClick={()=>onLogin('/login')}><UserRound size={16}/>个人用户登录</button></div>
         </div><Devices/>
       </div></section>

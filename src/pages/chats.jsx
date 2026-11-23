@@ -48,10 +48,14 @@ function StepList({ items }) {
   );
 }
 
-function ChatFrame({ title, children, side, sideOpen, onToggleSide, model, onModelChange, placeholder, onToast }) {
-  const [localMessages,setLocalMessages]=useState(()=>{try{const pending=JSON.parse(sessionStorage.getItem('kgcure-submitted-message')||'null');return pending?.text?[pending.text]:[];}catch{return [];}});
+export function ChatFrame({ title, children, side, sideOpen, onToggleSide, model, onModelChange, placeholder, onToast, composer, scrollRef, onScroll, onShare }) {
+  const isReplay = Boolean(composer);
+  const [localMessages,setLocalMessages]=useState(()=>{
+    if (isReplay) return [];
+    try{const pending=JSON.parse(sessionStorage.getItem('kgcure-submitted-message')||'null');return pending?.text?[pending.text]:[];}catch{return [];}
+  });
   const lastReply=useRef(null);
-  useEffect(()=>{try{sessionStorage.removeItem('kgcure-submitted-message');}catch{}},[]);
+  useEffect(()=>{if (!isReplay) {try{sessionStorage.removeItem('kgcure-submitted-message');}catch{}}},[isReplay]);
   useEffect(()=>{if(localMessages.length)lastReply.current?.scrollIntoView({block:'end'});},[localMessages.length]);
   return (
     <div className="chat-shell">
@@ -60,13 +64,13 @@ function ChatFrame({ title, children, side, sideOpen, onToggleSide, model, onMod
           <div className="chat-head-left">
             <h1>{title}</h1>
           </div>
-          <div className="chat-head-actions"><IconButton label="分享当前示例对话" onClick={() => onToast?.('分享对话（原型演示）')}/><FilePanelToggle open={sideOpen} onToggle={onToggleSide}/>
+          <div className="chat-head-actions"><IconButton label="分享当前示例对话" onClick={onShare ?? (() => onToast?.('分享对话（原型演示）'))}/><FilePanelToggle open={sideOpen} onToggle={onToggleSide}/>
           </div>
         </header>
-        <div className="chat-scroll">
+        <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
           <div className="chat-col">{children}{localMessages.map((text,i)=><div key={i}><div className="msg is-user"><div className="bubble">{text}</div></div><div className="msg is-assistant"><ThinkingSummary/><p>已保留你补充的信息。请继续明确研究对象、主要结局和需要的交付形式，便于组织后续任务。</p></div></div>)}<div ref={lastReply}/></div>
         </div>
-        <ChatComposer placeholder={placeholder} model={model} onModelChange={onModelChange} onToast={onToast} onSend={text=>setLocalMessages(v=>[...v,text])} />
+        {composer ?? <ChatComposer placeholder={placeholder} model={model} onModelChange={onModelChange} onToast={onToast} onSend={text=>setLocalMessages(v=>[...v,text])} />}
       </div>
       {sideOpen ? (
         <aside className="chat-side">
