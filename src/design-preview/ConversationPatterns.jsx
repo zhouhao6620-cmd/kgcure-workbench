@@ -156,7 +156,7 @@ export function DeliveryCard({ file, delivery, onDownload }) {
   const width = Math.min(224, window.innerWidth - 16);
   const below = window.innerHeight - bottom - 14;
   const above = top - 14;
- const rows = Math.max(spaces.length + 2, ...spaces.map(space => (space.folders?.length || 0) + 1));
+ const rows = Math.max(spaces.length + 1, ...spaces.map(space => (space.folders?.length || 0) + 1));
  const flip = below < Math.min(240, 42 + rows * 36) && above > below;
   Object.assign(menu.current.style, {
    width: width + 'px',
@@ -177,7 +177,7 @@ export function DeliveryCard({ file, delivery, onDownload }) {
    <button type="button" aria-label={'下载 ' + file.name} title="下载" onClick={onDownload}><Download size={18} aria-hidden="true"/></button>
   </div>
   <div className="sp-delivery-spaces" id={menuId} ref={menu} popover="auto" aria-label="保存到空间" role="menu" onToggle={event=>setOpen(event.newState === 'open')}>
-   {open && <SpaceDirectoryOptions spaces={spaces} value={null} caption="保存到空间" libraryLabel="我的文件库"
+   {open && <SpaceDirectoryOptions spaces={spaces} value={null} caption="保存到空间"
     onPick={(spaceId, folderId)=>{menu.current.hidePopover();delivery.onSave(file, spaceId, folderId);}}
     onNew={()=>{menu.current.hidePopover();delivery.onNewSpace?.();}} />}
   </div>
