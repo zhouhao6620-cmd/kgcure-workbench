@@ -238,7 +238,7 @@
 
 .plan-features {
   display: grid;
-  gap: 7px;
+  gap: 12px;
   margin: 18px 0 0;
   padding: 16px 0 0;
   list-style: none;
@@ -258,8 +258,37 @@
   margin-top: 3px;
 }
 
-.plan-feature-group, .plan-features > .plan-feature-status {
-  margin-top: 5px;
+.plan-feature-basic > svg {
+  flex: none;
+}
+
+.plan-feature-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.plan-feature-title, .plan-features > .plan-feature-status {
+  font-weight: 500;
+}
+
+.plan-feature-examples {
+  --ds-tag-weight: var(--ds-tag-weight-regular);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.plan-feature-details,
+.plans-view .plan-feature-examples .sp-tag,
+.plans-view .plan-feature-examples .sp-tag > span {
+  color: var(--ds-secondary);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.plan-feature-examples .sp-tag {
+  white-space: nowrap;
 }
 
 .plan-feature-details {
@@ -268,10 +297,6 @@
   margin: 4px 0 0;
   padding-left: 24px;
   list-style: none;
-}
-
-.plan-feature-status[data-included='false'] {
-  color: #6c737e;
 }
 
 .plan-feature-status[data-included='false'] svg {

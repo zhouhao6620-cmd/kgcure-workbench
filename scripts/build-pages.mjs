@@ -31,6 +31,7 @@ const directRoutes = [
   "workspace/research-space",
   "workspace/my-files",
   "workspace/membership",
+  "workspace/membership-plans",
   "workspace/membership/checkout",
   "workspace/contribute",
   "workspace/profile",

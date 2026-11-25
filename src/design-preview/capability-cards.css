@@ -1,7 +1,6 @@
 /* Current shared card contract. All store/chat and pointer sizes use these rules. */
 .sp-design-app {
  --sp-card-border:var(--ds-card-line);
- --sp-card-divider:#f1f3f6;
  --sp-card-hover-border:var(--ds-card-hover);
  --sp-card-focus:#3964fe;
  --sp-card-muted:#737d8b;
@@ -27,7 +26,7 @@
  padding:var(--sp-card-padding); min-height:136px; height:100%; width:100%; min-width:0;
  color:var(--sp-ink); background:transparent; border:0; text-align:left;
 }
-.sp-design-app .sp-gray-capability.sp-agent-card .sp-card-hit { min-height:188px; gap:10px; }
+.sp-design-app .sp-gray-capability.sp-agent-card .sp-card-hit { min-height:0; gap:10px; }
 .sp-design-app .sp-gray-top { display:flex; align-items:center; gap:10px; min-width:0; min-height:44px; }
 .sp-design-app .sp-gray-top .sp-ability-icon { width:36px; height:36px; flex-shrink:0; border-radius:9px; }
 .sp-design-app .sp-gray-top .sp-ability-icon > svg { width:22px; height:22px; }
@@ -64,16 +63,6 @@
 .sp-design-app .sp-gray-capability:has(.sp-card-hit[data-unavailable]):hover {
  border-color:var(--ds-line); background:#fff; transform:none; box-shadow:none;
 }
-.sp-design-app .sp-gray-flow { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0; }
-.sp-design-app .sp-gray-flow > span { position:relative; flex:1; min-width:0; font-size:12px; line-height:20px; font-weight:400; color:var(--sp-card-muted); text-align:center; white-space:nowrap; }
-.sp-design-app .sp-gray-flow i { display:none; }
-.sp-design-app .sp-gray-flow > span:not(:last-child)::after { content:'›'; position:absolute; top:0; right:-6px; color:#bbc3cf; }
-.sp-design-app .sp-gray-agent-bottom { padding-top:10px; border-top:1px solid var(--sp-card-divider); }
-.sp-design-app .sp-gray-output { display:flex; align-items:center; gap:6px; min-width:0; color:#8b98a9; }
-.sp-design-app .sp-gray-output > svg { flex-shrink:0; }
-.sp-design-app .sp-gray-output > span { min-width:0; }
-.sp-design-app .sp-gray-output small { display:none; }
-.sp-design-app .sp-gray-output strong { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:#697585; font-size:12px; line-height:20px; font-weight:400; }
 .sp-design-app .sp-gray-capability:focus-within { border-color:var(--sp-card-focus); background:#fff; transform:none; box-shadow:none; }
 .sp-design-app .sp-gray-capability .sp-card-hit:focus-visible { outline:2px solid var(--sp-card-focus); outline-offset:-3px !important; border-radius:9px; }
 .sp-design-app .sp-gray-capability:focus-within .sp-gray-action { color:#818c9b; background:transparent; }
@@ -120,10 +109,35 @@
 .sp-design-app .sp-rating-star > span { color:#f59e0b; }
 .sp-design-app .sp-agent-card-icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; isolation:isolate; overflow:hidden; width:36px; height:36px; border:1px solid #51432e; border-radius:9px; background:#1c1c1d; color:#d5b87d; }
 .sp-design-app .sp-agent-card-icon::after { content:''; position:absolute; z-index:-1; width:38px; height:38px; top:-26px; right:-20px; border:1px solid #bfa06440; border-radius:50%; }
-.sp-design-app .sp-gray-capability.sp-agent-card .sp-gray-flow { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:2px 0 0; }
-.sp-design-app .sp-gray-flow > span { display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--sp-card-muted); font-size:12px; line-height:20px; }
-.sp-design-app .sp-gray-flow i { display:block; width:5px; height:5px; border:1px solid #c3cad6; border-radius:50%; background:#fff; z-index:1; }
-.sp-design-app .sp-gray-flow > span:not(:last-child)::after { content:''; position:absolute; top:2px; left:calc(50% + 9px); right:calc(-50% - 3px); border-top:1px solid #edf0f4; }
+.sp-design-app .sp-agent-card .sp-gray-heading > small { display:flex; align-items:center; gap:8px; }
+.sp-design-app .sp-agent-category { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.sp-design-app .sp-agent-ability-count {
+ flex:none; padding-inline-start:8px; border-inline-start:1px solid #dce0e4; line-height:12px;
+}
+.sp-design-app .sp-agent-abilities {
+ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:1fr;
+ gap:6px 8px; margin-top:2px;
+}
+.sp-design-app .sp-agent-ability {
+ display:flex; align-items:center; gap:6px; min-width:0; min-height:32px; padding:6px 7px;
+ border-radius:6px; background:#f5f6f7; color:#41454a;
+ font-size:12px; line-height:18px; font-weight:500;
+}
+.sp-design-app .sp-agent-ability > svg { flex:none; color:#686c72; }
+.sp-design-app .sp-agent-ability-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sp-design-app .sp-agent-summary {
+ display:flex; align-items:center; flex-wrap:wrap; gap:5px 10px;
+ margin-top:auto; padding-top:10px; border-top:1px solid #eceef0;
+ font-size:12px; line-height:18px; color:var(--sp-card-muted);
+}
+.sp-design-app .sp-agent-metric {
+ display:flex; align-items:center; gap:5px; white-space:nowrap;
+}
+.sp-design-app .sp-agent-metric > svg { flex:none; color:#737981; }
+.sp-design-app .sp-agent-metric b { color:#434950; font-weight:600; font-variant-numeric:tabular-nums; }
+.sp-design-app .sp-agent-summary :is(.sp-card-unavailable,.sp-agent-open) { margin-inline-start:auto; }
+.sp-design-app .sp-agent-summary .sp-card-unavailable { line-height:18px; }
+.sp-design-app .sp-agent-summary .sp-agent-open { width:20px; height:20px; }
 
 .sp-design-app .sp-skill-card .sp-card-hit { position:relative; }
 .sp-design-app .sp-skill-card .sp-card-hit > .sp-skill-badge { position:absolute; top:14px; right:14px; padding:0 5px; height:22px; gap:4px; background:#f5f6f8; color:#7a8493; }

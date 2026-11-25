@@ -21,9 +21,9 @@ export const SKILLS = [
 ];
 
 export const AGENTS = [
-  { id: "review-agent", kind: "agent", name: "系统评价与 Meta 分析", description: "从研究问题出发，组织证据与分析流程。", category: "文献研究", icon: "workflow", tone: "blue", online: true, steps: ["场景确认", "文献调研", "选题推荐", "可行性评估", "方案生成", "报告生成"], output: "证据汇总与分析报告" },
-  { id: "paper-agent", kind: "agent", name: "完整论文初稿生成", description: "围绕研究资料，组织可复核的论文初稿。", category: "论文写作", icon: "file", tone: "teal", online: true, steps: ["整理资料", "规划结构", "撰写初稿", "核对引用"], output: "论文初稿与参考文献" },
-  { id: "grant-agent", kind: "agent", name: "科研基金申报", description: "把研究构想整理为结构完整的申报材料。", category: "基金申报", icon: "award", tone: "sand", online: true, steps: ["明确目标", "研究设计", "撰写材料", "检查完善"], output: "申请书与研究方案" },
+  { id: "review-agent", kind: "agent", name: "系统评价与 Meta 分析", description: "从研究问题出发，组织证据与分析流程。", category: "文献研究", icon: "workflow", tone: "blue", online: true, steps: ["场景确认", "文献调研", "选题推荐", "可行性评估", "方案生成", "报告生成"], output: "证据汇总与分析报告", coreAbilities: [["target", "综述问题界定"], ["search", "文献检索与筛选"], ["table", "证据整理与提取"], ["chart", "综合分析与报告"]] },
+  { id: "paper-agent", kind: "agent", name: "完整论文初稿生成", description: "围绕研究资料，组织可复核的论文初稿。", category: "论文写作", icon: "file", tone: "teal", online: true, steps: ["整理资料", "规划结构", "撰写初稿", "核对引用"], output: "论文初稿与参考文献", coreAbilities: [["book", "研究资料整理"], ["layers", "论文结构规划"], ["file", "论文初稿撰写"], ["checklist", "引用核对"]] },
+  { id: "grant-agent", kind: "agent", name: "科研基金申报", description: "把研究构想整理为结构完整的申报材料。", category: "基金申报", icon: "award", tone: "sand", online: true, steps: ["明确目标", "研究设计", "撰写材料", "检查完善"], output: "申请书与研究方案", coreAbilities: [["target", "研究目标凝练"], ["network", "研究方案设计"], ["file", "申报材料撰写"], ["checklist", "申报内容核查"]] },
 ];
 
 export const ALL_CAPABILITIES = [...SKILLS, ...AGENTS];

@@ -45,6 +45,14 @@ export const REVIEW_CAPABILITIES = [
     demo: true,
     online: true,
     steps: ['确认研究方向', '调研文献与证据', '比较候选选题', '评估可行性', '整理方案与报告'],
+    coreAbilities: [
+      ['network', '问题拆解与范围定义'],
+      ['database', '文献与数据条件核查'],
+      ['target', '候选课题比较优选'],
+      ['files', '立项成果打包'],
+    ],
+    preparationCount: '1–3',
+    estimatedMinutes: 6,
     fields: [
       { label: '研究问题', required: true, description: '说明计划研究的问题、目标和范围。' },
       { label: '已有条件', required: false, description: '列出可用数据、已有文献或研究约束。' },

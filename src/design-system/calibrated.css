@@ -16,7 +16,6 @@
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-skill-card .sp-card-hit > .sp-skill-badge { top: var(--ds-capability-block-padding); right: var(--ds-capability-inline-padding); }
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-gray-capability .sp-gray-bottom { min-height: 20px; }
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-gray-capability .sp-gray-action { width: 20px; height: 20px; }
-.sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-gray-capability.sp-agent-card .sp-gray-flow { padding-top: 0; }
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-filter-chips { gap: 8px; }
 .sp-design-app:is(.ds-spec-preview, .business-workspace) .sp-filter-chips .sp-filter {
   min-height: var(--ds-filter-height, 36px);

@@ -4,7 +4,7 @@ import { PageActions } from '../design-system/SecondaryPageShell.jsx';
 import { MembershipRedeemDialog } from "./BillingUsage.jsx";
 import { ProcurementInquiry } from "./ProcurementInquiry.jsx";
 import { SAMPLE_BALANCE } from "./billing-usage-data.js";
-import { canUseExclusiveAgent, membershipBenefits } from '../content/membership.js';
+import { canUseExclusiveCapability, DAILY_TASK_BENEFIT_LABEL, DAILY_TASK_EXAMPLES, membershipBenefits } from '../content/membership.js';
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -59,29 +59,13 @@ const FILES = [
 const DEMO_LIBRARY_FILES = FILES.map((row, index) => [...row, `demo-library:${index}`]);
 const FILES_LIBRARY_OVERRIDES_KEY = 'kgcure-my-files-overrides-v1';
 
-function fileLibraryHiddenIds() {
-  try { return JSON.parse(localStorage.getItem(FILES_LIBRARY_OVERRIDES_KEY) || '{}').hiddenIds || []; }
-  catch { return []; }
+function readFileLibraryOverrides() {
+  try { return JSON.parse(localStorage.getItem(FILES_LIBRARY_OVERRIDES_KEY) || '{}') || {}; }
+  catch { return {}; }
 }
 
-export function countMyFiles(sessions=[], libraryFiles=[]) {
-  const ids = new Set([
-    ...DEMO_LIBRARY_FILES.map(row => row[6]),
-    ...sessions.flatMap(session => (session.files || []).map(file => file.id)),
-    ...libraryFiles.map(file => file.id),
-  ]);
-  const hiddenIds = new Set(fileLibraryHiddenIds());
-  return [...ids].filter(id => !hiddenIds.has(id)).length;
-}
-
-export function MyFiles({ onToast, sessions=[], libraryFiles=[] }) {
-  const [tab, setTab] = useState("最近使用");
-  const [page, setPage] = useState(1);
-  const [query,setQuery]=useState(''),[format,setFormat]=useState('全部'),[source,setSource]=useState('全部'),[preview,setPreview]=useState(null),[uploads,setUploads]=useState([]);
-  const [overrides,setOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem(FILES_LIBRARY_OVERRIDES_KEY)||'{}');}catch{return {};}});
-  const [openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareTarget,setShareTarget]=useState(null),[deleteTarget,setDeleteTarget]=useState(null),[renameValue,setRenameValue]=useState('');
-  const moreRef=useRef(null);
-  const localFiles=sessions.flatMap(session=>session.files.map(file=>({...file,title:session.title,date:new Date(session.createdAt).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'})})));
+function fileLibraryView(sessions, libraryFiles, overrides = readFileLibraryOverrides()) {
+  const localFiles=sessions.flatMap(session=>(session.files||[]).map(file=>({...file,title:session.title,date:new Date(session.createdAt).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'})})));
   const preservedFiles=[...libraryFiles,...localFiles].filter((file,index,items)=>items.findIndex(item=>item.id===file.id)===index);
   const fileLookup=new Map(preservedFiles.map(file=>[file.id,file]));
   const preservedRows=preservedFiles.map(file=>[
@@ -93,10 +77,30 @@ export function MyFiles({ onToast, sessions=[], libraryFiles=[] }) {
     file.size||'',
     file.id,
   ]);
-  const baseRows=[...uploads,...preservedRows,...DEMO_LIBRARY_FILES];
+  const baseRows=[...preservedRows,...DEMO_LIBRARY_FILES];
   const hiddenIds=overrides.hiddenIds||[];
   const renamedFiles=overrides.names||{};
   const allRows=baseRows.filter(row=>!hiddenIds.includes(row[6])).map(row=>[renamedFiles[row[6]]||row[0],...row.slice(1)]);
+  return { allRows, fileLookup };
+}
+
+export function libraryAttachmentFiles(sessions, libraryFiles) {
+  const { allRows, fileLookup } = fileLibraryView(sessions, libraryFiles);
+  return allRows.map(row => {
+    const id = row[6];
+    const file = fileLookup.get(id);
+    return { id, name: row[0], size: file?.byteSize ?? file?.size };
+  });
+}
+
+export function MyFiles({ onToast, sessions=[], libraryFiles=[], onAddFiles }) {
+  const [tab, setTab] = useState("最近使用");
+  const [page, setPage] = useState(1);
+  const [query,setQuery]=useState(''),[format,setFormat]=useState('全部'),[source,setSource]=useState('全部'),[preview,setPreview]=useState(null);
+  const [overrides,setOverrides]=useState(readFileLibraryOverrides);
+  const [openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareTarget,setShareTarget]=useState(null),[deleteTarget,setDeleteTarget]=useState(null),[renameValue,setRenameValue]=useState('');
+  const moreRef=useRef(null);
+  const { allRows, fileLookup } = fileLibraryView(sessions, libraryFiles, overrides);
   const fileTabItems=[
     {key:'最近使用',label:<span className="files-library-tab-label">最近使用<span className="files-library-tab-count">{allRows.length}</span></span>},
     {key:'全部文件',label:<span className="files-library-tab-label">全部文件<span className="files-library-tab-count">{allRows.length}</span></span>},
@@ -134,9 +138,14 @@ export function MyFiles({ onToast, sessions=[], libraryFiles=[] }) {
       <header className="acct-head files-library-head"><div><h1>我的文件库</h1><p>查找科研对话的交付文件和本地文件记录。</p></div>
         <label className="sp-button sp-button-secondary ds-upload-button"><Upload size={16}/>添加本地文件
           <input type="file" multiple aria-label="添加到我的文件" onChange={e=>{
-            const additions=Array.from(e.target.files||[]).map(file=>[file.name,'F','本地附件名称','未关联对话',new Date().toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'}),(file.size/1024).toFixed(1)+' KB',crypto.randomUUID()]);
+            const additions=Array.from(e.target.files||[]).map(file=>({
+              id:crypto.randomUUID(), name:file.name, type:file.name.split('.').at(-1)?.toUpperCase(),
+              source:'本地附件名称', title:'未关联对话',
+              date:new Date().toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'}),
+              byteSize:file.size, size:(file.size/1024).toFixed(1)+' KB',
+            }));
             if(!additions.length)return;
-            setUploads(items=>[...additions,...items]);setPage(1);e.target.value='';
+            onAddFiles(additions);setPage(1);e.target.value='';
             onToast('已记录本地文件名称，未上传文件正文');
           }}/>
         </label>
@@ -272,11 +281,6 @@ function InfoRow({ label, value, action, onAction, trailing }) {
 const POINTS_PER_YUAN = 100;
 const planNumber = new Intl.NumberFormat('zh-CN');
 const money = new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const RESEARCH_TOOLS = [
-  { name: '日常对话', icon: MessageCircle },
-  { name: '科研绘图', icon: ImageIcon },
-  { name: '科研 Skill', icon: SkillGlyph },
-];
 const PLANS = [
   { id: 'BASIC', name: '基础版', useCase: '适合日常文献、分析与常规科研', checkoutHint: '日常文献与分析', price: 79, quota: 10000, icon: FlaskConical },
   { id: 'PLUS', name: 'Plus', useCase: '适合持续科研、论文与数据分析', checkoutHint: '论文与数据分析', price: 299, quota: 40000, icon: Layers },
@@ -294,6 +298,7 @@ function PlanAvailability({ included, children }) {
 function PlanCard({ plan, currentPlan, onCheckout }) {
   const tier = plan.id.toLowerCase();
   const { collaboration, academy } = membershipBenefits(tier);
+  const hasExclusiveAccess = canUseExclusiveCapability(tier);
   const rechargePrice = plan.quota / POINTS_PER_YUAN;
   const multiple = plan.quota / PLANS[0].quota;
   const isCurrent = plan.id === currentPlan;
@@ -325,18 +330,32 @@ function PlanCard({ plan, currentPlan, onCheckout }) {
       {action}{plan.id === 'BASIC' ? '' : ' '}{plan.name}
     </Button>
     <ul className="plan-features">
-      {RESEARCH_TOOLS.map(({ name, icon: Icon }) => <li key={name} className="plan-feature-line">
-        <Icon size={16} strokeWidth={1.65} aria-hidden="true" />{name}
-      </li>)}
+      <li className="plan-feature-line plan-feature-basic">
+        <MessageCircle size={16} strokeWidth={1.65} aria-hidden="true" />
+        <div className="plan-feature-copy">
+          <span className="plan-feature-title">{DAILY_TASK_BENEFIT_LABEL}</span>
+          <span className="plan-feature-examples">
+            {DAILY_TASK_EXAMPLES.map(example => <Tag key={example}>{example}</Tag>)}
+          </span>
+        </div>
+      </li>
+      <li className="plan-feature-line plan-feature-title"><ImageIcon size={16} strokeWidth={1.65} aria-hidden="true" />科研绘图</li>
       <li className="plan-feature-group">
-        <span className="plan-feature-line"><AgentGlyph size={16} />科研 Agent</span>
+        <span className="plan-feature-line plan-feature-title"><SkillGlyph size={16} />科研 Skill</span>
         <ul className="plan-feature-details">
-          <PlanAvailability included>普通 Agent</PlanAvailability>
-          {canUseExclusiveAgent(tier) && <PlanAvailability included>专享 Agent</PlanAvailability>}
+          <PlanAvailability included>普通 Skill</PlanAvailability>
+          {hasExclusiveAccess && <PlanAvailability included>专享 Skill</PlanAvailability>}
         </ul>
       </li>
       <li className="plan-feature-group">
-        <span className="plan-feature-line"><FolderOpen size={16} strokeWidth={1.65} aria-hidden="true" />科研空间</span>
+        <span className="plan-feature-line plan-feature-title"><AgentGlyph size={16} />科研 Agent</span>
+        <ul className="plan-feature-details">
+          <PlanAvailability included>普通 Agent</PlanAvailability>
+          {hasExclusiveAccess && <PlanAvailability included>专享 Agent</PlanAvailability>}
+        </ul>
+      </li>
+      <li className="plan-feature-group">
+        <span className="plan-feature-line plan-feature-title"><FolderOpen size={16} strokeWidth={1.65} aria-hidden="true" />科研空间</span>
         <ul className="plan-feature-details">
           <PlanAvailability included={collaboration}>{collaboration ? '支持邀请成员协作' : '不支持邀请协作'}</PlanAvailability>
         </ul>
@@ -367,7 +386,7 @@ export function MembershipPlans({ onCheckout, onBack, tier }) {
       </div>
       <div className="plan-redeem-row">
         <Button aria-haspopup="dialog" onClick={() => setDialog('redeem')}>
-          <Gift size={16} strokeWidth={1.6} aria-hidden="true" />使用兑换码对话
+          <Gift size={16} strokeWidth={1.6} aria-hidden="true" />使用兑换码兑换
         </Button>
       </div>
     </section>

@@ -10,6 +10,12 @@ import { AgentIdentity, CaseGallery, DeliveryCard, RegressionConfig, TaskJourney
 
 import { EmptyStateSpec, LayoutSpec, NavigationSpec, PromptSpec } from "./SpecPatterns.jsx";
 import { RecommendationHeading } from "../design-system/RecommendationHeading.jsx";
+import { BUSINESS_AGENTS, capabilityPath } from "../content/catalog.js";
+import { REVIEW_CAPABILITIES } from "../content/review-capabilities.js";
+import { useRouter } from "../router.jsx";
+
+const reviewAgent = REVIEW_CAPABILITIES.find(item => item.kind === "agent");
+const agentCardExamples = [reviewAgent, BUSINESS_AGENTS[0], BUSINESS_AGENTS.find(item => item.exclusive)];
 
 const COLORS = [
   ["主蓝", "--ds-primary", "#3964FE"], ["正文", "--ds-ink", "#0F1115"],
@@ -44,6 +50,7 @@ function TypographySpec({onNotice}) {
 }
 
 export function ControlGallery({ onDetail, onCall, onNotice, onDelete, annotate, onPreviewScene, onPreviewDrawer, deliverySamples, delivery, onDownloadFile }) {
+  const router = useRouter();
   const {query,setQuery,category,setCategory,source,setSource,list,reset}=useCapabilityFilters(SKILLS);
   const [favorite, setFavorite] = useState(false);
   const [task, setTask] = useState("");
@@ -67,7 +74,14 @@ export function ControlGallery({ onDetail, onCall, onNotice, onDelete, annotate,
       {list.length ? <div className="sp-skill-grid" data-testid="skill-grid">{list.map(item => <SkillCard key={item.id} item={item} context="spec" onDetail={onDetail} onCall={onCall} />)}</div> : <EmptyState onReset={reset}>没有匹配的 Skill</EmptyState>}
       <p className="sp-section-note"><Info size={13} />能力、评分、核验状态和使用量均为评审样例，不代表实际核验或上线状态。</p>
     </section>
-    <section className="sp-gallery-section" id="sp-agent-section"><div className="sp-section-heading"><div><h2>科研 Agent</h2><p>桌面三列。卡片最小高度 190px，内边距 14px，内容组间距 10px。</p></div></div><div className="sp-agent-grid" data-testid="agent-grid">{AGENTS.map(item => <AgentCard key={item.id} item={item} onDetail={onDetail} onCall={onCall} />)}</div></section>
+    <section className="sp-gallery-section" id="sp-agent-section">
+      <div className="sp-section-heading"><div><h2>科研 Agent</h2><p>分类、能力数量和描述同色。核心能力两列，每个名称单行。底栏右侧显示打开图标或接入状态。</p></div></div>
+      <div className="sp-agent-grid" data-testid="agent-grid">
+        {agentCardExamples.map(item => <AgentCard key={item.id} item={item} context="spec"
+          unavailable={item !== reviewAgent} onUnavailable={() => onNotice("暂无接入")}
+          onDetail={item => router.navigate(capabilityPath(item))}/>)}
+      </div>
+    </section>
     <div id="case-spec"><CaseGallery onChoose={item => onDetail({ ...item, kind: 'case', online: true, steps: ['了解任务', '补充研究材料', '配置执行'], output: '示例成果结构', icon: item.id === 'analysis' ? 'chart' : item.id === 'grant' ? 'file' : 'book' })} /></div>
     <EmptyStateSpec/>
     <section className="sp-gallery-section" id="spec-chat">
@@ -90,7 +104,12 @@ export function ControlGallery({ onDetail, onCall, onNotice, onDelete, annotate,
           {deliverySamples.map(file => <DeliveryCard key={file.id} file={file} delivery={delivery} onDownload={() => onDownloadFile(file)}/>)}
         </div>
         <section className="sp-recommendation-group"><RecommendationHeading kind="skill">推荐科研 Skill</RecommendationHeading></section>
-        <section className="sp-recommendation-group"><RecommendationHeading kind="agent">推荐科研 Agent</RecommendationHeading></section>
+        <section className="sp-recommendation-group">
+          <RecommendationHeading kind="agent">推荐科研 Agent</RecommendationHeading>
+          <div className="sp-two-agents">
+            {AGENTS.slice(0, 2).map(item => <AgentCard key={item.id} item={item} context="chat" onCall={onCall}/>)}
+          </div>
+        </section>
         <PromptSpec onChoose={text => onNotice("已选择「" + text + "」")}/>
       </div>
     </section>

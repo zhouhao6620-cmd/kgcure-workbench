@@ -1,4 +1,5 @@
 import { sitePath } from "../site-path.js";
+import { addComposerAttachments } from '../design-system/composer-sources.js';
 import { RecommendationHeading } from '../design-system/RecommendationHeading.jsx';
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Award, Blocks, BookOpen, Check, ChevronDown, ChevronRight, Copy, Download, FileText, Folder, Heart, Info, Layers, Lightbulb, MessageCirclePlus, MessageSquarePlus, MoreHorizontal, Orbit, Palette, PanelLeft, Plus, Ruler, Search, Share2, ThumbsUp, Trash2, User, Workflow, X } from "lucide-react";
@@ -44,6 +45,7 @@ export function DesignPreview({ delivery }) {
   const [ability, setAbility] = useState(null);
   const [spaces, setSpaces] = useState(INITIAL_SPACES);
   const [space, setSpace] = useState(null);
+  const [spaceFolder, setSpaceFolder] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [sessions, setSessions] = useState(() => INITIAL_HISTORY.map(item => ({ ...item, messages: demoMessages(item.id === "example" ? EXAMPLE_PROMPT : "请帮我整理「" + item.title + "」的研究目标与任务。"), model: "pro", space: null })));
   const [currentId, setCurrentId] = useState("example");
@@ -70,7 +72,7 @@ export function DesignPreview({ delivery }) {
 
   function notify(text) { window.clearTimeout(timer.current); setNotice(text); timer.current = window.setTimeout(() => setNotice(""), 2800); }
   function openView(next, section) { router.navigate("/design-system?view=" + next + (section ? "&section=" + section : "")); setMobileOpen(false); setMenu(null); }
-  function newTask(nextScene = "home") { setScene(nextScene); setDraft(""); setAttachments([]); setAbility(null); setSpace(null); setFileOpen(false); openView("create"); }
+  function newTask(nextScene = "home") { setScene(nextScene); setDraft(""); setAttachments([]); setAbility(null); setSpace(null); setSpaceFolder(null); setFileOpen(false); openView("create"); }
   function openSearch() { setSearchOpen(true); setSearchQuery(""); setSearchIndex(0); setMenu(null); }
   useEffect(() => () => window.clearTimeout(timer.current), []);
   useEffect(() => { const previous = document.title; document.title = "数愈 AI · 设计规范预览"; return () => { document.title = previous; }; }, []);
@@ -92,7 +94,7 @@ export function DesignPreview({ delivery }) {
     }
   }, [view, router.search]);
 
-  function attachFiles(items) { setAttachments(previous => [...previous, ...items.map(file => ({ id: uid(), name: file.name, size: file.size }))]); notify("已添加本地附件名称，未上传文件"); }
+  function attachFiles(items) { setAttachments(previous => addComposerAttachments(previous, items)); if (items.length && !items[0].reference) notify("已添加本地附件名称，未上传文件"); }
   function openSession(item) { setCurrentId(item.id); setMessages(item.messages); setModel(item.model); setSpace(item.space); setDraft(""); setAttachments([]); setAbility(null); setSearchOpen(false); setFileOpen(false); openView("chat"); }
   function responseFor(item, topic) { if (item?.id === "statistics" || /回归分析/.test(topic)) return { id: uid(), role: "assistant", type: "regression" }; return item?.kind === "agent" ? { id: uid(), role: "assistant", type: "parameters", capabilityId: item.id, topic } : { id: uid(), role: "assistant", type: item ? "skill" : "overview", capabilityId: item?.id }; }
   function enterConversation(text, selected = null) {
@@ -139,7 +141,7 @@ export function DesignPreview({ delivery }) {
     downloadText(item.title.slice(0, 24).replace(/[\\/:*?"<>|]/g, "_") + "_示例.md", body);
   }
   const detail = item => setDialog({ type: "capability", item });
-  const sharedComposer = { draft, onDraft: setDraft, model, onModel: setModel, ability, onAbility: setAbility, space, spaces, onSpace: setSpace, attachments, onAttach: attachFiles, onRemove: id => setAttachments(items => items.filter(file => file.id !== id)), onSend: send, onViewAll: kind => openView("components", kind === "agent" ? "agents" : "skills"), onNewSpace: () => { setFormName(""); setFormError(false); setDialog({ type: "new-space" }); }, onPickExisting: () => setDialog({ type: "sample-attachment" }), annotate };
+  const sharedComposer = { draft, onDraft: setDraft, model, onModel: setModel, ability, onAbility: setAbility, space, spaceFolder, spaces, onSpace: (id, folderId) => { setSpace(id); setSpaceFolder(folderId); }, attachments, onAttach: attachFiles, onRemove: id => setAttachments(items => items.filter(file => file.id !== id)), onSend: send, onViewAll: kind => openView("components", kind === "agent" ? "agents" : "skills"), onNewSpace: () => { setFormName(""); setFormError(false); setDialog({ type: "new-space" }); }, annotate };
   const searchResults = sessions.filter(item => item.title.toLowerCase().includes(searchQuery.trim().toLowerCase()));
   const visibleFiles = files.filter(file => file.conversationId === currentId);
 

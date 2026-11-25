@@ -97,6 +97,15 @@ export function initialResearchSpaces(){
  try{const saved=JSON.parse(localStorage.getItem('kgcure-spaces-v2')||'null');if(Array.isArray(saved))return mergeDemoFiles(withoutRetiredDefaultSpace(restoreOriginalSpace(saved)));}catch{}
  return mergeDemoFiles([defaultOriginalSpace()]);
 }
+
+export function researchSpaceFiles(space, sessions) {
+ return [
+  ...(space.files || []),
+  ...sessions.filter(session => session.space === space.id).flatMap(session =>
+   (session.files || []).map(file => ({...file, folderId:session.origin?.folderId, sessionId:session.id, date:file.date||session.updatedAt||session.createdAt}))),
+ ];
+}
+
 export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spaceId,onToast,fileCount=0}){
  const [folder,setFolder]=useState(()=>spaces.find(s=>s.id===spaceId)?.folders.find(f=>f.id===new URLSearchParams(location.search).get('folder'))?.id||'all'),[filter,setFilter]=useState('全部'),[page,setPage]=useState(1),[dialog,setDialog]=useState(null),[name,setName]=useState(''),[goal,setGoal]=useState(''),[preview,setPreview]=useState(null),[openMoveId,setOpenMoveId]=useState(null),[openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareRecord,setShareRecord]=useState(null),[folderMoveTargetId,setFolderMoveTargetId]=useState(null);
  const recordsRef=useRef(null);
@@ -202,7 +211,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
   setOpenMoreId(null);
   onToast?.(`已删除「${record.name}」`);
  }
- const files=[...space.files,...spaceSessions.flatMap(session=>(session.files||[]).map(file=>({...file,folderId:session.origin?.folderId,sessionId:session.id,date:file.date||session.updatedAt||session.createdAt})))];
+ const files=researchSpaceFiles(space, spaceSessions);
  function downloadRecord(file){
   if(!file.content){onToast?.('本地样板未收录该文件正文，暂不能下载');return;}
   file.type==='DOCX'?downloadWord(file.name,file.content):downloadText(file.name,file.content);

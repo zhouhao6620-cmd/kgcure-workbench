@@ -317,7 +317,6 @@
 .sp-capability-v3 .sp-card-action { color:var(--sp-blue); font-size:14px; gap:4px; }
 .sp-card-open-arrow { transform:rotate(45deg); }
 .sp-capability-v3.sp-agent-card .sp-card-hit { gap:12px; min-height:280px; padding:18px; }
-.sp-agent-category { font-size:12px; color:#979da7; }
 .sp-agent-title-row { display:flex; align-items:center; gap:10px; width:100%; }
 .sp-agent-title-row strong { font-size:14px; line-height:22px; font-weight:600; text-align:left; }
 .sp-capability-v3 .sp-agent-output { padding:9px 0 9px 12px; border-left:2px solid #cfb57f; border-radius:0; background:transparent; gap:8px; }

@@ -31,7 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { categories, researchWorkflows, shortcuts } from "./data.js";
-import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge, countMyFiles } from "./pages/account.jsx";
+import { Approvals, Checkout, MembershipPlans, MyFiles, ProfilePage, Recharge, libraryAttachmentFiles } from "./pages/account.jsx";
 import { MyFavorites } from './pages/MyFavorites.jsx';
 import { PersonalVerification } from "./pages/PersonalVerification.jsx";
 import { BillingUsage } from "./pages/BillingUsage.jsx";
@@ -52,7 +52,8 @@ import { ReviewDocument } from './design-system/ReviewDocument.jsx';
 import { EVALUATION_PATH } from './content/review-capabilities.js';
 import { capabilityDemoPath, capabilityDemoPrefix, capabilityDemos, capabilityDemoTitle } from './content/capability-demos.js';
 import { ResearchConversation, makeSession } from './design-system/ResearchConversation.jsx';
-import { ResearchSpaces, initialResearchSpaces } from './design-system/ResearchSpaces.jsx';
+import { ResearchSpaces, initialResearchSpaces, researchSpaceFiles } from './design-system/ResearchSpaces.jsx';
+import { ComposerSources } from './design-system/composer-sources.js';
 import { ContributionPage } from './design-system/ContributionPage.jsx';
 import { CapabilityCase } from './design-system/CapabilityCase.jsx';
 import { SecondaryPageShell } from './design-system/SecondaryPageShell.jsx';
@@ -550,7 +551,16 @@ export function App() {
       return additions.length?[...additions,...current]:current;
     });
   },[]);
-  const libraryFileCount=countMyFiles(localSessions,libraryFiles);
+  const attachmentLibrary = libraryAttachmentFiles(localSessions, libraryFiles);
+  const libraryFileCount = attachmentLibrary.length;
+  const composerSources = {
+    spaces,
+    library: attachmentLibrary,
+    filesBySpace: Object.fromEntries(spaces.map(space => [space.id, researchSpaceFiles(space, localSessions)
+      .filter(file => !space.hiddenRecordIds?.includes(file.id))
+      .map(file => ({ ...file, name:space.recordNames?.[file.id] || file.name,
+        folderId:space.recordFolders?.[file.id] || file.folderId }))])),
+  };
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -569,7 +579,7 @@ export function App() {
     toastTimer.current = window.setTimeout(() => setToast(null), 2200);
   }
 
-  function saveDelivery(file, spaceId, sessionId) {
+  function saveDelivery(file, spaceId, folderId, sessionId) {
     if (!spaceId || spaceId === 'personal') {
       const id = 'library:' + (sessionId || 'design-preview') + ':' + file.id;
       const hasContent = typeof file.content === 'string';
@@ -580,16 +590,25 @@ export function App() {
     }
     const space = spaces.find(item => item.id === spaceId);
     if (!space) return showToast('此科研空间已不存在');
+    const folder = space.folders?.find(item => item.id === folderId);
+    if (folderId && !folder) return showToast('此项目文件夹已不存在');
+    const destination = [space.name, folder?.name].filter(Boolean).join(' - ');
     const session = localSessions.find(item => item.id === sessionId);
-    const id = 'delivery:' + (sessionId || 'design-preview') + ':' + file.id;
-    if (space.files.some(item => item.id === id) || (session?.space === spaceId && session.files.some(item => item.id === file.id))) {
-      return showToast('「' + space.name + '」中已有此文件');
+    const sourceId = 'delivery:' + (sessionId || 'design-preview') + ':' + file.id;
+    const sameFolder = (target, id, currentFolder) =>
+      (target.recordFolders?.[id] || currentFolder || null) === (folderId || null);
+    const alreadySaved = target => target.files.some(item =>
+      (item.id === sourceId || item.deliverySourceId === sourceId) && sameFolder(target, item.id, item.folderId));
+    if (alreadySaved(space) || (session?.space === spaceId && session.files.some(item =>
+      item.id === file.id && sameFolder(space, item.id, session.origin?.folderId)))) {
+      return showToast('「' + destination + '」中已有此文件');
     }
     const hasContent = typeof file.content === 'string';
-    const record = {...file, id, sessionId, author:'周浩', date:Date.now(), source:hasContent ? '对话交付' : '历史交付文件记录'};
-    setSpaces(current => current.map(item => item.id === spaceId && !item.files.some(saved => saved.id === id)
+    const record = {...file, id:sourceId + ':' + crypto.randomUUID(), deliverySourceId:sourceId, sessionId,
+      folderId, author:'周浩', date:Date.now(), source:hasContent ? '对话交付' : '历史交付文件记录'};
+    setSpaces(current => current.map(item => item.id === spaceId && !alreadySaved(item)
       ? {...item, files:[...item.files, record]} : item));
-    showToast((hasContent ? '文件已保存到「' : '文件记录已保存到「') + space.name + '」');
+    showToast((hasContent ? '文件已保存到「' : '文件记录已保存到「') + destination + '」');
   }
 
   function navigate(target) {
@@ -774,7 +793,8 @@ export function App() {
         />
       );
     }
-    if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} libraryFiles={libraryFiles} onToast={showToast} />;
+    if (path === "/workspace/my-files") return <MyFiles sessions={localSessions} libraryFiles={libraryFiles}
+      onAddFiles={files => setLibraryFiles(current => [...files, ...current])} onToast={showToast} />;
     if (path === '/workspace/my-favorites') {
       const items = [...favoriteIds].map(id => capabilityById(id) || COMMUNITY_SKILL_EXAMPLES.find(item => item.id === id)).filter(Boolean);
       return <MyFavorites kind={router.get('kind') === 'agent' ? 'agent' : 'skill'} items={items}
@@ -835,7 +855,7 @@ export function App() {
     const session=localSessions.find(x=>x.id===id);
     const delivery = {
       spaces,
-      onSave:(file, spaceId) => saveDelivery(file, spaceId, id),
+      onSave:(file, spaceId, folderId) => saveDelivery(file, spaceId, folderId, id),
       onNewSpace:() => {
         navigate('/workspace/research-space');
         showToast('请在科研空间页新建空间');
@@ -852,14 +872,14 @@ export function App() {
     return <MultiStepChat title={id === "d6afecac-2d0c-49e5-952f-ea432738f373" ? "工作流全流程展示" : undefined} onToast={showToast} delivery={delivery} />;
   }
 
-  if (path === "/design-system") return <><DesignPreview delivery={{
+  if (path === "/design-system") return <ComposerSources.Provider value={composerSources}><DesignPreview delivery={{
     spaces,
     onSave:saveDelivery,
     onNewSpace:() => {
       navigate('/workspace/research-space');
       showToast('请在科研空间页新建空间');
     },
-  }} />{toast && <div className="toast" role="status">{toast}</div>}</>;
+  }} />{toast && <div className="toast" role="status">{toast}</div>}</ComposerSources.Provider>;
 
   if (path === '/login') {
     return <Login onBack={() => navigate('/')} onLogin={() => navigate('/workspace')}/>;
@@ -888,6 +908,7 @@ export function App() {
   }
 
   return (
+    <ComposerSources.Provider value={composerSources}>
     <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={demoSession ? [demoSession, ...visibleHistory] : visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={spaces} onSpaces={setSpaces}>
       {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
@@ -897,6 +918,7 @@ export function App() {
       </Modal>}
       {toast ? <div className="toast" role="status">{toast}</div> : null}
     </BusinessFrame>
+    </ComposerSources.Provider>
   );
 }
 

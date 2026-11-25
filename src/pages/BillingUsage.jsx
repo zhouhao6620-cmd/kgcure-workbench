@@ -3,7 +3,7 @@ import { Check, ChevronRight, Coins, Crown, Gift, Info, ReceiptText, Ticket } fr
 import { QuotaProgress } from "../design-system/QuotaProgress.jsx";
 import { Tabs } from '../components.jsx';
 import { Button, EmptyState, Modal, RecordEmptyIllustration, Tag } from '../design-preview/components.jsx';
-import { canUseExclusiveAgent, membershipBenefits } from '../content/membership.js';
+import { canUseExclusiveCapability, DAILY_TASK_BENEFIT, membershipBenefits } from '../content/membership.js';
 import { BillingUsageAnalysis } from './BillingUsageAnalysis.jsx';
 import {
   BILLING_VIEWS, MEMBERSHIP_ORDERS, POINT_RECORDS, SAMPLE_BALANCE, SAMPLE_GROUP_BALANCE, SAMPLE_QUOTA_REMAINING, SAMPLE_RESET,
@@ -78,7 +78,7 @@ export function MembershipRedeemDialog({ onClose }) {
 
 function MembershipOverview({ remaining, tier, onPlans, onRedeem, onInvite }) {
   const hasMembership = tier !== 'free';
-  const hasExclusiveAgent = canUseExclusiveAgent(tier);
+  const hasExclusiveAccess = canUseExclusiveCapability(tier);
   const { name, collaboration, academy } = membershipBenefits(tier);
   return <div className="bu-overview">
     <section className="bu-overview-main" aria-labelledby="bu-current-member-heading">
@@ -90,8 +90,10 @@ function MembershipOverview({ remaining, tier, onPlans, onRedeem, onInvite }) {
         <Button onClick={onRedeem}><Ticket size={16} />使用兑换码</Button>
       </div>
       {hasMembership && <ul className="bu-benefits" aria-label="会员权益">
-        <li><Check size={15} aria-hidden="true" />日常对话、科研绘图、科研 Skill</li>
-        <li><Check size={15} aria-hidden="true" />{hasExclusiveAgent ? '普通 Agent、专享 Agent' : '普通 Agent'}</li>
+        <li><Check size={15} aria-hidden="true" />{DAILY_TASK_BENEFIT}</li>
+        <li><Check size={15} aria-hidden="true" />科研绘图</li>
+        <li><Check size={15} aria-hidden="true" />{hasExclusiveAccess ? '普通 Skill、专享 Skill' : '普通 Skill'}</li>
+        <li><Check size={15} aria-hidden="true" />{hasExclusiveAccess ? '普通 Agent、专享 Agent' : '普通 Agent'}</li>
         <li><Check size={15} aria-hidden="true" />{collaboration ? '科研空间，支持邀请成员协作' : '科研空间'}</li>
         {academy && <li><Check size={15} aria-hidden="true" />KGcure 学院课程</li>}
       </ul>}

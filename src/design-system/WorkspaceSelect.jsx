@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 
-export function WorkspaceSelect({ label, value, options, onChange, disabled, showLabel, placeholder, clearable }) {
+export function WorkspaceSelect({ label, value, options, onChange, disabled, showLabel, placeholder, clearable, icon: Icon }) {
   const [open, setOpen] = useState(false);
   const trigger = useRef(null);
   const menu = useRef(null);
@@ -39,6 +39,7 @@ export function WorkspaceSelect({ label, value, options, onChange, disabled, sho
       aria-label={label} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined}
       data-placeholder={!value && Boolean(placeholder) ? '' : undefined}
       onClick={()=>open ? setOpen(false) : show()}>
+      {Icon && <Icon className="ds-field-select-leading" size={16} strokeWidth={1.7} aria-hidden="true"/>}
       <span>{choices.find(choice=>choice.value===value)?.label ?? (value || placeholder)}</span><ChevronDown size={16} aria-hidden="true"/>
     </button>
     {open && !disabled && <div className="ds-field-select-menu" role="menu" aria-label={label} id={id} ref={menu}>

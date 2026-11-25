@@ -2,14 +2,20 @@ import rawCatalog from './catalog.json';
 import { REVIEW_CAPABILITIES } from './review-capabilities.js';
 import { EDITORIAL, AGENT_CORRECTIONS } from './editorial.js';
 import { skillAssessmentExample } from './skill-assessment-examples.js';
+import { catalogAgentCoreAbilities } from './agent-core-abilities.js';
 const catalog=rawCatalog.map(item=>({...item,...(EDITORIAL[item.id]||{}),...(AGENT_CORRECTIONS[item.id]||{}),sourceIntro:item.intro,sourceSteps:item.steps,sourceDeliverables:item.deliverables,adapted:Boolean(EDITORIAL[item.id]||AGENT_CORRECTIONS[item.id])}));
 // Prototype assignments for reviewing the Agent entitlement flow.
 const previewExclusiveAgentIds = new Set(['1138', '1001', '1142']);
 // Visual examples for conversation Skill cards.
 const previewExclusiveSkillIds = new Set(['1028', '54e55c02d102417994d786a0239a5103']);
+const extraPickerExclusiveSkillId = '59405ee32866425ab3ed47b790e2579e';
 for (const item of catalog) {
-  if (item.kind === 'agent') item.exclusive = previewExclusiveAgentIds.has(item.id);
+  if (item.kind === 'agent') {
+    item.exclusive = previewExclusiveAgentIds.has(item.id);
+    item.coreAbilities = catalogAgentCoreAbilities[item.id];
+  }
   if (item.kind === 'skill' && previewExclusiveSkillIds.has(item.id)) item.previewExclusive = true;
+  if (item.id === extraPickerExclusiveSkillId) item.previewPickerExclusive = true;
   const assessment = skillAssessmentExample(item.id);
   if (assessment) Object.assign(item, { assessment, score: assessment.score, reviewed: true, sourceLabel: '已评测 · 演示' });
 }

@@ -1,5 +1,9 @@
-import { createElement, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { createElement, useContext, useEffect, useId, useRef, useState } from "react";
 import { ArrowUp, Award, BarChart3, Blocks, BookOpen, Check, ChevronDown, ChevronRight, FileText, Folder, Layers, Loader2, Paperclip, PenLine, Plus, Search, Share2, Star, Tag as TagIcon, Upload, Workflow, X, CircleCheck, Clock3, CircleAlert, CircleX, Info } from "lucide-react";
+import { ArrowLeft, Code, Database, Files, Filter, FlaskConical, Image, LibraryBig, ListChecks, Network, Presentation, Settings2, Table2, Target } from "lucide-react";
+import { AttachmentFileList, AttachmentSourceMenu } from "../design-system/ComposerAttachmentPicker.jsx";
+import { ComposerSources } from "../design-system/composer-sources.js";
 import { agentGlyph, evaluationAlertGlyph, evaluationShieldGlyph, exclusiveGlyph, pluginGlyph, skillGlyph } from "../design-system/capability-glyphs.js";
 import { certifiedEvaluationLabel, hasEvaluationCertification, missingEvaluationLabel } from '../content/review-capabilities.js';
 import '../design-system/evaluation-certification.css';
@@ -97,42 +101,132 @@ export function SkillCard({ item, context = "store", onDetail, onCall, unavailab
  {showTypeBadge&&<SkillBadge/>}<span className="sp-gray-bottom"><EvaluationCardFooter item={item} id={certificationId} compact={context === "channel"}/>{unavailable?<span className="sp-card-unavailable">暂无接入</span>:<span className="sp-gray-action" aria-hidden="true"><ArrowUp size={16}/></span>}</span>
  </button></article>;
 }
+const agentAbilityIcons = {
+ book: BookOpen, chart: BarChart3, checklist: ListChecks, code: Code, database: Database,
+ file: FileText, files: Files, filter: Filter, flask: FlaskConical, image: Image,
+ layers: Layers, network: Network, presentation: Presentation, search: Search, settings: Settings2,
+ table: Table2, target: Target, workflow: Workflow,
+};
+
 export function AgentCard({ item, context = "store", onDetail, onCall, unavailable = false, onUnavailable }) {
  const isChat=context==='chat';
- const stages=item.steps.length>3?[item.steps[0],item.steps[Math.floor(item.steps.length/2)],item.steps.at(-1)]:item.steps;
+ const cardId = useId();
+ const abilitiesId = cardId + '-abilities';
+ const summaryId = cardId + '-summary';
+ const coreAbilities = item.coreAbilities?.slice(0, 4) ?? [];
+ const abilityCount = item.steps?.length || coreAbilities.length;
+ const preparationCount = item.preparationCount ?? (item.fields?.length || null);
+ const estimatedMinutes = item.estimatedMinutes;
+ const descriptionIds = coreAbilities.length ? `${abilitiesId} ${summaryId}` : summaryId;
  const actionLabel = isChat ? '启动 '+item.name : '查看 '+item.name+'详情';
  return <article className="sp-agent-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit"
   data-unavailable={unavailable || undefined} disabled={unavailable && !onUnavailable}
   onClick={unavailable ? onUnavailable : () => isChat?onCall(item):onDetail(item)}
-  aria-label={unavailable?item.name+'，暂无接入':actionLabel + (item.exclusive ? '，专享' : '')}>
- <span className="sp-gray-top"><span className="sp-agent-card-icon" aria-hidden="true"><AgentGlyph size={24}/></span><span className="sp-gray-heading"><strong title={item.name}>{item.name}</strong><small>{item.category}{item.steps.length > 0 && ` · ${item.steps.length}大能力`}</small></span>{item.exclusive && <ExclusiveBadge/>}</span>
+  aria-label={unavailable?item.name+'，暂无接入':actionLabel + (item.exclusive ? '，专享' : '')}
+  aria-describedby={descriptionIds}>
+ <span className="sp-gray-top">
+  <span className="sp-agent-card-icon" aria-hidden="true"><AgentGlyph size={24}/></span>
+  <span className="sp-gray-heading">
+   <strong title={item.name}>{item.name}</strong>
+   <small>
+    <span className="sp-agent-category" title={item.category}>{item.category}</span>
+    {abilityCount > 0 && <span className="sp-agent-ability-count">{abilityCount}大能力</span>}
+   </small>
+  </span>
+  {item.exclusive && <ExclusiveBadge/>}
+ </span>
  <span className="sp-card-description" title={item.description}>{item.description}</span>
- {item.steps.length > 0 && <span className="sp-gray-flow" aria-label={"完整流程："+item.steps.join("、")} title={item.steps.join(" → ")}>{stages.map(step=><span key={step}><i aria-hidden="true"/><span>{step}</span></span>)}</span>}
- <span className="sp-gray-bottom sp-gray-agent-bottom">
-   <span className="sp-gray-output"><FileText size={16}/><span><small>预期交付</small><strong>{item.output}</strong></span></span>
-   {unavailable?<span className="sp-card-unavailable">暂无接入</span>:<span className="sp-gray-action sp-gray-launch" aria-hidden="true"><ArrowUp size={16}/></span>}
+ {coreAbilities.length > 0 && <span className="sp-agent-abilities" id={abilitiesId}>
+  {coreAbilities.map(([icon, label]) => {
+   const Icon = agentAbilityIcons[icon];
+   return <span className="sp-agent-ability" key={label}>
+    <Icon size={16} strokeWidth={1.6} aria-hidden="true"/>
+    <span className="sp-agent-ability-label" title={label}>{label}</span>
+   </span>;
+  })}
+ </span>}
+ <span className="sp-agent-summary" id={summaryId}>
+  <span className="sp-agent-metric" title={preparationCount ? undefined : '准备项数未标注'}>
+   <ListChecks size={14} strokeWidth={1.6} aria-hidden="true"/>
+   <span>准备 <b>{preparationCount ? `${preparationCount} 项` : '—'}</b></span>
+  </span>
+  <span className="sp-agent-metric" title={estimatedMinutes ? undefined : '预估耗时未标注'}>
+   <Clock3 size={14} strokeWidth={1.6} aria-hidden="true"/>
+   <span>耗时 <b>{estimatedMinutes ? `约 ${estimatedMinutes} 分钟` : '—'}</b></span>
+  </span>
+  {unavailable
+   ? <span className="sp-card-unavailable">暂无接入</span>
+   : <span className="sp-gray-action sp-agent-open" aria-hidden="true"><ArrowUp size={16}/></span>}
  </span>
  </button></article>;
 }
 
-export function SpaceDirectoryOptions({ spaces, value, caption, onPick, onNew }) {
+export function SpaceDirectoryOptions({ spaces, value, selectedFolder, caption, libraryLabel, librarySelected, onPick, onNew }) {
+  const [directoryId, setDirectoryId] = useState(null);
+  const directory = spaces.find(item => item.id === directoryId);
+  if (directory) return <>
+    <header className="sp-picker-directory-header">
+      <button type="button" role="menuitem" aria-label="返回空间列表" onClick={() => setDirectoryId(null)} autoFocus>
+        <ArrowLeft size={16} strokeWidth={1.7} aria-hidden="true"/>
+      </button>
+      <strong title={directory.name}>{directory.name}</strong>
+    </header>
+    <div className="sp-space-directory-list">
+      {directory.folders.map(folder => {
+        const checked = value === directory.id && selectedFolder === folder.id;
+        return <button type="button" className="sp-space-directory-option" role="menuitemradio"
+          key={folder.id} aria-checked={checked} onClick={() => onPick(directory.id, folder.id)}>
+          <Folder size={17} strokeWidth={1.7} aria-hidden="true"/><span>{folder.name}</span>{checked && <Check className="sp-space-check" size={15} aria-hidden="true"/>}
+        </button>;
+      })}
+    </div>
+    <div className="sp-space-directory-divider" role="separator"/>
+    <button type="button" className="sp-space-directory-option" role="menuitemradio"
+      aria-checked={value === directory.id && !selectedFolder} onClick={() => onPick(directory.id, null)}>
+      <Folder size={17} strokeWidth={1.7} aria-hidden="true"/><span>空间根目录</span>
+      {value === directory.id && !selectedFolder && <Check className="sp-space-check" size={15} aria-hidden="true"/>}
+    </button>
+  </>;
+
   return <>
     <p className="sp-space-directory-caption">{caption}</p>
     <div className="sp-space-directory-list">
-      {spaces.map(item => <button type="button" className="sp-space-directory-option" role="menuitemradio"
-        aria-checked={value === item.id} key={item.id} onClick={() => onPick(item.id)}>
-        <Folder size={15} aria-hidden="true"/><span>{item.name}</span>{value === item.id && <Check className="sp-space-check" size={15} aria-hidden="true"/>}
-      </button>)}
+      {libraryLabel && <button type="button" className="sp-space-directory-option" role="menuitemradio"
+        aria-checked={Boolean(librarySelected)} onClick={() => onPick(null, null)}>
+        <LibraryBig size={17} strokeWidth={1.7} aria-hidden="true"/><span>{libraryLabel}</span>
+        {librarySelected && <Check className="sp-space-check" size={15} aria-hidden="true"/>}
+      </button>}
+      {spaces.map(item => {
+        const hasFolders = Boolean(item.folders?.length);
+        return <button type="button" className="sp-space-directory-option" role={hasFolders ? "menuitem" : "menuitemradio"}
+          aria-checked={hasFolders ? undefined : value === item.id} key={item.id}
+          onClick={() => hasFolders ? setDirectoryId(item.id) : onPick(item.id, null)}>
+          <Folder size={17} strokeWidth={1.7} aria-hidden="true"/><span>{item.name}</span>
+          {value === item.id && <Check className="sp-space-check" size={15} aria-hidden="true"/>}
+          {hasFolders && <ChevronRight size={14} aria-hidden="true"/>}
+        </button>;
+      })}
     </div>
-    <div className="sp-space-directory-divider" role="separator" aria-hidden="true"/>
-    <button type="button" className="sp-space-directory-option is-new" role="menuitem" onClick={onNew}>
-      <Plus size={15} aria-hidden="true"/><span>新建科研空间</span>
-    </button>
+    {onNew && <>
+      <div className="sp-space-directory-divider" role="separator" aria-hidden="true"/>
+      <button type="button" className="sp-space-directory-option is-new" role="menuitem" onClick={onNew}>
+        <Plus size={15} aria-hidden="true"/><span>新建科研空间</span>
+      </button>
+    </>}
   </>;
 }
 
-export function Composer({ chat = false, draft, onDraft, model, onModel, ability, onAbility, space, spaces, onSpace, attachments, onAttach, onRemove, onSend, onViewAll, onNewSpace, onPickExisting, annotate = false, placeholder, inputLabel, showCapabilities = true, showSpace = true, configuration, skills = SKILLS, agents = AGENTS }) {
+export function Composer({ chat = false, draft, onDraft, model, onModel, ability, onAbility, space, spaceFolder, spaces, onSpace, attachments, onAttach, onRemove, onSend, onViewAll, onNewSpace, annotate = false, placeholder, inputLabel, showCapabilities = true, showSpace = true, configuration, skills = SKILLS, agents = AGENTS }) {
+  const sources = useContext(ComposerSources);
+  const availableSpaces = spaces ?? sources?.spaces ?? [];
+  const selectedSpace = availableSpaces.find(item => item.id === space);
+  const selectedFolder = selectedSpace?.folders?.find(item => item.id === spaceFolder);
+  const [pickedLibrary, setPickedLibrary] = useState(false);
+  const directoryName = [selectedSpace?.name, selectedFolder?.name].filter(Boolean).join(" - ") ||
+    (pickedLibrary ? "我的文件库" : "选择科研空间");
+  const DirectoryIcon = !selectedSpace && pickedLibrary ? LibraryBig : Folder;
   const [open, setOpen] = useState(null);
+  const [attachmentSource, setAttachmentSource] = useState(null);
   const [capabilityQuery, setCapabilityQuery] = useState("");
   const [menuPosition, setMenuPosition] = useState({});
   const triggerRef = useRef(null);
@@ -148,7 +242,11 @@ export function Composer({ chat = false, draft, onDraft, model, onModel, ability
   }, [draft, chat]);
   useEffect(() => {
     function pointer(event) { if (!wrapper.current?.contains(event.target)) setOpen(null); }
-    function key(event) { if (event.key === "Escape") setOpen(null); }
+    function key(event) {
+      if (event.key !== "Escape" || !wrapper.current?.contains(document.activeElement)) return;
+      if (triggerRef.current?.getAttribute("aria-expanded") === "true") triggerRef.current.focus();
+      setOpen(null);
+    }
     document.addEventListener("pointerdown", pointer);
     document.addEventListener("keydown", key);
     return () => { document.removeEventListener("pointerdown", pointer); document.removeEventListener("keydown", key); };
@@ -159,11 +257,13 @@ export function Composer({ chat = false, draft, onDraft, model, onModel, ability
     const viewport = window.visualViewport;
     const vw = viewport?.width || window.innerWidth;
     const vh = (viewport?.height || window.innerHeight) + (viewport?.offsetTop || 0);
-    const width = Math.min(name === "model" ? 300 : name === "space" ? 260 : 360, vw - 24);
+    const width = Math.min(({ model: 300, attachment: 170, space: 260 })[name] ?? 360, vw - 24);
     const preferredLeft = name === "model" ? r.right - width : r.left;
     const left = Math.max(12, Math.min(vw - width - 12, preferredLeft));
-    const room = chat ? r.top - (viewport?.offsetTop || 0) - 16 : vh - r.bottom - 16;
-    setMenuPosition({ position: "fixed", left, right: "auto", width, top: chat ? "auto" : r.bottom + 8, bottom: chat ? window.innerHeight - r.top + 8 : "auto", maxHeight: Math.max(48, Math.min(360, room)) });
+    const below = vh - r.bottom - 16;
+    const above = r.top - (viewport?.offsetTop || 0) - 16;
+    const flip = chat || ((name === "attachment" || name === "space") && below < 180 && above > below);
+    setMenuPosition({ position: "fixed", left, right: "auto", width, top: flip ? "auto" : r.bottom + 8, bottom: flip ? window.innerHeight - r.top + 8 : "auto", maxHeight: Math.max(48, Math.min(360, flip ? above : below)) });
   }
   function toggle(name, trigger) {
     if (open === name) { setOpen(null); return; }
@@ -189,17 +289,39 @@ export function Composer({ chat = false, draft, onDraft, model, onModel, ability
     const selected = ability?.kind === kind;
     const Icon = isSkill ? SkillGlyph : AgentGlyph;
     return <div className="sp-picker-anchor"><button type="button" className={cx("sp-tool-select", selected && "is-selected")} aria-label={isSkill ? "选择科研 Skill" : "选择科研 Agent"} aria-expanded={open === kind} aria-haspopup="menu" onClick={event => toggle(kind, event.currentTarget)}><Icon size={15} /><span className="sp-ability-select-label">{selected ? ability.name : <><span className="sp-label-prefix">科研 </span>{isSkill ? "Skill" : "Agent"}</>}</span><ChevronDown size={12} /></button>
-      {open === kind && <div className="sp-popover sp-capability-picker" style={menuPosition} aria-label={isSkill ? "科研 Skill 选择面板" : "科研 Agent 选择面板"}><label className="sp-capability-search sp-capability-query"><Search size={16} /><input autoFocus onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const first = filtered.find(item => item.online); if (first) { onAbility(ability?.id === first.id ? null : first); setOpen(null); } } if (event.key === "ArrowDown") { event.preventDefault(); event.currentTarget.closest(".sp-capability-picker")?.querySelector("button[role=menuitemradio]:not(:disabled)")?.focus(); } }} value={capabilityQuery} onChange={event => setCapabilityQuery(event.target.value)} aria-label={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} placeholder={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} />{capabilityQuery && <IconButton label="清空能力搜索" onClick={() => setCapabilityQuery("")}><X size={13} /></IconButton>}</label><div className="sp-capability-results" role="menu">{filtered.length ? filtered.map(item => <button type="button" role="menuitemradio" aria-checked={ability?.id === item.id} disabled={!item.online} className="sp-menu-choice sp-capability-option" key={item.id} onClick={() => { onAbility(ability?.id === item.id ? null : item); setOpen(null); }}><span className="sp-capability-kind-icon"><Icon size={19}/></span><span><span className="sp-agent-title"><strong>{item.name}</strong>{item.exclusive && <ExclusiveBadge/>}</span><small>{item.online ? item.description : "尚未上线，暂不可调用"}</small></span>{ability?.id === item.id && <Check size={15} />}</button>) : <p className="sp-picker-empty">没有匹配的{isSkill ? " Skill" : " Agent"}</p>}</div><button type="button" className="sp-capability-view-all" onClick={() => { setOpen(null); onViewAll?.(kind); }}>{isSkill ? "查看全部 Skill" : "查看全部Agent"}</button></div>}
+      {open === kind && <div className="sp-popover sp-capability-picker" style={menuPosition} aria-label={isSkill ? "科研 Skill 选择面板" : "科研 Agent 选择面板"}><label className="sp-capability-search sp-capability-query"><Search size={16} /><input autoFocus onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const first = filtered.find(item => item.online); if (first) { onAbility(ability?.id === first.id ? null : first); setOpen(null); } } if (event.key === "ArrowDown") { event.preventDefault(); event.currentTarget.closest(".sp-capability-picker")?.querySelector("button[role=menuitemradio]:not(:disabled)")?.focus(); } }} value={capabilityQuery} onChange={event => setCapabilityQuery(event.target.value)} aria-label={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} placeholder={isSkill ? "搜索科研 Skill" : "搜索科研 Agent"} />{capabilityQuery && <IconButton label="清空能力搜索" onClick={() => setCapabilityQuery("")}><X size={13} /></IconButton>}</label><div className="sp-capability-results" role="menu">{filtered.length ? filtered.map(item => <button type="button" role="menuitemradio" aria-checked={ability?.id === item.id} disabled={!item.online} className="sp-menu-choice sp-capability-option" key={item.id} onClick={() => { onAbility(ability?.id === item.id ? null : item); setOpen(null); }}><span className="sp-capability-kind-icon"><Icon size={19}/></span><span><span className="sp-agent-title"><strong>{item.name}</strong>{(item.exclusive || (isSkill && (item.previewExclusive || item.previewPickerExclusive))) && <ExclusiveBadge/>}{ability?.id === item.id && <Check className="sp-picker-selected" size={15} aria-hidden="true"/>}</span><small>{item.online ? item.description : "尚未上线，暂不可调用"}</small></span></button>) : <p className="sp-picker-empty">没有匹配的{isSkill ? " Skill" : " Agent"}</p>}</div><button type="button" className="sp-capability-view-all" onClick={() => { setOpen(null); onViewAll?.(kind); }}>{isSkill ? "查看全部 Skill" : "查看全部Agent"}</button></div>}
     </div>;
+  }
+  function closeAttachmentDialog() {
+    setAttachmentSource(null);
+    triggerRef.current?.focus();
   }
   return <div className={cx("sp-compose-block", chat ? "sp-compose-chat" : "sp-compose-home", annotate && "sp-measured")} ref={wrapper} data-measure={chat ? "输入框 776 × 124px" : "首页输入框 776 × 176px"}>
     <form className="sp-composer" onSubmit={send} aria-label={chat ? "对话输入框" : "创建任务输入框"}>
       <textarea ref={input} value={draft} onChange={event => onDraft(event.target.value)} rows={2} aria-label={inputLabel || (chat ? "继续对话" : "输入科研问题")} placeholder={placeholder || (chat ? "继续描述你的问题，或补充研究材料…" : "描述你的科研问题，或上传已有的研究资料…")} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form.requestSubmit(); } }} />
       {attachments.length > 0 && <div className="sp-attachments">{attachments.map(file => <span className="sp-attachment" key={file.id}><FileText size={14} /><span title={file.name}>{file.name}</span><IconButton label={"移除附件 " + file.name} onClick={() => onRemove(file.id)}><X size={12} /></IconButton></span>)}</div>}
       {configuration}
-      <div className="sp-composer-tools"><div className="sp-composer-left"><IconButton label="添加附件" className="sp-attachment-icon" onClick={() => fileInput.current?.click()}><Paperclip size={19} /></IconButton><input className="sp-visually-hidden" tabIndex={-1} type="file" ref={fileInput} multiple aria-label="选择本地附件" onChange={event => { onAttach(Array.from(event.target.files || [])); event.target.value = ""; }} />{!chat && showCapabilities && <>{capabilityPicker("skill")}{capabilityPicker("agent")}</>}</div><div className="sp-composer-right"><div className="sp-picker-anchor"><button type="button" className="sp-model-select" aria-label="选择模型" aria-expanded={open === "model"} aria-haspopup="menu" onClick={event => toggle("model", event.currentTarget)}><span><span className="sp-model-brand">Shuyu </span>{selectedModel.name.replace("Shuyu ", "")}</span><ChevronDown size={12} /></button>{open === "model" && <div className="sp-popover sp-model-picker" style={menuPosition} role="menu" aria-label="选择模型"><div className="sp-menu-caption">选择模型</div>{MODELS.map(item => <button type="button" key={item.id} className="sp-menu-choice" role="menuitemradio" aria-checked={model === item.id} onClick={() => { onModel(item.id); setOpen(null); }}><span><strong>{item.name}</strong><small>{item.description}</small></span>{model === item.id && <Check size={16} />}</button>)}</div>}</div><button type="submit" className="sp-send" aria-label="发送消息" disabled={!draft.trim() && !attachments.length}><ArrowUp size={21} strokeWidth={2} /></button></div></div>
+      <div className="sp-composer-tools"><div className="sp-composer-left"><div className="sp-picker-anchor">
+        <IconButton label="添加附件" className="sp-attachment-icon" aria-haspopup="menu" aria-expanded={open === "attachment"}
+          onClick={event => toggle("attachment", event.currentTarget)}><Paperclip size={19} /></IconButton>
+        {open === "attachment" && <AttachmentSourceMenu style={menuPosition}
+          onLocal={() => { setOpen(null); triggerRef.current?.focus(); fileInput.current?.click(); }}
+          onBrowse={source => { setOpen(null); setAttachmentSource(source); }}/>}
+      </div><input className="sp-visually-hidden" tabIndex={-1} type="file" ref={fileInput} multiple aria-label="选择本地附件" onChange={event => { onAttach(Array.from(event.target.files || [])); event.target.value = ""; }} />{!chat && showCapabilities && <>{capabilityPicker("skill")}{capabilityPicker("agent")}</>}</div><div className="sp-composer-right"><div className="sp-picker-anchor"><button type="button" className="sp-model-select" aria-label="选择模型" aria-expanded={open === "model"} aria-haspopup="menu" onClick={event => toggle("model", event.currentTarget)}><span><span className="sp-model-brand">Shuyu </span>{selectedModel.name.replace("Shuyu ", "")}</span><ChevronDown size={12} /></button>{open === "model" && <div className="sp-popover sp-model-picker" style={menuPosition} role="menu" aria-label="选择模型"><div className="sp-menu-caption">选择模型</div>{MODELS.map(item => <button type="button" key={item.id} className="sp-menu-choice" role="menuitemradio" aria-checked={model === item.id} onClick={() => { onModel(item.id); setOpen(null); }}><span><strong>{item.name}</strong><small>{item.description}</small></span>{model === item.id && <Check size={16} />}</button>)}</div>}</div><button type="submit" className="sp-send" aria-label="发送消息" disabled={!draft.trim() && !attachments.length}><ArrowUp size={21} strokeWidth={2} /></button></div></div>
     </form>
-    {!chat && showSpace && <div className="sp-space-strip"><div className="sp-picker-anchor"><button type="button" className="sp-space-select" aria-label="选择任务归属空间" aria-expanded={open === "space"} aria-haspopup="menu" onClick={event => toggle("space", event.currentTarget)}><Folder size={16} /><span>{spaces.find(item => item.id === space)?.name || "选择科研空间"}</span><ChevronDown size={12} /></button>{open === "space" && <div className="sp-popover sp-space-picker" style={menuPosition} role="menu" aria-label="任务归属空间"><SpaceDirectoryOptions spaces={spaces} value={space} caption="请选择空间目录" onPick={id => { onSpace(id); setOpen(null); }} onNew={() => { setOpen(null); onNewSpace?.(); }} /></div>}</div></div>}
+    {!chat && showSpace && <div className="sp-space-strip"><div className="sp-picker-anchor"><button type="button" className="sp-space-select" aria-label="选择任务归属空间" title={directoryName} aria-expanded={open === "space"} aria-haspopup="menu" onClick={event => toggle("space", event.currentTarget)}><DirectoryIcon size={16} strokeWidth={1.7} aria-hidden="true"/><span>{directoryName}</span><ChevronDown size={12} /></button>{open === "space" && <div className="sp-popover sp-space-picker" style={menuPosition} role="menu" aria-label="任务归属空间"><SpaceDirectoryOptions spaces={availableSpaces} value={space} selectedFolder={spaceFolder} caption="请选择空间目录"
+        libraryLabel="默认到文件库" librarySelected={!selectedSpace}
+        onPick={(id, folderId) => { setPickedLibrary(id === null); onSpace(id, folderId); setOpen(null); triggerRef.current?.focus(); }}
+        onNew={onNewSpace && (() => { setOpen(null); onNewSpace(); })}/></div>}</div></div>}
+    {attachmentSource && createPortal(
+      <Modal title={attachmentSource === "library" ? "从我的文件库添加" : "从我的科研空间添加"}
+        onClose={closeAttachmentDialog} wide placement="search">
+        <AttachmentFileList source={attachmentSource} library={sources?.library ?? []}
+          spaces={sources?.spaces ?? availableSpaces} filesBySpace={sources?.filesBySpace ?? {}}
+          onSelect={file => { onAttach([file]); closeAttachmentDialog(); }}/>
+      </Modal>,
+      wrapper.current.closest(".sp-design-app") || document.body
+    )}
   </div>;
 }
 
