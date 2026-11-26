@@ -52,7 +52,8 @@ import { ReviewDocument } from './design-system/ReviewDocument.jsx';
 import { EVALUATION_PATH } from './content/review-capabilities.js';
 import { capabilityDemoPath, capabilityDemoPrefix, capabilityDemos, capabilityDemoTitle } from './content/capability-demos.js';
 import { ResearchConversation, makeSession } from './design-system/ResearchConversation.jsx';
-import { ResearchSpaces, initialResearchSpaces, researchSpaceFiles } from './design-system/ResearchSpaces.jsx';
+import { ResearchSpaces, ResearchSpaceSettings, applyResearchSpaceSettings, initialResearchSpaces, researchSpaceFiles, spaceMembers } from './design-system/ResearchSpaces.jsx';
+import { spaceMemberPreview, spaceOwnerId, spaceOwnerPreview, useSpaceDownloadRequests } from './design-system/space-access.js';
 import { ComposerSources } from './design-system/composer-sources.js';
 import { ContributionPage } from './design-system/ContributionPage.jsx';
 import { CapabilityCase } from './design-system/CapabilityCase.jsx';
@@ -508,6 +509,9 @@ export function App() {
   const router = useRouter();
   const path = router.path;
   const previewTier = router.get('preview');
+  const memberPreview = router.get('space-preview') === 'member';
+  const approvalPreview = path === '/workspace/approvals' && router.get('approval-preview') === '1';
+  const spaceActor = memberPreview ? spaceMemberPreview : spaceOwnerPreview;
   const tier = previewMembershipTier(previewTier);
   const [favoriteIds, setFavoriteIds] = useState(readCapabilityFavorites);
   useEffect(() => {
@@ -531,6 +535,21 @@ export function App() {
   }
   const [localSessions,setLocalSessions]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-sessions-v2')||'[]');}catch{return [];}});
   const [spaces,setSpaces]=useState(initialResearchSpaces);
+  const [spaceSettingsId,setSpaceSettingsId]=useState(null);
+  const {requests:downloadRequests,submit:submitDownloadRequest,resolve:resolveDownloadRequest}=useSpaceDownloadRequests(approvalPreview);
+  const accessibleSpaces=memberPreview ? spaces.filter(space=>spaceMembers(space).some(member=>member.id===spaceActor.id)) : spaces;
+  const settingsSpace=spaces.find(space=>space.id===spaceSettingsId&&spaceOwnerId(space)===spaceActor.id);
+  const incomingRequests=downloadRequests.filter(request=>request.ownerId===spaceActor.id&&
+    (approvalPreview||spaces.some(space=>space.id===request.spaceId&&spaceOwnerId(space)===spaceActor.id)));
+  const pendingApprovalCount=incomingRequests.filter(request=>request.status==='pending').length;
+  const ownRequests=downloadRequests.filter(request=>request.requesterId===spaceActor.id);
+  useEffect(()=>{
+    function syncSpaces(event) {
+      if(event.key==='kgcure-spaces-v2')setSpaces(initialResearchSpaces());
+    }
+    window.addEventListener('storage',syncSpaces);
+    return ()=>window.removeEventListener('storage',syncSpaces);
+  },[]);
   const [libraryFiles,setLibraryFiles]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-file-library-files-v1')||'[]');}catch{return [];}});
   const [historyOverrides,setHistoryOverrides]=useState(()=>{try{return JSON.parse(localStorage.getItem('kgcure-history-overrides')||'{}');}catch{return {};}});
   useEffect(()=>localStorage.setItem('kgcure-history-overrides',JSON.stringify(historyOverrides)),[historyOverrides]);
@@ -623,6 +642,8 @@ export function App() {
     if (previewTier && url.pathname.startsWith('/workspace') && !url.searchParams.has('preview')) {
       url.searchParams.set('preview', tier);
     }
+    if (memberPreview && url.pathname.startsWith('/workspace')) url.searchParams.set('space-preview', 'member');
+    if (approvalPreview && url.pathname === '/workspace/approvals') url.searchParams.set('approval-preview', '1');
     router.navigate(url.href);
     setRestrictedAgent(null);
     setMobileOpen(false);
@@ -688,8 +709,12 @@ export function App() {
     if (!requireCapabilityAccess(data.ability)) return false;
     const session=makeSession(data);setLocalSessions(items=>[session,...items]);navigate('/workspace/chats/'+session.id);
   }
-  function spaceAction(type,item,details={}){
+  function spaceAction(type,item){
     if(!item)return;
+    if(type==='settings'){
+      setSpaceSettingsId(item.id);
+      return;
+    }
     if(type==='pin'){
       setSpaces(current=>{
         const updated=current.map(space=>space.id===item.id?{...space,pinned:!space.pinned}:space);
@@ -698,13 +723,7 @@ export function App() {
       showToast(item.pinned?'已取消置顶「'+item.name+'」':'已置顶「'+item.name+'」');
       return;
     }
-    if(type==='rename'){
-      if(!details.name?.trim())return;
-      setSpaces(current=>current.map(space=>space.id===item.id?{...space,name:details.name.trim(),goal:details.goal?.trim()||''}:space));
-      showToast('已更新「'+details.name.trim()+'」');
-      return;
-    }
-    if(type==='delete'){
+    if(type==='delete' && spaceOwnerId(item)===spaceActor.id){
       const deleted=spaces.find(space=>space.id===item.id);
       if(!deleted)return;
       const deletedSessionFiles=localSessions.filter(session=>session.space===item.id).flatMap(session=>session.files||[]);
@@ -722,6 +741,31 @@ export function App() {
       setLocalSessions(items=>items.map(session=>session.space===item.id?{...session,space:null,origin:session.origin?{...session.origin,folderId:undefined}:session.origin}:session));
       showToast('空间已删除，文件仍可在「我的文件库」中查看');
       if(path.startsWith('/workspace/research-space/'+item.id))navigate('/workspace/research-space');
+    }
+  }
+  function saveSpaceSettings(settings,removed){
+    const date=Date.now();
+    setSpaces(current=>current.map(space=>space.id===settingsSpace.id
+      ? applyResearchSpaceSettings(space,spaceActor,settings,removed,date) : space));
+    setSpaceSettingsId(null);
+    showToast('科研空间设置已保存');
+  }
+  function requestSpaceDownload(space,file){
+    try {
+      const submitted=submitDownloadRequest(space,file,spaceActor);
+      if(submitted)showToast('下载申请已提交');
+      return submitted;
+    } catch {
+      showToast('暂无法提交申请，请重试');
+      return false;
+    }
+  }
+  function reviewSpaceDownload(request,status){
+    try {
+      const resolved=resolveDownloadRequest(request.id,status,spaceActor.id);
+      showToast(resolved?(status==='approved'?'已通过下载申请':'已驳回下载申请'):'该申请已处理');
+    } catch {
+      showToast('暂无法保存审批结果，请重试');
     }
   }
   function sessionAction(type,item,title){
@@ -777,8 +821,8 @@ export function App() {
     if (path === "/workspace/topic-selection") return <ServicePage showCaseType key="topic" onStart={startTask} kind="topic" onToast={showToast} />;
     if (path === "/workspace/grant-application") return <ServicePage showCaseType key="grant" onStart={startTask} kind="grant" onToast={showToast} />;
     if (path === "/workspace/scientific-drawing") return <DrawingPage onStart={startTask} onOpenChat={() => navigate("/workspace/chats/e9dd87e0-b232-479d-b0a9-5ba249a76a78")} onToast={showToast} />;
-    if (path === "/workspace/research-space") return <ResearchSpaces spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
-    if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={spaces} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
+    if (path === "/workspace/research-space") return <ResearchSpaces spaces={accessibleSpaces} actor={spaceActor} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
+    if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={accessibleSpaces} actor={spaceActor} onSettings={setSpaceSettingsId} requests={downloadRequests} onRequestDownload={requestSpaceDownload} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
     if (path === "/workspace/workflows") return <CapabilityStore onRecommend={task=>startTask({text:task.name,origin:{category:task.category}})} key="legacy-agents" kind="agent" onNavigate={navigate} onToast={showToast}/>;
     if (path.startsWith("/workspace/workflows/template/")) {
       const sourceId=path.split('/')[4],item=capabilityById(sourceId);
@@ -837,7 +881,7 @@ export function App() {
         onRecords={() => navigate('/workspace/membership?view=points&section=records')}
         onToast={showToast} />;
     }
-    if (path === "/workspace/approvals") return <Approvals onFiles={() => navigate("/workspace/my-files")} />;
+    if (path === "/workspace/approvals") return <Approvals incoming={incomingRequests} outgoing={ownRequests} onResolve={reviewSpaceDownload} onFiles={() => navigate("/workspace/my-files")} />;
 
     return (
       <div className="page">
@@ -909,8 +953,9 @@ export function App() {
 
   return (
     <ComposerSources.Provider value={composerSources}>
-    <BusinessFrame path={path} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={demoSession ? [demoSession, ...visibleHistory] : visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={spaces} onSpaces={setSpaces}>
+    <BusinessFrame path={path} account={spaceActor} approvalCount={pendingApprovalCount} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={demoSession ? [demoSession, ...visibleHistory] : visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={accessibleSpaces}>
       {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
+      {settingsSpace&&<ResearchSpaceSettings key={settingsSpace.id} space={settingsSpace} onSave={saveSpaceSettings} onClose={()=>setSpaceSettingsId(null)} onToast={showToast}/>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
       {restrictedAgent && <Modal title={restrictedAgent.name} onClose={() => setRestrictedAgent(null)}>
         <p>{EXCLUSIVE_AGENT_REQUIREMENT}</p>

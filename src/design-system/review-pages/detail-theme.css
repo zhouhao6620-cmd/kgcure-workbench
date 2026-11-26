@@ -100,7 +100,11 @@ html { scroll-padding-top: 0; }
 .catalog-detail-steps { padding-left:20px; margin:8px 0 0; line-height:1.8; }
 .catalog-detail-metrics { display:grid; grid-template-columns:max-content 1fr; gap:6px 16px; }
 .catalog-detail-metrics dd { margin:0; }
-#catalog-cases .actual-case-card { height:auto; min-height:38px; margin:0 8px 8px 0; white-space:normal; text-align:left; }
+.secondary-btn.actual-case-card { border-color:var(--ds-line); }
+#catalog-cases .actual-case-card {
+  height:auto; min-height:38px; margin:0 8px 8px 0; white-space:normal; text-align:left;
+  border-width:1px; border-style:solid; border-radius:var(--ds-radius-control); background:transparent;
+}
 .follow-actions.catalog-detail-follow { display:none; }
 @media (max-width:760px) {
   .follow-actions.catalog-detail-follow:not([hidden]) { display:grid; grid-template-columns:1fr; }

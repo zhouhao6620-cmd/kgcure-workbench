@@ -6,6 +6,7 @@ import { certifiedEvaluationLabel, hasEvaluationCertification, missingEvaluation
 import certificationTheme from './evaluation-certification.css?raw';
 import detailTheme from './review-pages/detail-theme.css?raw';
 import evaluationTheme from './review-pages/evaluation-theme.css?raw';
+import cardHover from './card-hover.css?raw';
 import tokens from './tokens.css?raw';
 import './review-document.css';
 
@@ -82,7 +83,7 @@ export function ReviewDocument({ kind, title, mode = 'skill', item, unrated = fa
     let current = true;
     documents[kind]().then(({ default: source }) => {
       if (!current) return;
-      const theme = kind === 'evaluation' ? evaluationTheme : detailTheme;
+      const theme = kind === 'evaluation' ? evaluationTheme : `${detailTheme}\n${cardHover}`;
       const certification = kind === 'skill' ? certificationTheme : '';
       const html = source
         .replace('<!-- workbench-theme -->', () => `<style>${tokens}\n${certification}\n${theme}</style>`)

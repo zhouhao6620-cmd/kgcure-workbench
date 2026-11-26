@@ -53,7 +53,6 @@
 .workLibraryBar > .workLibraryActions {gap:8px;margin-left:auto}
 .workLibraryActions [aria-disabled=true] {pointer-events:none}
 .workLibraryBar nav {gap:8px}
-.workLibraryBar nav button small {font:inherit;color:inherit;letter-spacing:inherit}
 .workRecords {display:grid;width:100%;gap:12px}
 .workRecordsEmpty.sp-empty {min-height:clamp(280px,calc(100dvh - 590px),430px);padding:32px 20px}
 .workRecordCard {position:relative;display:flex;align-items:center;gap:8px;box-sizing:border-box;height:var(--ds-delivery-card-height);min-width:0;padding:12px 16px;border:1px solid var(--ds-card-line,#eef0f4);border-radius:10px;background:white;color:inherit;transition:background-color 160ms ease,border-color 160ms ease}
@@ -119,13 +118,6 @@
 .workChoices button {font-size:14px;color:#3159d2}
 .workChoices> :is(div,li)>button {justify-content:flex-end;justify-self:stretch;min-width:0;padding:0 4px;white-space:nowrap}
 .workChoices .workRemoveAction {color:#bd3441}
-.workMemberChoices {padding:0;list-style:none}
-.workMemberChoices .workAvatar {box-shadow:none;margin:0}
-.workMemberChoices button {min-height:var(--ds-button-compact);padding:0 6px;border-radius:var(--ds-radius-control);white-space:nowrap}
-.workMemberChoices button:hover {background:#fff3f3}
-.workMemberChoices button:focus-visible {outline-offset:0}
-.workMemberInvite {display:flex;justify-content:flex-end;margin-top:20px;padding-top:20px;border-top:1px solid #e9ecf1}
-.workMemberInviteButton {width:100%;min-height:40px;padding-inline:16px;font-size:14px;line-height:22px}
 @media(max-width:699px){
  .integratedSpace {grid-template-columns:minmax(0,1fr);gap:20px}
  .workSpaceOverview h1 {font-size:24px}
@@ -146,3 +138,107 @@
 .business-workspace .ds-secondary-scroll > .integratedSpace.view {width:100%;max-width:none;margin:0}
 .business-workspace .ds-secondary-scroll:has(> .integratedSpace.view) {scrollbar-gutter:stable;overflow-y:scroll}
 .workLibraryBar nav button,.workLibraryBar nav button small { font-size:14px; line-height:22px; }
+
+.workSpaceTitle {
+ display:flex; align-items:center; gap:8px; min-width:0;
+}
+.workSpaceTitle > span:first-child { min-width:0; overflow-wrap:anywhere; }
+.workSpacePrivacyMark {
+ display:inline-flex; align-items:center; flex:none; color:var(--ds-secondary); letter-spacing:normal;
+}
+.sp-modal.workSettingsModal { width:560px; }
+.workSettingsModal .sp-modal-body { padding-block:12px 28px; }
+.workSettingsForm {
+ display:grid; gap:22px; color:var(--ds-ink);
+}
+.workSettingsForm .sp-field { margin:0; }
+.workSettingsForm .sp-field > span, .workSettingsMembers h3, .workPrivacySetting h3 {
+ margin:0; font-size:14px; font-weight:600; line-height:22px; color:var(--ds-ink);
+}
+.workSettingsForm .sp-field input { min-height:44px; }
+.workSettingsForm .sp-field textarea { min-height:68px; }
+.workPrivacySetting {
+ display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+.workPrivacySetting p {
+ margin:4px 0 0; color:var(--ds-secondary); font-size:12px; line-height:20px;
+}
+.workPrivacySwitch {
+ position:relative; display:flex; align-items:center; flex:none; width:42px; height:24px;
+ border:0; border-radius:999px; padding:3px; background:#a6b1c1;
+ transition:background-color 160ms ease;
+}
+.workPrivacySwitch > span {
+ display:block; width:18px; height:18px; border-radius:50%; background:#fff;
+ box-shadow:0 1px 3px rgb(15 17 21 / 14%); transition:transform 160ms ease;
+}
+.workPrivacySwitch[aria-checked="true"] { background:var(--ds-primary); }
+.workPrivacySwitch[aria-checked="true"] > span { transform:translateX(18px); }
+.workSettingsMembers h3 > span { margin-inline-start:4px; color:var(--ds-secondary); font-weight:400; }
+.workMemberChoices {
+ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 20px;
+ margin:8px 0 0; padding:0; list-style:none;
+}
+.workMemberChoices > li {
+ display:flex; align-items:center; gap:8px; min-width:0; min-height:44px;
+ border-bottom:1px solid var(--ds-card-line);
+}
+.workMemberChoices .workAvatar { flex:none; margin:0; box-shadow:none; }
+.workSettingsMemberName {
+ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+ font-size:14px; line-height:22px; font-weight:400;
+}
+.workSettingsOwner {
+ flex:none; color:var(--ds-primary); font-size:12px; line-height:20px; white-space:nowrap;
+ padding-inline-end:4px;
+}
+.workMemberChoices .workRemoveAction { color:var(--ds-notification); }
+.workMemberChoices .workRemoveAction:hover { background:#fff0f1; color:var(--ds-notification); }
+.workSettingsModal .sp-modal-footer { flex:none; padding-block:16px 20px; border-top:1px solid var(--ds-card-line); }
+.workSettingsActions { display:flex; justify-content:space-between; gap:12px; }
+.workDownloadFile {
+ display:flex; align-items:center; gap:12px; padding:12px; margin-bottom:12px;
+ border:1px solid var(--ds-line); border-radius:var(--ds-radius-card); background:var(--ds-sidebar);
+}
+.workDownloadFile > strong { min-width:0; overflow-wrap:anywhere; font-size:14px; }
+.workDownloadFeedback { margin:6px 0 0; color:var(--ds-secondary); font-size:14px; }
+.workSpaceLog { gap:12px; }
+.workSpaceLog .workRecordCopy { flex:1; }
+.workSpaceLog .workRecordDot { margin-inline:5px; }
+.workSpaceLogSubject {
+ max-width:42%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+ color:var(--ds-secondary); font-size:14px; line-height:22px;
+}
+.workApprovalList { display:grid; gap:10px; margin:0; padding:0; list-style:none; }
+.workApprovalItem {
+ display:flex; align-items:center; gap:12px; min-height:var(--ds-delivery-card-height);
+ padding:12px 16px; border:1px solid var(--ds-line); border-radius:var(--ds-radius-card); background:#fff;
+}
+.workApprovalCopy { flex:1; min-width:0; }
+.workApprovalCopy strong {
+ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+ font-size:14px; line-height:22px; font-weight:600;
+}
+.workApprovalCopy p {
+ margin:2px 0 0; color:var(--ds-secondary); font-size:12px; line-height:20px; overflow-wrap:anywhere;
+}
+.workApprovalActions { display:flex; align-items:center; gap:8px; flex:none; max-width:100%; }
+.workApprovalActions .workRecordContributor { width:auto; max-width:128px; margin-inline-end:4px; }
+@media (max-width:480px) {
+ .workSettingsForm { gap:18px; }
+ .workSettingsModal .sp-modal-body { padding-block:10px 22px; }
+ .workMemberChoices { column-gap:12px; }
+ .workMemberChoices > li { gap:5px; }
+ .workMemberChoices .workAvatar { width:24px; height:24px; }
+ .workSettingsModal .sp-modal-footer { padding:12px 18px 16px; }
+ .workApprovalItem { flex-wrap:wrap; }
+ .workApprovalCopy { flex-basis:calc(100% - 60px); }
+ .workApprovalActions { margin-inline-start:auto; }
+}
+@media (max-width:360px) {
+ .workSettingsActions { gap:8px; }
+ .workSettingsActions > .sp-button { gap:6px; padding-inline:9px; }
+}
+@media (prefers-reduced-motion:reduce) {
+ .workPrivacySwitch, .workPrivacySwitch > span { transition:none; }
+}

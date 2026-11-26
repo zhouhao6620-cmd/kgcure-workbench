@@ -1,7 +1,7 @@
 import { sitePath } from "../site-path.js";
 import { ConversationPrompt, FollowUpQuestions } from '../design-system/ConversationPrompt.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
-import { Archive, Download, FolderInput, ImagePlus, ChevronRight, PenLine, ArrowUpRight, Check, ChevronDown, Circle, FileCheck2, FileText, Folder, Layers, LibraryBig, Loader2, Pause, Play, Square, Pencil, Search, Sparkles, Upload, Workflow, X } from 'lucide-react';
+import { Archive, Download, FolderInput, ImagePlus, ChevronRight, PenLine, ArrowUpRight, Check, ChevronDown, Circle, FileCheck2, FileText, Folder, Layers, LibraryBig, Loader2, Pause, Play, Square, Pencil, Search, Sparkles, Upload, UserRound, Workflow, X } from 'lucide-react';
 import { SkillGlyph, StatusTag, AgentBadge, Button, CaseCategory, SpaceDirectoryOptions } from './components.jsx';
 
 export function FilePanelToggle({ open, onToggle, controls, label = '文件面板' }) {
@@ -130,6 +130,13 @@ export function DeliveryFileIcon({ type, name }) {
   const format = DELIVERY_FILE_FORMATS[type?.toUpperCase()] ?? DELIVERY_FILE_FORMATS[extension] ?? (type ? 'generic' : 'markdown');
   return <span className={`sp-delivery-file-icon is-${format}`} aria-hidden="true">
     {DELIVERY_FILE_MARKS[format] ?? <FileText/>}
+  </span>;
+}
+
+export function RecordContributor({ name, avatar, description = name }) {
+  return <span className="workRecordContributor" title={description} aria-label={description}>
+    <span aria-hidden="true">{avatar ? <img src={sitePath(avatar)} alt=""/> : <UserRound size={17}/>}</span>
+    <span className="workRecordContributorName">{name}</span>
   </span>;
 }
 

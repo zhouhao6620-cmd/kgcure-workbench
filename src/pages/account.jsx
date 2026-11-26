@@ -34,12 +34,13 @@ import {
   User,
   X,
 } from "lucide-react";
-import { AgentGlyph, ApprovalEmptyIllustration, Button, EmptyState as WorkspaceEmptyState, IconButton, Modal, RecordEmptyIllustration, SearchEmptyIllustration, SkillGlyph, Tag, TrashEmptyIllustration } from "../design-preview/components.jsx";
-import { DeliveryFileIcon } from "../design-preview/ConversationPatterns.jsx";
+import { AgentGlyph, ApprovalEmptyIllustration, Button, EmptyState as WorkspaceEmptyState, IconButton, Modal, RecordEmptyIllustration, SearchEmptyIllustration, SkillGlyph, StatusTag, Tag, TrashEmptyIllustration } from "../design-preview/components.jsx";
+import { DeliveryFileIcon, RecordContributor } from "../design-preview/ConversationPatterns.jsx";
 import { downloadText } from "../content/catalog.js";
 import { downloadWord } from "../design-preview/word-file.js";
 import { Badge, Btn, PageHead, Tabs } from "../components.jsx";
 import { Pagination } from "../design-system/Pagination.jsx";
+import { spaceMemberPreview } from "../design-system/space-access.js";
 import "./membership-plans.css";
 
 const FILES = [
@@ -548,14 +549,46 @@ export function Recharge({ onBack, onRecords, onToast }) {
   );
 }
 
-export function Approvals({ onFiles }) {
-  const [tab, setTab] = useState("我发起的");
+const APPROVAL_STATUS = {
+  pending: { label: '待审批', tone: 'warning' },
+  approved: { label: '审核通过', tone: 'success' },
+  rejected: { label: '已驳回', tone: 'error' },
+};
+const approvalDate = new Intl.DateTimeFormat('zh-CN', {
+  year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+});
+
+export function Approvals({ incoming = [], outgoing = [], onResolve, onFiles }) {
+  const [tab, setTab] = useState(() => incoming.length ? '待我审批' : '我发起的');
+  const reviewing = tab === '待我审批';
+  const records = reviewing ? incoming : outgoing;
   return (
     <div className="view acct-view account-flat approvals-view">
       <header className="acct-head"><h1>我的审批</h1><p>查看发起的下载申请和待处理审批。</p></header>
-      <Tabs className="sp-filter-chips approval-filters" items={["我发起的", "待我审批"]} value={tab} onChange={setTab} />
-      <div className="billing-records">
-        <WorkspaceEmptyState icon={ApprovalEmptyIllustration} description={tab === "我发起的" ? "发起文件下载申请后，可在这里查看进度。" : "收到文件下载申请后，可在这里处理。"} action={tab === "我发起的" && <Button onClick={onFiles}>前往我的文件 <ArrowRight size={16}/></Button>}>{tab === "我发起的" ? "暂无发起的申请" : "暂无待审批申请"}</WorkspaceEmptyState>
+      <Tabs className="sp-filter-chips approval-filters" ariaLabel="下载审批" items={['我发起的', '待我审批']} value={tab} onChange={setTab} />
+      <div className="billing-records" role="tabpanel" aria-label={tab}>
+        {records.length ? <ul className="workApprovalList">{records.map(request => {
+          const status = APPROVAL_STATUS[request.status];
+          return <li key={request.id} className="workApprovalItem">
+            <DeliveryFileIcon type={request.fileType} name={request.fileName} />
+            <div className="workApprovalCopy">
+              <strong title={request.fileName}>{request.fileName}</strong>
+              <p>{request.spaceName}<span aria-hidden="true"> · </span>{approvalDate.format(request.createdAt)}</p>
+            </div>
+            <div className="workApprovalActions">
+              {reviewing && <RecordContributor name={request.requesterName} description={'申请人：'+request.requesterName}
+                avatar={request.requesterId===spaceMemberPreview.id?spaceMemberPreview.avatar:undefined}/>}
+              {reviewing && request.status==='pending' ? <>
+                <Button small onClick={() => onResolve(request, 'rejected')}><X size={16} strokeWidth={1.65} aria-hidden="true"/>驳回</Button>
+                <Button small variant="primary" onClick={() => onResolve(request, 'approved')}><Check size={16} strokeWidth={1.65} aria-hidden="true"/>通过</Button>
+              </> : <StatusTag status={status.tone}>{status.label}</StatusTag>}
+            </div>
+          </li>;
+        })}</ul> : <WorkspaceEmptyState icon={ApprovalEmptyIllustration}
+          description={reviewing ? '收到文件下载申请后，可在这里处理。' : '发起文件下载申请后，可在这里查看进度。'}
+          action={!reviewing && <Button onClick={onFiles}>前往我的文件 <ArrowRight size={16}/></Button>}>
+          {reviewing ? '暂无待审批申请' : '暂无发起的申请'}
+        </WorkspaceEmptyState>}
       </div>
     </div>
   );

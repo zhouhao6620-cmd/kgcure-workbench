@@ -50,7 +50,7 @@ export function Tag({ children, tone = "neutral", icon:Icon }) {
 }
 function ExclusiveGlyph(props) { return <CapabilityGlyph design={exclusiveGlyph} {...props}/>; }
 export function ExclusiveBadge() { return <span className="sp-tag sp-tag-violet sp-exclusive-badge"><ExclusiveGlyph size={14}/><span>专享</span></span>; }
-export function NewBadge() { return <span className="sp-new-badge">NEW</span>; }
+export function NewBadge() { return <span className="sp-new-badge sp-tag-green">NEW</span>; }
 export function CaseCategory({ children }) {
   return <span className="ds-case-category">
     <TagIcon size={12} strokeWidth={1.6} aria-hidden="true"/>
@@ -92,13 +92,13 @@ export function SkillCard({ item, context = "store", onDetail, onCall, unavailab
  const showExclusive=item.exclusive||(item.previewExclusive&&(isChatOrSpec||(context==='channel'&&item.demo)));
  const showTypeBadge=!isChatOrSpec&&context!=='channel'&&!showExclusive;
  const actionLabel=isChat&&item.online?'使用 '+item.name:'查看 '+item.name+'详情';
- return <article className="sp-skill-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit"
+ return <article className="sp-skill-card sp-capability-v2 sp-gray-capability ds-card-interaction" data-capability-id={item.id}><button type="button" className="sp-card-hit"
   data-unavailable={unavailable || undefined} disabled={unavailable && !onUnavailable} aria-describedby={certificationId}
   onClick={unavailable ? onUnavailable : () => isChat&&item.online?onCall(item):onDetail(item)}
   aria-label={unavailable?item.name+'，暂无接入':actionLabel+(showExclusive?'，专享':'')}>
  <span className="sp-gray-top"><AbilityIcon item={item} size={24} vivid/><span className="sp-gray-heading"><strong title={item.name}>{item.name}</strong><StarRating score={item.score}/></span>{showExclusive&&<ExclusiveBadge/>}</span>
  <span className="sp-card-description" title={item.description}>{item.description}</span>
- {showTypeBadge&&<SkillBadge/>}<span className="sp-gray-bottom"><EvaluationCardFooter item={item} id={certificationId} compact={context === "channel"}/>{unavailable?<span className="sp-card-unavailable">暂无接入</span>:<span className="sp-gray-action" aria-hidden="true"><ArrowUp size={16}/></span>}</span>
+ {showTypeBadge&&<SkillBadge/>}<span className="sp-gray-bottom"><EvaluationCardFooter item={item} id={certificationId} compact={context === "channel"}/>{unavailable?<span className="sp-card-unavailable">暂无接入</span>:<span className="sp-gray-action ds-card-interaction-arrow" aria-hidden="true"><ArrowUp size={16}/></span>}</span>
  </button></article>;
 }
 const agentAbilityIcons = {
@@ -119,7 +119,7 @@ export function AgentCard({ item, context = "store", onDetail, onCall, unavailab
  const estimatedMinutes = item.estimatedMinutes;
  const descriptionIds = coreAbilities.length ? `${abilitiesId} ${summaryId}` : summaryId;
  const actionLabel = isChat ? '启动 '+item.name : '查看 '+item.name+'详情';
- return <article className="sp-agent-card sp-capability-v2 sp-gray-capability" data-capability-id={item.id}><button type="button" className="sp-card-hit"
+ return <article className="sp-agent-card sp-capability-v2 sp-gray-capability ds-card-interaction" data-capability-id={item.id}><button type="button" className="sp-card-hit"
   data-unavailable={unavailable || undefined} disabled={unavailable && !onUnavailable}
   onClick={unavailable ? onUnavailable : () => isChat?onCall(item):onDetail(item)}
   aria-label={unavailable?item.name+'，暂无接入':actionLabel + (item.exclusive ? '，专享' : '')}
@@ -156,7 +156,7 @@ export function AgentCard({ item, context = "store", onDetail, onCall, unavailab
   </span>
   {unavailable
    ? <span className="sp-card-unavailable">暂无接入</span>
-   : <span className="sp-gray-action sp-agent-open" aria-hidden="true"><ArrowUp size={16}/></span>}
+   : <span className="sp-gray-action sp-agent-open ds-card-interaction-arrow" aria-hidden="true"><ArrowUp size={16}/></span>}
  </span>
  </button></article>;
 }
@@ -325,7 +325,7 @@ export function Composer({ chat = false, draft, onDraft, model, onModel, ability
   </div>;
 }
 
-export function Modal({ title, children, onClose, wide = false, footer, placement = "center" }) {
+export function Modal({ title, children, onClose, wide = false, footer, placement = "center", className }) {
   const ref = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -345,7 +345,7 @@ export function Modal({ title, children, onClose, wide = false, footer, placemen
     document.addEventListener("keydown", key);
     return () => { document.removeEventListener("keydown", key); if (previous?.isConnected) previous.focus(); };
   }, []);
-  return <div className={cx("sp-modal-backdrop", placement === "search" && "sp-search-backdrop")} onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section ref={ref} className={cx("sp-modal", wide && "sp-modal-wide")} role="dialog" aria-modal="true" aria-label={title}><header className="sp-modal-header"><h2>{title}</h2><IconButton label="关闭弹窗" onClick={onClose}><X size={18} /></IconButton></header><div className="sp-modal-body">{children}</div>{footer && <footer className="sp-modal-footer">{footer}</footer>}</section></div>;
+  return <div className={cx("sp-modal-backdrop", placement === "search" && "sp-search-backdrop")} onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section ref={ref} className={cx("sp-modal", wide && "sp-modal-wide", className)} role="dialog" aria-modal="true" aria-label={title}><header className="sp-modal-header"><h2>{title}</h2><IconButton label="关闭弹窗" onClick={onClose}><X size={18} /></IconButton></header><div className="sp-modal-body">{children}</div>{footer && <footer className="sp-modal-footer">{footer}</footer>}</section></div>;
 }
 
 export function ApprovalEmptyIllustration() {

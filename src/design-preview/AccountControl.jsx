@@ -14,7 +14,10 @@ const GROUPS = [
  [{label:'账单与用量',icon:CreditCard,target:'/workspace/membership'},{label:'积分充值',icon:Coins,target:'/workspace/recharge'}],
  [{label:'个人资料',icon:User,target:'/workspace/profile'},{label:'我的收藏',icon:Heart,target:'/workspace/my-favorites'},{label:'我的审批',icon:ClipboardCheck,target:'/workspace/approvals'},{label:'邀请好友',icon:Gift,target:'invite'}]
 ];
-export function AccountControl({nickname='周浩',tier='free',quotaRemaining=SAMPLE_QUOTA_REMAINING,onNavigate,onAction,onNotice,visible=true}) {
+function ApprovalBadge({count}) {
+ return count>0 ? <span className="sp-approval-badge sp-tag-blue" aria-hidden="true">新待办</span> : null;
+}
+export function AccountControl({nickname='周浩',avatar='/design-preview/account-avatar.jpg',approvalCount=0,tier='free',quotaRemaining=SAMPLE_QUOTA_REMAINING,onNavigate,onAction,onNotice,visible=true}) {
  const [open,setOpen]=useState(false),[languageOpen,setLanguageOpen]=useState(false),[languagePosition,setLanguagePosition]=useState({});
  const [language,setLanguage]=useLanguagePreference();
  const wrapper=useRef(null),trigger=useRef(null),panel=useRef(null),id=useId();
@@ -41,8 +44,8 @@ export function AccountControl({nickname='周浩',tier='free',quotaRemaining=SAM
   }
  }
  return <div className="sp-account-control" ref={wrapper} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))close();}}>
-  <button ref={trigger} type="button" className="sp-account sp-account-trigger" aria-label={'账户菜单：'+nickname} aria-haspopup="menu" aria-expanded={open} aria-controls={open?id:undefined} onClick={()=>open?close():show()} onKeyDown={e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();show();}}}>
-   <span className="sp-avatar sp-photo-avatar"><img src={sitePath("/design-preview/account-avatar.jpg")} alt=""/></span><strong className="sp-account-nickname">{nickname}</strong><MembershipBadge tier={tier}/><ChevronDown size={14}/>
+  <button ref={trigger} type="button" className="sp-account sp-account-trigger" aria-label={'账户菜单：'+nickname+(approvalCount?'，'+approvalCount+' 项待审批':'')} aria-haspopup="menu" aria-expanded={open} aria-controls={open?id:undefined} onClick={()=>open?close():show()} onKeyDown={e=>{if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();show();}}}>
+   <span className="sp-avatar sp-photo-avatar"><img src={sitePath(avatar)} alt=""/></span><strong className="sp-account-nickname">{nickname}</strong><ApprovalBadge count={approvalCount}/><MembershipBadge tier={tier}/><ChevronDown size={14}/>
   </button>
   {open&&<div className="sp-account-popover" role="menu" aria-label="账户菜单" id={id} ref={panel} onKeyDown={keys}>
    <button type="button" role="menuitem" className="sp-membership-upgrade" onClick={()=>choose('/workspace/membership-plans')}><Crown size={20}/><span>购买会员</span><ChevronRight size={16}/></button>
@@ -53,7 +56,7 @@ export function AccountControl({nickname='周浩',tier='free',quotaRemaining=SAM
      <span className="sp-account-quota-reset"><time dateTime={SAMPLE_RESET.dateTime}>{SAMPLE_RESET.date}</time>重置</span>
     </>}
    </button>
-   {GROUPS.map((group,i)=><div className="sp-account-menu-group" role="group" key={i}>{group.map(({label,icon:Icon,target})=><button key={label} role="menuitem" type="button" className={target === 'invite' ? 'sp-account-menu-item sp-account-invite' : 'sp-account-menu-item'} onClick={()=>choose(target)}><Icon size={18}/><span>{label}</span></button>)}</div>)}
+   {GROUPS.map((group,i)=><div className="sp-account-menu-group" role="group" key={i}>{group.map(({label,icon:Icon,target})=><button key={label} role="menuitem" type="button" className={target === 'invite' ? 'sp-account-menu-item sp-account-invite' : 'sp-account-menu-item'} aria-label={target==='/workspace/approvals'&&approvalCount?label+'，'+approvalCount+' 项待审批':undefined} onClick={()=>choose(target)}><Icon size={18}/><span>{label}</span>{target==='/workspace/approvals'&&<ApprovalBadge count={approvalCount}/>}</button>)}</div>)}
    <div className="sp-account-menu-group" role="group"><button data-language-trigger type="button" role="menuitem" className="sp-account-menu-item" aria-haspopup="menu" aria-expanded={languageOpen} onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();setLanguagePosition({left:window.innerWidth>=660?Math.min(rect.right+16,window.innerWidth-224):Math.max(16,Math.min(rect.left,window.innerWidth-224)),top:Math.max(12,Math.min(rect.top,window.innerHeight-130))});setLanguageOpen(v=>!v);requestAnimationFrame(()=>wrapper.current?.querySelector('[role=menuitemradio][aria-checked=true]')?.focus());}}><Languages size={18}/><span>Language</span><ChevronRight size={14}/></button></div>
    <div className="sp-account-menu-group" role="group"><button role="menuitem" type="button" className="sp-account-menu-item is-danger" onClick={()=>choose('logout')}><LogOut size={18}/><span>退出登录</span></button></div>
   </div>}

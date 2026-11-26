@@ -18,7 +18,6 @@
 .sp-design-app .sp-gray-capability {
  min-width:0; border:1px solid var(--sp-card-border); border-radius:10px; background:#fff;
  overflow:hidden; box-shadow:none; transform:none;
- transition:border-color 160ms ease,box-shadow 160ms ease,transform 160ms ease;
 }
 .sp-design-app .sp-gray-capability { border-color:var(--ds-line); }
 .sp-design-app .sp-gray-capability .sp-card-hit {
@@ -55,25 +54,14 @@
 .sp-design-app .sp-gray-action {
  display:inline-flex; flex-shrink:0; align-items:center; justify-content:center; width:28px; height:28px;
  padding:0; border:0; border-radius:6px; color:#818c9b; background:transparent;
- transition:color 160ms ease,background-color 160ms ease;
 }
 .sp-design-app .sp-gray-action svg { width:16px; height:16px; transform:rotate(45deg); }
 .sp-design-app .sp-card-unavailable { flex:none; color:var(--ds-secondary); font-size:12px; line-height:20px; }
 .sp-design-app .sp-gray-capability .sp-card-hit:disabled { opacity:1; cursor:default; }
-.sp-design-app .sp-gray-capability:has(.sp-card-hit[data-unavailable]):hover {
- border-color:var(--ds-line); background:#fff; transform:none; box-shadow:none;
-}
-.sp-design-app .sp-gray-capability:focus-within { border-color:var(--sp-card-focus); background:#fff; transform:none; box-shadow:none; }
+.sp-design-app .sp-gray-capability:focus-within { border-color:var(--sp-card-focus); }
 .sp-design-app .sp-gray-capability .sp-card-hit:focus-visible { outline:2px solid var(--sp-card-focus); outline-offset:-3px !important; border-radius:9px; }
-.sp-design-app .sp-gray-capability:focus-within .sp-gray-action { color:#818c9b; background:transparent; }
-@media(hover:hover) and (pointer:fine) {
- .sp-design-app .sp-gray-capability:hover { border-color:var(--sp-card-hover-border); background:#fff; transform:translateY(-1px); box-shadow:0 4px 12px #26334d06; }
- .sp-design-app .sp-gray-capability:hover .sp-gray-action { color:#818c9b; background:transparent; }
-}
 @media(hover:none), (pointer:coarse) {
- .sp-design-app .sp-gray-capability:hover { border-color:var(--sp-card-border); background:#fff; transform:none; box-shadow:none; }
- .sp-design-app .sp-gray-capability:hover .sp-gray-action { color:#818c9b; background:transparent; }
- .sp-design-app .sp-gray-capability:active { border-color:var(--sp-card-hover-border); background:#fafbfe; }
+ .sp-design-app .sp-gray-capability:active { border-color:var(--ds-card-hover); }
 }
 .sp-design-app .sp-source-delivery-card,
 .sp-design-app .sp-compact-track > ol,
@@ -83,10 +71,6 @@
 .sp-design-app .sp-source-delivery-card:hover { background:#fafbfc; border-color:var(--sp-card-hover-border); }
 @media(max-width:699px) {
  .sp-design-app .sp-gray-capability .sp-card-hit { min-height:136px; }
-}
-@media(prefers-reduced-motion:reduce) {
- .sp-design-app .sp-gray-capability, .sp-design-app .sp-gray-action { transition:none; }
- .sp-design-app .sp-gray-capability:hover { transform:none; }
 }
 /* Search emphasis is neutral; task execution emphasis is the primary blue. */
 .sp-design-app .sp-section-heading .sp-search-field { width:min(320px,100%); }
@@ -101,7 +85,7 @@
 .sp-design-app .sp-capability-query input::placeholder { font-weight:400; }
 @media(max-width:699px) { .sp-design-app .sp-section-heading .sp-search-field { width:100%; } }
 /* Enlarge the case's inner preview while preserving the card footprint. */
-.sp-design-app .sp-new-badge { font-size:12px; line-height:20px; font-weight:400; letter-spacing:0; padding:1px 7px; border-radius:var(--ds-radius-tag); color:#926b2d; background:#fbf4e6; }
+.sp-design-app .sp-new-badge { font-size:12px; line-height:20px; font-weight:400; letter-spacing:0; padding:1px 7px; border-radius:var(--ds-radius-tag); }
 
 .sp-design-app .sp-gray-badges > .evaluation-certification { color:var(--evaluation-ink); }
 .sp-design-app .sp-gray-badges[data-compact] > .evaluation-certification { white-space:nowrap; }

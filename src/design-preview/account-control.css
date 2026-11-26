@@ -33,3 +33,10 @@
 .sp-account-menu-item.is-danger,.sp-account-menu-item.is-danger > svg { color:#cf3740; }
 .sp-account-menu-item.is-danger:hover { background:#fff3f3; }
 @media(pointer:coarse) { .sp-account-menu-item,.sp-account-languages button { min-height:40px; } }
+
+.sp-approval-badge {
+ display:inline-flex; align-items:center; flex:none; height:22px;
+ padding:0 7px; border-radius:var(--ds-radius-tag);
+ font-size:12px; font-weight:500; line-height:20px; white-space:nowrap;
+}
+.sp-account-menu-item > .sp-approval-badge { flex:none; margin-inline-start:auto; }

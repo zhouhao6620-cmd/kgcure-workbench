@@ -1,15 +1,15 @@
 import { sitePath } from "../site-path.js";
-import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, Check, Download, FileText, Folder, FolderInput, FolderOpen, Layers, Link2, MessageSquare, MinusCircle, MoreHorizontal, Pencil, Plus, Search, Share2, Target, Trash2, Upload, UserRound, Users, X } from 'lucide-react';
-import { AgentGlyph, Button, EmptyState, IconButton, Modal, SkillGlyph, SpaceEmptyIllustration, Tag } from '../design-preview/components.jsx';
-import { DeliveryFileIcon } from '../design-preview/ConversationPatterns.jsx';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ArrowRight, ArrowUpRight, Check, Download, FileText, Folder, FolderInput, FolderOpen, History, Layers, Lock, MessageSquare, MinusCircle, MoreHorizontal, Pencil, Plus, Save, Search, Settings, Share2, Target, Trash2, Upload, UserPlus, Users, X } from 'lucide-react';
+import { AgentGlyph, Button, EmptyState, IconButton, Modal, RecordEmptyIllustration, SkillGlyph, SpaceEmptyIllustration, Tag } from '../design-preview/components.jsx';
+import { DeliveryFileIcon, RecordContributor } from '../design-preview/ConversationPatterns.jsx';
 import { HighlightedTitle } from './Typography.jsx';
 import { capabilityById, capabilityPath, downloadText, hasPreviewDetail } from '../content/catalog.js';
 import { downloadWord } from '../design-preview/word-file.js';
 import { Pagination } from './Pagination.jsx';
+import { addSpaceLog, downloadRequestFor, ORIGINAL_SPACE_ID, spaceMemberPreview, spaceOwnerId, spaceOwnerPreview } from './space-access.js';
 import './spaces.css';
 import './workspace-details.css';
-export const ORIGINAL_SPACE_ID='db79430b945744a4aa9b3676d21f5fba';
 const RECORDS_PER_PAGE=10;
 function assignRecordFolder(space,recordId,folderId){
  const recordFolders={...space.recordFolders};
@@ -22,7 +22,7 @@ function assignRecordFolder(space,recordId,folderId){
  };
 }
 const DEMO_MEMBERS=[
- {name:'焦龙',initial:'J',role:'示例成员',avatar:'/design-preview/members/jiao-long.png'},
+ {...spaceMemberPreview,initial:'J',role:'示例成员'},
  {name:'向飞',initial:'X',role:'示例成员',avatar:'/design-preview/members/xiang-fei.png'},
  {name:'李二牛',initial:'L',role:'示例成员',avatar:'/design-preview/members/li-erniu.png'},
 ];
@@ -82,7 +82,7 @@ function mergeDemoFiles(spaces){
 }
 const ORIGINAL_RESTORE_FLAG='kgcure-original-space-restored-v1';
 function defaultOriginalSpace(){
- return {id:ORIGINAL_SPACE_ID,name:'神经发育障碍',goal:'制作风险预测模型',members:[{name:'周浩',role:'管理员'}],capabilityIds:['1042','1028','35a3e188211447888f499c11d0b90345','1031','1003'],folders:[{id:'plan',name:'制定研究方案'}],files:[]};
+ return {id:ORIGINAL_SPACE_ID,ownerId:spaceOwnerPreview.id,name:'神经发育障碍',goal:'制作风险预测模型',members:[{name:'周浩',role:'管理员'}],capabilityIds:['1042','1028','35a3e188211447888f499c11d0b90345','1031','1003'],folders:[{id:'plan',name:'制定研究方案'}],files:[]};
 }
 function restoreOriginalSpace(spaces){
  if(spaces.some(space=>space.id===ORIGINAL_SPACE_ID))return spaces;
@@ -106,33 +106,52 @@ export function researchSpaceFiles(space, sessions) {
  ];
 }
 
-export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spaceId,onToast,fileCount=0}){
+export function spaceMembers(space) {
+ const legacyDemo = space.id === ORIGINAL_SPACE_ID && space.members.length === 1 && space.members[0].name === spaceOwnerPreview.name;
+ const examples = legacyDemo ? DEMO_MEMBERS.filter(member => !space.removedDemoMemberInitials?.includes(member.initial)) : [];
+ return [...space.members, ...examples];
+}
+
+const SPACE_FILTERS = ['全部', '文件成果', '我上传的', '任务对话', '空间日志'];
+
+export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spaceId,onToast,fileCount=0,actor=spaceOwnerPreview,onSettings,requests=[],onRequestDownload}){
  const [folder,setFolder]=useState(()=>spaces.find(s=>s.id===spaceId)?.folders.find(f=>f.id===new URLSearchParams(location.search).get('folder'))?.id||'all'),[filter,setFilter]=useState('全部'),[page,setPage]=useState(1),[dialog,setDialog]=useState(null),[name,setName]=useState(''),[goal,setGoal]=useState(''),[preview,setPreview]=useState(null),[openMoveId,setOpenMoveId]=useState(null),[openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareRecord,setShareRecord]=useState(null),[folderMoveTargetId,setFolderMoveTargetId]=useState(null);
+ const [downloadTarget,setDownloadTarget]=useState(null);
  const recordsRef=useRef(null);
  const space=spaces.find(x=>x.id===spaceId);
  const visibleSpaces=withoutRetiredDefaultSpace(spaces);
- function patch(value){onSpaces(spaces.map(x=>x.id===space.id?{...x,...value}:x));}
+ function patch(value, action, subject){
+  const date=Date.now();
+  onSpaces(current=>current.map(item=>{
+   if(item.id!==space.id)return item;
+   const next={...item,...value};
+   return action ? addSpaceLog(next,actor,action,subject,date) : next;
+  }));
+ }
  function open(type){setName('');setGoal('');setFolderMoveTargetId(null);setRenameTarget(null);setDialog(type);}
  function closeDialog(){setDialog(null);setFolderMoveTargetId(null);}
  function beginNewFolder(recordId=null){setOpenMoveId(null);setName('');setFolderMoveTargetId(recordId);setDialog('folder');}
- function create(e){e.preventDefault();if(!name.trim())return;if(dialog==='space'){const id=crypto.randomUUID();onSpaces([...spaces,{id,name:name.trim(),goal:goal.trim(),members:[{name:'周浩',role:'管理员'}],capabilityIds:[],folders:[],files:[]}]);closeDialog();onNavigate('/workspace/research-space/'+id);}else if(dialog==='folder'){const newFolder={id:crypto.randomUUID(),name:name.trim()};onSpaces(current=>current.map(item=>{if(item.id!==space.id)return item;const next={...item,folders:[...item.folders,newFolder]};return folderMoveTargetId?assignRecordFolder(next,folderMoveTargetId,newFolder.id):next;}));if(folderMoveTargetId)onToast?.('已移动到「'+newFolder.name+'」');closeDialog();setPage(1);}}
- async function copySpaceInviteLink(){
-  const inviteLink=new URL(sitePath('/workspace/research-space/'+space.id)+'?invite=1',window.location.href).href;
-  try{
-   if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(inviteLink);
-   else throw new Error('Clipboard API unavailable');
-   onToast?.('邀请链接已复制');
-  }catch{
-   const input=document.createElement('textarea');
-   input.value=inviteLink;
-   input.setAttribute('readonly','');
-   input.style.position='fixed';
-   input.style.opacity='0';
-   document.body.appendChild(input);
-   input.select();
-   const copied=document.execCommand('copy');
-   input.remove();
-   onToast?.(copied?'邀请链接已复制':'邀请链接已生成，请手动复制');
+ function create(event){
+  event.preventDefault();
+  const title=name.trim();
+  if(!title)return;
+  const date=Date.now();
+  if(dialog==='space'){
+   const id=crypto.randomUUID();
+   const created={id,ownerId:actor.id,name:title,goal:goal.trim(),members:[{...actor,role:'管理员'}],capabilityIds:[],folders:[],files:[]};
+   onSpaces(current=>[...current,addSpaceLog(created,actor,'创建科研空间',title,date)]);
+   closeDialog();
+   onNavigate('/workspace/research-space/'+id);
+  }else if(dialog==='folder'){
+   const newFolder={id:crypto.randomUUID(),name:title};
+   onSpaces(current=>current.map(item=>{
+    if(item.id!==space.id)return item;
+    const next=addSpaceLog({...item,folders:[...item.folders,newFolder]},actor,'新建项目分组',title,date);
+    return folderMoveTargetId?assignRecordFolder(next,folderMoveTargetId,newFolder.id):next;
+   }));
+   if(folderMoveTargetId)onToast?.('已移动到「'+title+'」');
+   closeDialog();
+   setPage(1);
   }
  }
  useEffect(()=>{
@@ -152,42 +171,33 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
  if(!spaceId){return <div className="view ds-space-page">
   <div className="ds-space-heading"><div><h1>我的科研空间</h1><p>{visibleSpaces.length} 个科研空间 · 集中管理科研任务、共享能力与研究成果</p></div></div>
   <div className="ds-space-grid">
-   <button type="button" className="ds-space-entry ds-file-library-entry" onClick={()=>onNavigate('/workspace/my-files')}>
+   <button type="button" className="ds-space-entry ds-file-library-entry ds-card-interaction" onClick={()=>onNavigate('/workspace/my-files')}>
     <span className="ds-space-entry-icon" aria-hidden="true"><FileLibraryMark/></span>
     <h2>我的文件库</h2>
     <p>集中查看科研交付文件和本地文件。</p>
-    <span><FileText size={16}/>{fileCount} 个文件<ArrowRight size={16}/></span>
+    <span><FileText size={16}/>{fileCount} 个文件<ArrowRight className="ds-card-interaction-arrow" size={16}/></span>
    </button>
-   {visibleSpaces.map(item=><button type="button" className="ds-space-entry" key={item.id} onClick={()=>{setFolder('all');onNavigate('/workspace/research-space/'+item.id);}}><span className="ds-space-entry-icon" aria-hidden="true"><SpaceFolderMark/></span><h2>{item.name}</h2><p>{item.goal||'科研任务、共享成果与团队协作'}</p><span><Users size={16}/>{item.members.length} 位成员 · {(item.files?.length||0)+(item.folders?.length||0)} 个任务<ArrowRight size={16}/></span></button>)}
-   <button type="button" className="ds-space-create-entry" onClick={()=>open('space')}><span className="ds-space-create-icon"><Plus size={24}/></span><strong>创建科研空间</strong></button>
+   {visibleSpaces.map(item=><button type="button" className="ds-space-entry ds-card-interaction" key={item.id} onClick={()=>{setFolder('all');onNavigate('/workspace/research-space/'+item.id);}}><span className="ds-space-entry-icon" aria-hidden="true"><SpaceFolderMark/></span><h2 className="workSpaceTitle"><span>{item.name}</span>{item.isPrivate&&<PrivacyMark/>}</h2><p>{item.goal||'科研任务、共享成果与团队协作'}</p><span><Users size={16}/>{item.members.length} 位成员 · {(item.files?.length||0)+(item.folders?.length||0)} 个任务<ArrowRight className="ds-card-interaction-arrow" size={16}/></span></button>)}
+   {actor.id===spaceOwnerPreview.id&&<button type="button" className="ds-space-create-entry" onClick={()=>open('space')}><span className="ds-space-create-icon"><Plus size={24}/></span><strong>创建科研空间</strong></button>}
   </div>
   {dialog==='space'&&<Modal title="新建科研空间" onClose={()=>setDialog(null)}><form className="ds-space-dialog-form" onSubmit={create}><label className="sp-field"><span>空间名称</span><input autoFocus required value={name} onChange={e=>setName(e.target.value)} placeholder="例如：临床队列研究"/></label><label className="sp-field"><span>研究目标</span><input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="例如：制作风险预测模型"/></label><div className="sp-dialog-actions"><Button onClick={()=>setDialog(null)}>取消</Button><button type="submit" className="sp-button sp-button-primary"><Plus size={16}/>创建空间</button></div></form></Modal>}
  </div>;}
  if(!space)return <div className="view ds-page-empty"><h1>未找到此科研空间</h1><Button onClick={()=>onNavigate('/workspace/research-space')}>返回空间列表</Button></div>;
  const demoConversations=space.id===ORIGINAL_SPACE_ID?DEMO_SPACE_CONVERSATIONS.map(demoConversationSession):[];
  const spaceSessions=[...sessions.filter(x=>x.space===space.id&&!DEMO_SPACE_CONVERSATIONS.some(demo=>demo.id===x.id)),...demoConversations];
- const members=space.members;
- const demoTeam=space.id===ORIGINAL_SPACE_ID && members.length===1 && members[0].name==='周浩';
- const demoMembers=demoTeam?DEMO_MEMBERS.filter(member=>!space.removedDemoMemberInitials?.includes(member.initial)):[];
- const displayedMembers=[...members,...demoMembers];
- const canRemoveMembers=members.some(member=>member.name==='周浩' && member.role==='管理员');
- function removeMember(member){
-  onSpaces(current=>current.map(item=>{
-   if(item.id!==space.id)return item;
-   if(DEMO_MEMBERS.includes(member)){
-    const removed=item.removedDemoMemberInitials??[];
-    return removed.includes(member.initial)?item:{...item,removedDemoMemberInitials:[...removed,member.initial]};
-   }
-   return {...item,members:item.members.filter(candidate=>candidate!==member)};
-  }));
-  onToast('已移除 '+member.name);
- }
+ const displayedMembers=spaceMembers(space);
+ const isOwner=actor.id===spaceOwnerId(space);
+ const requiresApproval=space.isPrivate && !isOwner;
+ const requestFor=file=>downloadRequestFor(requests,space.id,file.id,actor.id);
  function changePage(next){
   setPage(next);
   requestAnimationFrame(()=>recordsRef.current?.scrollIntoView({block:'start',behavior:'smooth'}));
  }
- function moveRecord(recordId,folderId,folderName){
-  onSpaces(current=>current.map(item=>item.id===space.id?assignRecordFolder(item,recordId,folderId):item));
+ function moveRecord(record,folderId,folderName){
+  const date=Date.now();
+  onSpaces(current=>current.map(item=>item.id===space.id
+   ? addSpaceLog(assignRecordFolder(item,record.id,folderId),actor,folderId?'移入「'+folderName+'」':'移出项目分组',record.name,date)
+   : item));
   setOpenMoveId(null);
   setPage(1);
   onToast?.(folderId?'已移动到「'+folderName+'」':'已移出项目分组');
@@ -201,18 +211,23 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
  function renameRecord(event){
   event.preventDefault();
   if(!renameTarget||!name.trim())return;
-  patch({recordNames:{...(space.recordNames||{}),[renameTarget.id]:name.trim()}});
+  patch({recordNames:{...(space.recordNames||{}),[renameTarget.id]:name.trim()}},'重命名记录',name.trim());
   setDialog(null);
   setRenameTarget(null);
   onToast?.(`已重命名为「${name.trim()}」`);
  }
  function deleteRecord(record){
-  patch({hiddenRecordIds:[...(space.hiddenRecordIds||[]),record.id]});
+  patch({hiddenRecordIds:[...(space.hiddenRecordIds||[]),record.id]},'删除记录',record.name);
   setOpenMoreId(null);
   onToast?.(`已删除「${record.name}」`);
  }
  const files=researchSpaceFiles(space, spaceSessions);
  function downloadRecord(file){
+  if(requiresApproval && requestFor(file)?.status!=='approved'){
+   setPreview(null);
+   setDownloadTarget(file);
+   return;
+  }
   if(!file.content){onToast?.('本地样板未收录该文件正文，暂不能下载');return;}
   file.type==='DOCX'?downloadWord(file.name,file.content):downloadText(file.name,file.content);
  }
@@ -234,7 +249,15 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
  }).filter(record=>!space.hiddenRecordIds?.includes(record.id)).sort((a,b)=>(Date.parse(b.date)||Number(b.date)||0)-(Date.parse(a.date)||Number(a.date)||0));
  const recordFolderId=record=>space.recordFolders?.[record.id]||record.folderId;
  const scoped=records.filter(r=>folder==='all'||recordFolderId(r)===folder);
- const visible=scoped.filter(r=>filter==='全部'||filter===r.kind);
+ const wasUploaded=record=>record.kind==='文件' && ['upload','本地附件名称'].includes(record.file.originType || record.file.source);
+ const byFilter={
+  '全部':scoped,
+  '文件成果':scoped.filter(record=>record.kind==='文件'&&!wasUploaded(record)),
+  '我上传的':scoped.filter(record=>wasUploaded(record)&&(record.file.uploaderId ? record.file.uploaderId===actor.id : record.author===actor.name)),
+  '任务对话':scoped.filter(record=>record.kind==='对话'),
+  '空间日志':space.logs || [],
+ };
+ const visible=byFilter[filter];
  const pageCount=Math.max(1,Math.ceil(visible.length/RECORDS_PER_PAGE));
  const currentPage=Math.min(page,pageCount);
  const pagedRecords=visible.slice((currentPage-1)*RECORDS_PER_PAGE,currentPage*RECORDS_PER_PAGE);
@@ -246,9 +269,9 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
    const text=String(data.get('topic')||'').trim();
    if(text)onStart({space:space.id,text,origin:{folderId}});
   }else{
-   const additions=data.getAll('files').filter(f=>f.name).map(f=>({id:crypto.randomUUID(),name:f.name,type:f.name.split('.').pop().toUpperCase(),source:'本地附件名称',folderId,author:'周浩',date:Date.now()}));
+   const additions=data.getAll('files').filter(f=>f.name).map(f=>({id:crypto.randomUUID(),name:f.name,type:f.name.split('.').pop().toUpperCase(),source:'本地附件名称',originType:'upload',uploaderId:actor.id,folderId,author:actor.name,date:Date.now()}));
    if(!additions.length)return;
-   patch({files:[...space.files,...additions]});setFilter('文件');setPage(1);onToast('已保存本地文件名称');
+   patch({files:[...space.files,...additions]},'添加本地文件记录',additions.map(file=>file.name).join('、'));setFilter('我上传的');setPage(1);onToast('已保存本地文件名称');
   }
   setDialog(null);
  }
@@ -259,7 +282,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
    <div className="workSpaceIdentity">
     <div className="workSpaceIdentityCopy">
      <header>
-      <h1>{space.name}</h1>
+      <h1 className="workSpaceTitle"><span>{space.name}</span>{space.isPrivate&&<PrivacyMark/>}</h1>
       <div className="workSpaceMeta">
        <span className="workSpaceMetaItem"><Target size={16} strokeWidth={1.65} aria-hidden="true"/><span>研究目标</span><strong>{space.goal||'科研任务、共享成果与团队协作'}</strong></span>
        <span className="workSpaceMetaItem"><SkillGlyph size={16}/><span>常用科研能力</span><strong>{capabilities.length} 项</strong></span>
@@ -274,14 +297,18 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
    <nav aria-label="常用可用能力">{capabilities.map(item=><button className={'ds-home-shortcut is-'+item.kind} key={item.id} title={item.description} disabled={!hasPreviewDetail(item)} onClick={()=>onNavigate(capabilityPath(item)+'?space='+encodeURIComponent(space.id)+(folder==='all'?'':'&folder='+encodeURIComponent(folder)))}>{item.kind==='skill'?<SkillGlyph size={16}/>:<AgentGlyph size={16}/>}<strong>{item.name}</strong>{!hasPreviewDetail(item)&&<small>暂无接入</small>}</button>)}{!capabilities.length&&<button type="button" className="ds-home-shortcut is-empty-capability" onClick={()=>open('capability')}><Plus size={16} aria-hidden="true"/><strong>添加常用科研能力</strong></button>}</nav>
    <div className="workSpaceActions">
     <div className="workSpaceUtilityActions">
-     <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('manage')}><Users size={16} strokeWidth={1.65} aria-hidden="true"/>空间成员管理</Button>
+     {isOwner&&<Button variant="ghost" className="workSpaceMemberManage" onClick={()=>onSettings(space.id)}><Settings size={16} strokeWidth={1.65} aria-hidden="true"/>科研空间设置</Button>}
      <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('capability')}><SkillGlyph size={16}/>科研能力管理</Button>
     </div>
     <div><Button aria-disabled="true" tabIndex={-1}><Upload size={16} aria-hidden="true"/>上传文件</Button><Button variant="primary" aria-disabled="true" tabIndex={-1}><Plus size={16} aria-hidden="true"/>创建新任务</Button></div>
    </div>
   </section>
-  <div className="workLibraryBar"><nav className="sp-filter-chips" aria-label="项目内容筛选">{['全部','文件','对话'].map(t=><button key={t} className={'sp-filter'+(filter===t?' is-active':'')} aria-pressed={filter===t} onClick={()=>{setFilter(t);setPage(1);}}>{t} <small>{scoped.filter(r=>t==='全部'||r.kind===t).length}</small></button>)}</nav></div>
-  <div className="workRecords" ref={recordsRef}>{pagedRecords.map(r=>{
+  <div className="workLibraryBar"><nav className="sp-filter-chips" aria-label="项目内容筛选">{SPACE_FILTERS.map(t=><button key={t} className={'sp-filter'+(filter===t?' is-active':'')} aria-pressed={filter===t} onClick={()=>{setFilter(t);setPage(1);}}>{t}</button>)}</nav></div>
+  <div className="workRecords" ref={recordsRef}>{filter==='空间日志' ? pagedRecords.map((log,index)=><article className="workRecordCard workSpaceLog" key={log.date+'-'+index}>
+   <span className="workRecordConversationIcon" aria-hidden="true"><History size={20} strokeWidth={1.65}/></span>
+   <span className="workRecordCopy"><strong>{log.action}</strong><small>{log.actor}<span className="workRecordDot">·</span>{formatDateTime(log.date)}</small></span>
+   <span className="workSpaceLogSubject" title={log.subject}>{log.subject}</span>
+  </article>) : pagedRecords.map(r=>{
    const currentFolderId=recordFolderId(r);
    const folderName=space.folders.find(f=>f.id===currentFolderId)?.name||'空间';
    const fileFormat=r.kind==='文件'?(r.type||r.name.split('.').at(-1)).toUpperCase():'对话';
@@ -292,9 +319,8 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
      <span className="workRecordCopy"><strong title={r.name}>{r.name}</strong><small><span className="workRecordUpdated">{r.date?'最新更新 '+formatDateTime(r.date):'更新时间未记录'}</span><span className="workRecordDot">·</span><span className="workRecordFormat">{fileFormat}</span><span className="workRecordDot">·</span><span className="workRecordFolder">{folderName}</span></small></span>
     </button>
     <div className="workRecordMeta">
-     <span className="workRecordContributor" title={'更新于：'+(r.date?formatDateTime(r.date):'未记录')+'；贡献者：'+contributor} aria-label={'更新于：'+(r.date?formatDateTime(r.date):'未记录')+'；贡献者：'+contributor}>
-      <span>{r.author==='周浩'?<img src={sitePath("/design-preview/account-avatar.jpg")} alt=""/>:<UserRound size={17}/>}</span><span className="workRecordContributorName">{contributor}</span>
-     </span>
+     <RecordContributor name={contributor} avatar={r.author===spaceOwnerPreview.name?spaceOwnerPreview.avatar:undefined}
+      description={'更新于：'+(r.date?formatDateTime(r.date):'未记录')+'；贡献者：'+contributor}/>
     </div>
     <div className="workRecordActions">
      <div className="workRecordMove">
@@ -302,10 +328,10 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
       {openMoveId===r.id&&<div className="workRecordMoveMenu" role="menu" aria-label={'移动 '+r.name+' 到项目分组'}>
        <p className="sp-space-directory-caption">移动到项目分组</p>
        <div className="sp-space-directory-list">
-        <button type="button" className="sp-space-directory-option" role="menuitemradio" aria-checked={!currentFolderId} onClick={()=>moveRecord(r.id,null,'空间')}>
+        <button type="button" className="sp-space-directory-option" role="menuitemradio" aria-checked={!currentFolderId} onClick={()=>moveRecord(r,null,'空间')}>
          <Layers size={15} aria-hidden="true"/><span>空间（未分组）</span>{!currentFolderId&&<Check className="sp-space-check" size={15} aria-hidden="true"/>}
         </button>
-        {space.folders.map(item=><button type="button" className="sp-space-directory-option" role="menuitemradio" aria-checked={currentFolderId===item.id} key={item.id} onClick={()=>moveRecord(r.id,item.id,item.name)}>
+        {space.folders.map(item=><button type="button" className="sp-space-directory-option" role="menuitemradio" aria-checked={currentFolderId===item.id} key={item.id} onClick={()=>moveRecord(r,item.id,item.name)}>
          <Folder size={15} aria-hidden="true"/><span>{item.name}</span>{currentFolderId===item.id&&<Check className="sp-space-check" size={15} aria-hidden="true"/>}
         </button>)}
        </div>
@@ -328,18 +354,26 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
    </article>;
   })}</div>
   {!visible.length
-   ? <EmptyState className="workRecordsEmpty" icon={SpaceEmptyIllustration} description="可在空间上传文件，或者发起任务对话。">暂无内容</EmptyState>
+   ? <EmptyState className="workRecordsEmpty" icon={filter==='空间日志'?RecordEmptyIllustration:SpaceEmptyIllustration}
+     description={filter==='空间日志'?'空间设置和记录变更后会显示在这里。':filter==='我上传的'?'你上传到当前范围的文件会显示在这里。':'可在空间上传文件，或者发起任务对话。'}>
+     {filter==='空间日志'?'暂无空间日志':filter==='我上传的'?'暂无我上传的文件':'暂无内容'}
+    </EmptyState>
    : <Pagination page={currentPage} total={pageCount} onChange={changePage} label="科研空间记录分页"/>}
  </div>
  {(dialog==='chat'||dialog==='file')&&<Modal title={dialog==='chat'?'发起对话':'添加文件'} onClose={()=>setDialog(null)}><form onSubmit={submitRecord}>
   <label className="sp-field"><span>归属项目</span><select name="folder" defaultValue={folder==='all'?'':folder}><option value="">空间（未分组）</option>{space.folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
   {dialog==='chat'?<label className="sp-field"><span>对话主题</span><input name="topic" required autoFocus placeholder="输入研究问题"/></label>:<label className="sp-field"><span>本地文件</span><input type="file" required name="files" multiple/></label>}
   <div className="sp-dialog-actions"><Button onClick={()=>setDialog(null)}>取消</Button><button className="sp-button sp-button-primary" type="submit">{dialog==='chat'?'开始对话':'添加文件'}</button></div></form></Modal>}
- {dialog==='manage'&&<SpaceMemberSettings members={displayedMembers} onRemove={canRemoveMembers?removeMember:undefined} onCopyInvite={copySpaceInviteLink} onClose={()=>setDialog(null)}/>}
+ {downloadTarget&&<DownloadRequestDialog file={downloadTarget} request={requestFor(downloadTarget)}
+  onClose={()=>setDownloadTarget(null)}
+  onView={()=>{setDownloadTarget(null);onNavigate('/workspace/approvals');}}
+  onSubmit={()=>{
+   if(onRequestDownload(space,downloadTarget))setDownloadTarget(null);
+  }}/>}
  {dialog==='rename'&&renameTarget&&<Modal title="重命名" onClose={()=>{setDialog(null);setRenameTarget(null);}}><form onSubmit={renameRecord}><label className="sp-field"><span>记录名称</span><input autoFocus required value={name} onChange={e=>setName(e.target.value)}/></label><div className="sp-dialog-actions"><Button onClick={()=>{setDialog(null);setRenameTarget(null);}}>取消</Button><button type="submit" className="sp-button sp-button-primary">保存</button></div></form></Modal>}
  {shareRecord&&<Modal title="分享" onClose={()=>setShareRecord(null)}><div className="ds-prose"><p>分享「{shareRecord.name}」</p><p>本地预览不会创建公开链接。真实产品中可生成仅空间成员可访问的分享入口。</p></div><div className="sp-dialog-actions"><Button onClick={()=>setShareRecord(null)}>完成</Button></div></Modal>}
  {(dialog==='folder'||dialog==='capability')&&<Modal title={{folder:'新建项目分组',capability:'管理科研能力'}[dialog]} wide={dialog==='capability'} onClose={closeDialog}>{dialog==='capability'?<CapabilityChoices selected={space.capabilityIds} onToggle={id=>patch({capabilityIds:space.capabilityIds.includes(id)?space.capabilityIds.filter(x=>x!==id):[...space.capabilityIds,id]})}/>:<form onSubmit={create}><label className="sp-field"><span>分组名称</span><input autoFocus required value={name} onChange={e=>setName(e.target.value)} placeholder="例如：文献调研"/></label><p className="ds-muted">项目分组用于归集相关对话和文件。{folderMoveTargetId?' 创建后将自动移动当前记录。':''}</p><div className="sp-dialog-actions"><Button onClick={closeDialog}>取消</Button><button type="submit" className="sp-button sp-button-primary">创建分组</button></div></form>}</Modal>}
- {preview&&<Modal title={preview.name||preview.title} wide onClose={()=>setPreview(null)}>{preview.messages?<div className="ds-prose">{preview.summary&&<p>{preview.summary}</p>}{preview.messages.map((message,index)=><p key={index}><b>{message.role==='user'?'提问':'回复'}：</b>{message.text}</p>)}<p className="ds-muted">本地模拟对话，未调用科研模型。</p></div>:preview.content?<><pre className="sp-file-preview">{preview.content}</pre><Button onClick={()=>preview.type==='DOCX'?downloadWord(preview.name,preview.content):downloadText(preview.name,preview.content)}>下载文件</Button>{preview.sessionId&&<Button onClick={()=>{setPreview(null);onNavigate('/workspace/chats/'+preview.sessionId);}}>查看来源对话</Button>}</>:<div className="ds-prose"><p>{preview.source==='原克隆成果记录'?'这是原克隆空间保留的成果记录。当前未取得文件正文，因此仅展示文件元数据。':preview.source==='历史交付文件记录'?'已保存历史交付记录。原始文件未收录于本地样板。':'已在本机保留附件名称；未读取或上传文件正文。'}</p><p>文件名称：{preview.name}</p>{preview.date&&<p>来源记录时间：{preview.date}</p>}</div>}</Modal>}</article>;
+ {preview&&<Modal title={preview.name||preview.title} wide onClose={()=>setPreview(null)}>{preview.messages?<div className="ds-prose">{preview.summary&&<p>{preview.summary}</p>}{preview.messages.map((message,index)=><p key={index}><b>{message.role==='user'?'提问':'回复'}：</b>{message.text}</p>)}<p className="ds-muted">本地模拟对话，未调用科研模型。</p></div>:preview.content?<><pre className="sp-file-preview">{preview.content}</pre><Button onClick={()=>downloadRecord(preview)}>下载文件</Button>{preview.sessionId&&<Button onClick={()=>{setPreview(null);onNavigate('/workspace/chats/'+preview.sessionId);}}>查看来源对话</Button>}</>:<div className="ds-prose"><p>{preview.source==='原克隆成果记录'?'这是原克隆空间保留的成果记录。当前未取得文件正文，因此仅展示文件元数据。':preview.source==='历史交付文件记录'?'已保存历史交付记录。原始文件未收录于本地样板。':'已在本机保留附件名称；未读取或上传文件正文。'}</p><p>文件名称：{preview.name}</p>{preview.date&&<p>来源记录时间：{preview.date}</p>}</div>}</Modal>}</article>;
 }
 import { CAPABILITIES } from '../content/catalog.js';
 function MemberAvatar({member,tone,decorative=false}){
@@ -436,28 +470,98 @@ function SpaceFolderMark(){
   </g>
  </svg>;
 }
-function SpaceMemberSettings({members,onRemove,onCopyInvite,onClose}){
- return <Modal title="空间成员管理" onClose={onClose}>
-  <p className="ds-prose">成员可查看空间共享内容。未归属科研空间的任务不自动共享；本地预览没有授予任何线上权限。</p>
-  <ul className="workChoices workMemberChoices" aria-label="空间成员">
-   {members.map((member,index)=><li key={member.id??member.name}>
-    <MemberAvatar member={member} tone={index} decorative/>
-    <span><strong>{member.name}</strong><small>{member.role}</small></span>
-    {onRemove&&member.role!=='管理员'&&<button type="button" className="workRemoveAction" aria-label={'移除 '+member.name} onClick={event=>{
-     const row=event.currentTarget.closest('li');
-     const nextAction=row.nextElementSibling?.querySelector('button')
-      ||row.previousElementSibling?.querySelector('button')
-      ||row.closest('[role="dialog"]')?.querySelector('.sp-modal-header button');
-     nextAction?.focus();
-     onRemove(member);
-    }}><MinusCircle size={16} aria-hidden="true"/>移除</button>}
-   </li>)}
-  </ul>
-  <div className="workMemberInvite">
-   <Button variant="primary" className="workMemberInviteButton" onClick={onCopyInvite}><Link2 size={16} aria-hidden="true"/>复制链接邀请好友加入</Button>
+function PrivacyMark(){
+ return <span className="workSpacePrivacyMark" role="img" aria-label="私密科研空间" title="私密科研空间">
+  <Lock size={18} strokeWidth={1.65} aria-hidden="true"/>
+ </span>;
+}
+
+function memberKey(member){ return member.id ?? member.name; }
+
+export function ResearchSpaceSettings({space,onSave,onClose,onToast}){
+ const formId=useId();
+ const privacyTitleId=useId();
+ const descriptionId=useId();
+ const [name,setName]=useState(space.name);
+ const [goal,setGoal]=useState(space.goal || '');
+ const [isPrivate,setIsPrivate]=useState(Boolean(space.isPrivate));
+ const [removed,setRemoved]=useState([]);
+ const members=spaceMembers(space).filter(member=>!removed.some(entry=>memberKey(entry)===memberKey(member)));
+ const owner=space.members.find(member=>member.id===spaceOwnerId(space)) || space.members[0];
+ async function copyInvite(){
+  const link=new URL(sitePath('/workspace/research-space/'+space.id)+'?invite=1',window.location.href).href;
+  try{
+   await navigator.clipboard.writeText(link);
+   onToast('邀请链接已复制');
+  }catch{
+   onToast('无法复制邀请链接，请检查剪贴板权限');
+  }
+ }
+ function submit(event){
+  event.preventDefault();
+  if(!name.trim())return;
+  onSave({name:name.trim(),goal:goal.trim(),isPrivate},removed);
+ }
+ return <Modal title="科研空间设置" className="sp-modal-large-title workSettingsModal" onClose={onClose}
+  footer={<div className="workSettingsActions">
+   <Button onClick={copyInvite}><UserPlus size={16} strokeWidth={1.65} aria-hidden="true"/>邀请新成员</Button>
+   <Button variant="primary" type="submit" form={formId} disabled={!name.trim()}><Save size={16} strokeWidth={1.65} aria-hidden="true"/>保存空间设置</Button>
+  </div>}>
+  <form id={formId} className="workSettingsForm" onSubmit={submit}>
+   <label className="sp-field"><span>空间名称</span><input required value={name} onChange={event=>setName(event.target.value)}/></label>
+   <label className="sp-field"><span>研究目标</span><textarea rows={2} placeholder="填写研究目标" value={goal} onChange={event=>setGoal(event.target.value)}/></label>
+   <div className="workPrivacySetting">
+    <div><h3 id={privacyTitleId}>隐私安全设置</h3>
+     <p id={descriptionId}>开启开关后，空间成员下载文件，需经过所有者审批</p>
+    </div>
+    <button type="button" className="workPrivacySwitch" role="switch" aria-labelledby={privacyTitleId} aria-describedby={descriptionId}
+     aria-checked={isPrivate} onClick={()=>setIsPrivate(value=>!value)}><span/></button>
+   </div>
+   <section className="workSettingsMembers" aria-label="空间成员">
+    <h3>空间成员 <span>{members.length}</span></h3>
+    <ul className="workMemberChoices">
+     {members.map((member,index)=><li key={member.id??member.name}>
+      <MemberAvatar member={member} tone={index} decorative/>
+      <span className="workSettingsMemberName" title={member.name}>{member.name}</span>
+      {member===owner&&<span className="workSettingsOwner">所有者</span>}
+      {member!==owner&&member.role!=='管理员'&&<IconButton className="workRemoveAction" label={'移除 '+member.name} onClick={event=>{
+       const item=event.currentTarget.closest('li');
+       const next=item.nextElementSibling?.querySelector('button') || item.previousElementSibling?.querySelector('button');
+       (next || item.closest('form').querySelector('input'))?.focus();
+       setRemoved(current=>[...current,member]);
+      }}><MinusCircle size={16} strokeWidth={1.65} aria-hidden="true"/></IconButton>}
+     </li>)}
+    </ul>
+   </section>
+  </form>
+ </Modal>;
+}
+
+export function applyResearchSpaceSettings(space,actor,settings,removed,date){
+ let updated={...space,...settings,members:space.members.filter(member=>!removed.some(entry=>memberKey(entry)===memberKey(member))),
+  removedDemoMemberInitials:[...new Set([...(space.removedDemoMemberInitials||[]),...removed.filter(member=>DEMO_MEMBERS.includes(member)).map(member=>member.initial)])]};
+ if(space.name!==settings.name || (space.goal||'')!==settings.goal) {
+  updated=addSpaceLog(updated,actor,'更新科研空间设置',settings.name,date);
+ }
+ if(Boolean(space.isPrivate)!==settings.isPrivate) {
+  updated=addSpaceLog(updated,actor,settings.isPrivate?'开启私密科研空间':'关闭私密科研空间',settings.name,date);
+ }
+ return removed.reduce((current,member)=>addSpaceLog(current,actor,'移除成员',member.name,date),updated);
+}
+
+function DownloadRequestDialog({file,request,onClose,onSubmit,onView}){
+ const pending=request?.status==='pending';
+ const approved=request?.status==='approved';
+ return <Modal title="申请下载" onClose={onClose}>
+  <div className="workDownloadFile"><DeliveryFileIcon type={file.type} name={file.name}/><strong>{file.name}</strong></div>
+  <p className="ds-prose">{pending?'申请已提交，正在等待空间所有者审批。':approved?'申请已通过。关闭弹窗后，再次点击下载即可。':'该空间已开启隐私设置。申请通过后，你可直接下载此文件。'}</p>
+  {request?.status==='rejected'&&<p className="workDownloadFeedback">上次申请未通过，你可以重新提交。</p>}
+  <div className="sp-dialog-actions"><Button onClick={onClose}>{pending||approved?'关闭':'取消'}</Button>
+   {pending?<Button variant="primary" onClick={onView}>查看申请</Button>:!approved&&<Button variant="primary" onClick={onSubmit}>提交申请</Button>}
   </div>
  </Modal>;
 }
+
 function formatDateTime(value){
  if(!value)return '';
  if(typeof value==='string'&&/^\d{4}[/-]\d{1,2}[/-]\d{1,2}$/.test(value)){

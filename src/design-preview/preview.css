@@ -253,7 +253,6 @@
 .sp-tone-teal { color: #4c8176; background: #f0f7f5; }
 .sp-tone-sand { color: #96784b; background: #faf5ec; }
 .sp-skill-card, .sp-agent-card { min-width: 0; background: #fff; border: 1px solid var(--sp-line); border-radius: 12px; overflow: hidden; transition: border-color 160ms, background 160ms; }
-.sp-skill-card:hover, .sp-agent-card:hover { background: #fcfdff; border-color: #becbfa; }
 .sp-card-hit { display: flex; flex-direction: column; gap: 17px; width: 100%; min-height: 172px; height: 100%; padding: 16px; border: 0; background: transparent; text-align: left; }
 .sp-card-hit:focus-visible { outline-offset: -3px !important; border-radius: 11px; }
 .sp-card-top { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-width: 0; }
@@ -454,7 +453,7 @@
 .sp-modal-body { padding: 8px 24px 24px; overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
 .sp-modal-footer { padding: 12px 24px 20px; }
 .sp-search-backdrop { align-items: flex-start; padding-top: min(120px, 14vh); }
-.sp-search-backdrop .sp-modal-header h2 { font-size: 18px; line-height: 26px; }
+:is(.sp-search-backdrop, .sp-modal-large-title) .sp-modal-header h2 { font-size: 18px; line-height: 26px; }
 .sp-history-search .sp-search-field { width: 100%; height: 44px; }
 .sp-history-search .sp-search-field input { font-size: 16px; }
 .sp-search-caption { display: block; padding: 20px 6px 8px; color: #6b7280; font-size: 12px; }
@@ -712,7 +711,7 @@
 .sp-main-nav > .sp-professional-heading { display: flex; margin-top: 16px; margin-bottom: 6px; }
 .sp-space-nav { margin-top: 16px; }
 .sp-nav-link > .sp-new-badge { margin-left: auto; }
-.sp-new-badge { padding: 0 5px; border-radius: var(--ds-radius-tag); background: #fff2c6; color: #9a6700; font-size: 12px; line-height: 18px; font-weight: 600; letter-spacing: .2px; }
+.sp-new-badge { padding: 0 5px; border-radius: var(--ds-radius-tag); font-size: 12px; line-height: 18px; font-weight: 600; letter-spacing: .2px; }
 
 .sp-sidebar-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #cfd3dc transparent; }
 .sp-sidebar-scroll .sp-history-list { overflow: visible; }

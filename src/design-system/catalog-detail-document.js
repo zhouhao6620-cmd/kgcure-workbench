@@ -94,7 +94,7 @@ export function catalogDetailDocument(html, item, canLaunch) {
     });
     section('catalog-assessment', '模拟评测', [metrics, paragraph(assessment.summary)]);
   }
-  const cases = (item.cases || []).map(entry => el('button', 'secondary-btn actual-case-card', entry.name));
+  const cases = (item.cases || []).map(entry => el('button', 'secondary-btn actual-case-card ds-card-interaction', entry.name));
   section('catalog-cases', '应用案例', cases);
   page.title = item.name;
   return '<!doctype html>\n' + page.documentElement.outerHTML;

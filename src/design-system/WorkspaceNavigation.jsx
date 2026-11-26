@@ -6,7 +6,7 @@ import { AccountControl } from '../design-preview/AccountControl.jsx';
 import { HOME_COPY } from '../design-preview/data.js';
 const NAV=[{scene:'evidence',icon:Search},{scene:'topic',icon:Lightbulb},{scene:'grant',icon:Award},{scene:'drawing',icon:Palette}];
 
-export function WorkspaceNavigation({accountTier,accountQuotaRemaining,collapsed,mobileOpen,onCollapse,onNewTask,onScene,onCapabilities,activeScene,activeCapability,filesActive,spaces=[],sessions=[],currentId,onFiles,onSpace,onAllSpaces,onNewSpace,onSpaceMenu,spaceMenuId,onOpenSession,onHistoryMenu,historyMenuId,onSearch,onNavigate,onAccountAction,onNotice}) {
+export function WorkspaceNavigation({account,approvalCount,accountTier,accountQuotaRemaining,collapsed,mobileOpen,onCollapse,onNewTask,onScene,onCapabilities,activeScene,activeCapability,filesActive,spaces=[],sessions=[],currentId,onFiles,onSpace,onAllSpaces,onNewSpace,onSpaceMenu,spaceMenuId,onOpenSession,onHistoryMenu,historyMenuId,onSearch,onNavigate,onAccountAction,onNotice}) {
  const [sections,setSections]=useState({spaces:true,history:true});
  return <aside className={cx('sp-sidebar',collapsed&&'sp-sidebar-hidden')}>
   <header className="sp-sidebar-head"><button type="button" className="sp-brand" aria-label="数愈科研 创建新任务" onClick={onNewTask}><img src={sitePath("/design-preview/kgcure-logo.png")} alt="KGcure"/></button><div className="sp-sidebar-tools"><IconButton label="收起导航" onClick={onCollapse}><PanelLeft size={16}/></IconButton></div></header>
@@ -28,7 +28,7 @@ export function WorkspaceNavigation({accountTier,accountQuotaRemaining,collapsed
    </>}
   </div>
   <div className="sp-history-head"><button type="button" className="sp-nav-heading" aria-expanded={sections.history} onClick={()=>setSections(v=>({...v,history:!v.history}))}>对话<ChevronDown size={14}/></button><IconButton label="搜索历史对话" onClick={onSearch}><Search size={15}/></IconButton></div><div className="sp-history-list" hidden={!sections.history}>{sessions.map(item=><div key={item.id} className={cx('sp-history-row',currentId===item.id&&'is-active')}><button type="button" className="sp-history-link" title={item.title} onClick={()=>onOpenSession(item)}>{item.title}</button>{onHistoryMenu&&!item.readOnly&&<button type="button" className="sp-history-more" aria-label={'管理对话 '+item.title} aria-expanded={historyMenuId===item.id} onClick={e=>onHistoryMenu(item,e.currentTarget)}><MoreHorizontal size={16}/></button>}</div>)}</div></div>
-  <footer className="sp-account-footer"><AccountControl tier={accountTier} quotaRemaining={accountQuotaRemaining} visible={!collapsed||mobileOpen} onNavigate={onNavigate} onAction={onAccountAction} onNotice={onNotice}/></footer>
+  <footer className="sp-account-footer"><AccountControl nickname={account?.name} avatar={account?.avatar} approvalCount={approvalCount} tier={accountTier} quotaRemaining={accountQuotaRemaining} visible={!collapsed||mobileOpen} onNavigate={onNavigate} onAction={onAccountAction} onNotice={onNotice}/></footer>
  </aside>;
 }
 export function WorkspaceFloatingTools({onNewTask,onExpand,onSearch}) {
