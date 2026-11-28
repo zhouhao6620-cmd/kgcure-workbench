@@ -10,6 +10,7 @@ import { downloadWord } from '../design-preview/word-file.js';
 import { BUSINESS_AGENTS, BUSINESS_SKILLS, BUSINESS_SPACES, capabilityById, capabilityPath, downloadText } from '../content/catalog.js';
 import { canUseCapability, EXCLUSIVE_AGENT_REQUIREMENT } from '../content/membership.js';
 import { addComposerAttachments, ComposerSources } from './composer-sources.js';
+import { researchRecordFolderId } from './space-access.js';
 import './research.css';
 const uid=()=>crypto.randomUUID();
 export function makeSession(data={}){
@@ -37,7 +38,7 @@ export function ResearchConversation({session,tier,onRequireCapability,onUpdate,
  const [draft,setDraft]=useState(''),[attachments,setAttachments]=useState([]),[fileOpen,setFileOpen]=useState(false),[share,setShare]=useState(false);const scroll=useRef(null);
  const spaces=useContext(ComposerSources)?.spaces ?? BUSINESS_SPACES;
  const activeSpace=spaces.find(space=>space.id===session.space);
- const folderId=activeSpace?.recordFolders?.[session.id] || session.origin?.folderId;
+ const folderId=researchRecordFolderId(activeSpace,session.id,session.origin?.folderId);
  const activeFolder=activeSpace?.folders?.find(folder=>folder.id===folderId);
  const spacePath=[activeSpace?.name || '科研空间',activeFolder?.name].filter(Boolean).join(' - ');
  const latest=useRef(session);latest.current=session;

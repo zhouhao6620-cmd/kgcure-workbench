@@ -10,10 +10,27 @@
 .integratedSpace {display:grid;grid-template-columns:220px minmax(0,1fr);column-gap:clamp(24px,2.5vw,40px);align-items:start;color:var(--ds-ink)}
 .workGroups header {padding:0 0 8px}
 .workAbilityLabel h2 {font-size:14px}
-.workGroups>button,.workAbilityLabel button,.workLibraryBar nav button {background:transparent;border:0;color:var(--ds-secondary);font:inherit;font-size:14px;cursor:pointer}
-.workGroups>button {display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:7px;text-align:left}
-.workGroups>button span {flex:1;overflow-wrap:anywhere}
-.workGroups>button[aria-pressed=true] {background:var(--ds-nav-selected,#f0f2f5);color:var(--ds-ink);font-weight:600}
+.workGroupLink,.workAbilityLabel button,.workLibraryBar nav button {background:transparent;border:0;color:var(--ds-secondary);font:inherit;font-size:14px;cursor:pointer}
+.workGroupRow {position:relative;min-width:0}
+.workGroupLink {display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:8px 10px;border-radius:7px;text-align:left}
+.workGroupLink span {flex:1;overflow-wrap:anywhere}
+.workGroupLink svg {flex:none}
+.workGroupRow.has-menu .workGroupLink {padding-inline-end:36px}
+.workGroupRow.has-menu .workGroupLink small {position:absolute;right:10px}
+.workGroupRow:hover .workGroupLink,.workGroupRow.is-open .workGroupLink,.workGroupLink[aria-pressed=true] {background:var(--ds-nav-selected,#f0f2f5);color:var(--ds-ink)}
+.workGroupLink[aria-pressed=true] {font-weight:600}
+.workGroupRow .workGroupMore {position:absolute;top:50%;right:4px;transform:translateY(-50%);width:28px;height:28px;min-height:0;opacity:0}
+.workGroupRow:hover .workGroupMore,.workGroupRow:focus-within .workGroupMore,.workGroupRow.is-open .workGroupMore {opacity:1}
+.sp-history-menu.workGroupMenu {width:145px}
+.workGroupMenu > button {font-size:14px}
+@media (hover:hover) {
+ .workGroupRow.has-menu:is(:hover,:focus-within,.is-open) .workGroupLink small {visibility:hidden}
+}
+@media (hover:none) {
+ .workGroupRow .workGroupMore {opacity:1}
+ .workGroupRow.has-menu .workGroupLink {padding-inline-end:50px}
+ .workGroupRow.has-menu .workGroupLink small {right:36px;visibility:visible}
+}
 .workSpaceOverview {background:var(--sp-sidebar,#f6f7f8);padding:24px 24px 16px;border-radius:12px}
 .workSpaceOverview h1 {font-size:26px;margin:0;line-height:1.4}
 .workSpaceMeta {display:flex;align-items:center;flex-wrap:wrap;gap:8px 22px;margin-top:10px;color:var(--ds-secondary);font-size:14px;line-height:22px}
@@ -45,6 +62,8 @@
 .workSpaceActions>div {display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-left:auto}
 .workSpaceActions>.workSpaceUtilityActions {flex:1 1 auto;justify-content:flex-start;gap:18px;margin-left:0}
 .workSpaceActions>div [aria-disabled=true] {pointer-events:none}
+.workUploadSource {position:relative}
+.workUploadSource .workUploadMenu {top:calc(100% + 6px);right:0;left:auto;width:170px}
 .workSpaceActions .workSpaceMemberManage {min-height:0;padding:0;border:0!important;border-radius:0;background:transparent!important;color:var(--ds-secondary)!important;font-size:14px;line-height:22px;font-weight:400}
 .workSpaceActions .workSpaceMemberManage>svg {color:currentColor}
 .workSpaceActions .workSpaceMemberManage:hover {background:transparent!important;color:var(--ds-ink)!important}
@@ -123,10 +142,12 @@
  .workSpaceOverview h1 {font-size:24px}
  .workGroups {display:flex;flex-wrap:wrap;gap:4px}
  .workGroups header {width:100%;padding:0}
- .workGroups>button {width:auto;padding:6px 8px}
+ .workGroupRow {max-width:100%}
+ .workGroupLink {padding:6px 8px}
  .workSpaceOverview {padding:22px 16px 18px}
  .workSpaceActions {margin-top:16px;padding-top:16px}
  .workSpaceActions>div {gap:6px}
+ .workUploadSource .workUploadMenu {right:auto;left:0}
  .workRecordCard {height:auto;min-height:var(--ds-delivery-card-height);gap:6px;padding-inline:12px}
  .workRecordMoveButton,.workRecordMoreButton {width:28px;height:28px}
  .workRecordMoveMenu {right:-12px;top:auto;bottom:calc(100% + 7px);width:min(248px,calc(100vw - 48px));max-height:min(320px,calc(100dvh - 88px))}
@@ -195,7 +216,10 @@
 .workMemberChoices .workRemoveAction { color:var(--ds-notification); }
 .workMemberChoices .workRemoveAction:hover { background:#fff0f1; color:var(--ds-notification); }
 .workSettingsModal .sp-modal-footer { flex:none; padding-block:16px 20px; border-top:1px solid var(--ds-card-line); }
-.workSettingsActions { display:flex; justify-content:space-between; gap:12px; }
+.workSettingsActions { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px 12px; }
+.workSettingsSaveActions { display:flex; justify-content:flex-end; gap:8px; margin-inline-start:auto; }
+.workSettingsActions .workSettingsDelete { padding-inline:8px; color:#b64450 !important; }
+.workSettingsActions .workSettingsDelete:hover { background:#fff0f1; }
 .workDownloadFile {
  display:flex; align-items:center; gap:12px; padding:12px; margin-bottom:12px;
  border:1px solid var(--ds-line); border-radius:var(--ds-radius-card); background:var(--ds-sidebar);
@@ -237,7 +261,7 @@
 }
 @media (max-width:360px) {
  .workSettingsActions { gap:8px; }
- .workSettingsActions > .sp-button { gap:6px; padding-inline:9px; }
+ .workSettingsActions .sp-button { gap:6px; padding-inline:9px; }
 }
 @media (prefers-reduced-motion:reduce) {
  .workPrivacySwitch, .workPrivacySwitch > span { transition:none; }

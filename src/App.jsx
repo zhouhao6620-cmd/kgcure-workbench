@@ -52,8 +52,8 @@ import { ReviewDocument } from './design-system/ReviewDocument.jsx';
 import { EVALUATION_PATH } from './content/review-capabilities.js';
 import { capabilityDemoPath, capabilityDemoPrefix, capabilityDemos, capabilityDemoTitle } from './content/capability-demos.js';
 import { ResearchConversation, makeSession } from './design-system/ResearchConversation.jsx';
-import { ResearchSpaces, ResearchSpaceSettings, applyResearchSpaceSettings, initialResearchSpaces, researchSpaceFiles, spaceMembers } from './design-system/ResearchSpaces.jsx';
-import { spaceMemberPreview, spaceOwnerId, spaceOwnerPreview, useSpaceDownloadRequests } from './design-system/space-access.js';
+import { ResearchSpaces, ResearchSpaceSettings, applyResearchSpaceSettings, initialResearchSpaces, rememberOriginalSpaceDeletion, researchSpaceFiles, spaceMembers } from './design-system/ResearchSpaces.jsx';
+import { researchRecordFolderId, spaceMemberPreview, spaceOwnerId, spaceOwnerPreview, useSpaceDownloadRequests } from './design-system/space-access.js';
 import { ComposerSources } from './design-system/composer-sources.js';
 import { ContributionPage } from './design-system/ContributionPage.jsx';
 import { CapabilityCase } from './design-system/CapabilityCase.jsx';
@@ -578,7 +578,7 @@ export function App() {
     filesBySpace: Object.fromEntries(spaces.map(space => [space.id, researchSpaceFiles(space, localSessions)
       .filter(file => !space.hiddenRecordIds?.includes(file.id))
       .map(file => ({ ...file, name:space.recordNames?.[file.id] || file.name,
-        folderId:space.recordFolders?.[file.id] || file.folderId }))])),
+        folderId:researchRecordFolderId(space,file.id,file.folderId) }))])),
   };
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -615,7 +615,7 @@ export function App() {
     const session = localSessions.find(item => item.id === sessionId);
     const sourceId = 'delivery:' + (sessionId || 'design-preview') + ':' + file.id;
     const sameFolder = (target, id, currentFolder) =>
-      (target.recordFolders?.[id] || currentFolder || null) === (folderId || null);
+      (researchRecordFolderId(target,id,currentFolder) || null) === (folderId || null);
     const alreadySaved = target => target.files.some(item =>
       (item.id === sourceId || item.deliverySourceId === sourceId) && sameFolder(target, item.id, item.folderId));
     if (alreadySaved(space) || (session?.space === spaceId && session.files.some(item =>
@@ -726,6 +726,8 @@ export function App() {
     if(type==='delete' && spaceOwnerId(item)===spaceActor.id){
       const deleted=spaces.find(space=>space.id===item.id);
       if(!deleted)return;
+      rememberOriginalSpaceDeletion(item.id);
+      setSpaceSettingsId(current=>current===item.id?null:current);
       const deletedSessionFiles=localSessions.filter(session=>session.space===item.id).flatMap(session=>session.files||[]);
       const preservedFiles=[...(deleted.files||[]),...deletedSessionFiles]
         .filter((file,index,items)=>items.findIndex(candidate=>candidate.id===file.id)===index)
@@ -821,8 +823,8 @@ export function App() {
     if (path === "/workspace/topic-selection") return <ServicePage showCaseType key="topic" onStart={startTask} kind="topic" onToast={showToast} />;
     if (path === "/workspace/grant-application") return <ServicePage showCaseType key="grant" onStart={startTask} kind="grant" onToast={showToast} />;
     if (path === "/workspace/scientific-drawing") return <DrawingPage onStart={startTask} onOpenChat={() => navigate("/workspace/chats/e9dd87e0-b232-479d-b0a9-5ba249a76a78")} onToast={showToast} />;
-    if (path === "/workspace/research-space") return <ResearchSpaces spaces={accessibleSpaces} actor={spaceActor} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
-    if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={accessibleSpaces} actor={spaceActor} onSettings={setSpaceSettingsId} requests={downloadRequests} onRequestDownload={requestSpaceDownload} onSpaces={setSpaces} sessions={localSessions} onStart={startTask} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
+    if (path === "/workspace/research-space") return <ResearchSpaces spaces={accessibleSpaces} actor={spaceActor} onSpaces={setSpaces} sessions={localSessions} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
+    if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={accessibleSpaces} actor={spaceActor} onSettings={setSpaceSettingsId} requests={downloadRequests} onRequestDownload={requestSpaceDownload} onSpaces={setSpaces} sessions={localSessions} attachmentLibrary={attachmentLibrary} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
     if (path === "/workspace/workflows") return <CapabilityStore onRecommend={task=>startTask({text:task.name,origin:{category:task.category}})} key="legacy-agents" kind="agent" onNavigate={navigate} onToast={showToast}/>;
     if (path.startsWith("/workspace/workflows/template/")) {
       const sourceId=path.split('/')[4],item=capabilityById(sourceId);
@@ -955,7 +957,7 @@ export function App() {
     <ComposerSources.Provider value={composerSources}>
     <BusinessFrame path={path} account={spaceActor} approvalCount={pendingApprovalCount} accountTier={tier} accountQuotaRemaining={hasBillingMembership ? (resetUsed ? 100 : SAMPLE_QUOTA_REMAINING) : null} collapsed={collapsed} mobileOpen={mobileOpen} onCollapsed={setCollapsed} onMobileOpen={setMobileOpen} onNavigate={navigate} onSearch={() => setSearchOpen(true)} onNotice={showToast} sessions={demoSession ? [demoSession, ...visibleHistory] : visibleHistory} onSessionAction={sessionAction} onSpaceAction={spaceAction} spaces={accessibleSpaces}>
       {isChat ? renderChat() : isStore ? <SecondaryPageShell key={path} path={path} firstLevel onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell> : isFirstLevel ? <div className={cx("page-scroll",isHome&&"ds-business-home-scroll","ds-first-level")} ref={scrollRef}>{renderStandard()}</div> : <SecondaryPageShell key={path} path={path} onNavigate={navigate} onToast={showToast} scrollRef={scrollRef}>{renderStandard()}</SecondaryPageShell>}
-      {settingsSpace&&<ResearchSpaceSettings key={settingsSpace.id} space={settingsSpace} onSave={saveSpaceSettings} onClose={()=>setSpaceSettingsId(null)} onToast={showToast}/>}
+      {settingsSpace&&<ResearchSpaceSettings key={settingsSpace.id} space={settingsSpace} onSave={saveSpaceSettings} onClose={()=>setSpaceSettingsId(null)} onToast={showToast} onDelete={()=>spaceAction('delete',settingsSpace)}/>}
       {searchOpen ? <HistorySearch sessions={visibleHistory} onClose={() => setSearchOpen(false)} onChoose={item=>{setSearchOpen(false);navigate("/workspace/chats/"+item.id);}}/> : null}
       {restrictedAgent && <Modal title={restrictedAgent.name} onClose={() => setRestrictedAgent(null)}>
         <p>{EXCLUSIVE_AGENT_REQUIREMENT}</p>

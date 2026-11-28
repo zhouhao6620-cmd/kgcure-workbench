@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react';
 export const spaceOwnerPreview = { id: 'local-owner', name: '周浩', avatar: '/design-preview/account-avatar.jpg' };
 export const spaceMemberPreview = { id: 'demo-jiao-long', name: '焦龙', avatar: '/design-preview/members/jiao-long.png' };
 export const ORIGINAL_SPACE_ID = 'db79430b945744a4aa9b3676d21f5fba';
+export const DEFAULT_PROJECT_FOLDER = { id: 'default-project-folder', name: '默认项目文件夹' };
+
+export function researchRecordFolderId(space, recordId, originalFolderId) {
+  const folderId = space?.recordFolders?.[recordId] === null ? null : space?.recordFolders?.[recordId] || originalFolderId;
+  return space?.deletedFolderIds?.includes(folderId) ? DEFAULT_PROJECT_FOLDER.id : folderId;
+}
 
 export function spaceOwnerId(space) {
   return space.ownerId || spaceOwnerPreview.id;

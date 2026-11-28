@@ -7,17 +7,15 @@ import { HighlightedTitle } from './Typography.jsx';
 import { capabilityById, capabilityPath, downloadText, hasPreviewDetail } from '../content/catalog.js';
 import { downloadWord } from '../design-preview/word-file.js';
 import { Pagination } from './Pagination.jsx';
-import { addSpaceLog, downloadRequestFor, ORIGINAL_SPACE_ID, spaceMemberPreview, spaceOwnerId, spaceOwnerPreview } from './space-access.js';
+import { AttachmentFileList, AttachmentSourceMenu } from './ComposerAttachmentPicker.jsx';
+import { addSpaceLog, DEFAULT_PROJECT_FOLDER, downloadRequestFor, ORIGINAL_SPACE_ID, researchRecordFolderId, spaceMemberPreview, spaceOwnerId, spaceOwnerPreview } from './space-access.js';
 import './spaces.css';
 import './workspace-details.css';
 const RECORDS_PER_PAGE=10;
 function assignRecordFolder(space,recordId,folderId){
- const recordFolders={...space.recordFolders};
- if(folderId)recordFolders[recordId]=folderId;
- else delete recordFolders[recordId];
  return {
   ...space,
-  recordFolders,
+  recordFolders:{...space.recordFolders,[recordId]:folderId},
   files:(space.files||[]).map(file=>file.id===recordId?{...file,folderId}:file),
  };
 }
@@ -74,13 +72,16 @@ function mergeDemoFiles(spaces){
    ...space,
    capabilityIds:upgradeCapabilitySample?[...new Set([...(space.capabilityIds||[]),'1003'])]:space.capabilityIds,
    demoCapabilityVersion:1,
-   folders:[...(space.folders||[]),...DEMO_SPACE_FOLDERS.filter(demo=>!space.folders?.some(folder=>folder.id===demo.id))],
+   folders:[...(space.folders||[]),...DEMO_SPACE_FOLDERS.filter(demo=>!space.deletedFolderIds?.includes(demo.id)&&!space.folders?.some(folder=>folder.id===demo.id))],
    recordFolders,
    files:[...savedFiles,...DEMO_SPACE_FILES.filter(demo=>!savedFiles.some(file=>file.id===demo.id))],
   };
  })());
 }
 const ORIGINAL_RESTORE_FLAG='kgcure-original-space-restored-v1';
+export function rememberOriginalSpaceDeletion(spaceId){
+ if(spaceId===ORIGINAL_SPACE_ID)localStorage.setItem(ORIGINAL_RESTORE_FLAG,'1');
+}
 function defaultOriginalSpace(){
  return {id:ORIGINAL_SPACE_ID,ownerId:spaceOwnerPreview.id,name:'神经发育障碍',goal:'制作风险预测模型',members:[{name:'周浩',role:'管理员'}],capabilityIds:['1042','1028','35a3e188211447888f499c11d0b90345','1031','1003'],folders:[{id:'plan',name:'制定研究方案'}],files:[]};
 }
@@ -94,8 +95,12 @@ function withoutRetiredDefaultSpace(spaces){
  return spaces.filter(space=>space?.id!=='personal'&&!space?.isDefault&&space?.name!=='默认空间'&&String(space?.name||'').trim().toLowerCase()!=='test');
 }
 export function initialResearchSpaces(){
- try{const saved=JSON.parse(localStorage.getItem('kgcure-spaces-v2')||'null');if(Array.isArray(saved))return mergeDemoFiles(withoutRetiredDefaultSpace(restoreOriginalSpace(saved)));}catch{}
- return mergeDemoFiles([defaultOriginalSpace()]);
+ let spaces = [defaultOriginalSpace()];
+ try{const saved=JSON.parse(localStorage.getItem('kgcure-spaces-v2')||'null');if(Array.isArray(saved))spaces=withoutRetiredDefaultSpace(restoreOriginalSpace(saved));}catch{}
+ return mergeDemoFiles(spaces).map(space=>{
+  const folders=space.folders||[];
+  return folders.some(folder=>folder.id===DEFAULT_PROJECT_FOLDER.id) ? space : {...space,folders:[DEFAULT_PROJECT_FOLDER,...folders]};
+ });
 }
 
 export function researchSpaceFiles(space, sessions) {
@@ -114,11 +119,20 @@ export function spaceMembers(space) {
 
 const SPACE_FILTERS = ['全部', '文件成果', '我上传的', '任务对话', '空间日志'];
 
-export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spaceId,onToast,fileCount=0,actor=spaceOwnerPreview,onSettings,requests=[],onRequestDownload}){
- const [folder,setFolder]=useState(()=>spaces.find(s=>s.id===spaceId)?.folders.find(f=>f.id===new URLSearchParams(location.search).get('folder'))?.id||'all'),[filter,setFilter]=useState('全部'),[page,setPage]=useState(1),[dialog,setDialog]=useState(null),[name,setName]=useState(''),[goal,setGoal]=useState(''),[preview,setPreview]=useState(null),[openMoveId,setOpenMoveId]=useState(null),[openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareRecord,setShareRecord]=useState(null),[folderMoveTargetId,setFolderMoveTargetId]=useState(null);
+export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,spaceId,onToast,fileCount=0,actor=spaceOwnerPreview,onSettings,requests=[],onRequestDownload,attachmentLibrary=[]}){
+ const [selectedFolder,setFolder]=useState(()=>new URLSearchParams(location.search).get('folder')),[filter,setFilter]=useState('全部'),[page,setPage]=useState(1),[dialog,setDialog]=useState(null),[name,setName]=useState(''),[goal,setGoal]=useState(''),[preview,setPreview]=useState(null),[openMoveId,setOpenMoveId]=useState(null),[openMoreId,setOpenMoreId]=useState(null),[renameTarget,setRenameTarget]=useState(null),[shareRecord,setShareRecord]=useState(null),[folderMoveTargetId,setFolderMoveTargetId]=useState(null);
  const [downloadTarget,setDownloadTarget]=useState(null);
+ const [folderMenu,setFolderMenu]=useState(null);
+ const [folderTarget,setFolderTarget]=useState(null);
+ const [uploadOpen,setUploadOpen]=useState(false);
  const recordsRef=useRef(null);
+ const folderMenuRef=useRef(null);
+ const uploadRef=useRef(null);
+ const uploadButton=useRef(null);
+ const localInput=useRef(null);
  const space=spaces.find(x=>x.id===spaceId);
+ const folder=space?.deletedFolderIds?.includes(selectedFolder) ? DEFAULT_PROJECT_FOLDER.id :
+  space?.folders.some(item=>item.id===selectedFolder) ? selectedFolder : 'all';
  const visibleSpaces=withoutRetiredDefaultSpace(spaces);
  function patch(value, action, subject){
   const date=Date.now();
@@ -129,7 +143,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
   }));
  }
  function open(type){setName('');setGoal('');setFolderMoveTargetId(null);setRenameTarget(null);setDialog(type);}
- function closeDialog(){setDialog(null);setFolderMoveTargetId(null);}
+ function closeDialog(){setDialog(null);setFolderMoveTargetId(null);setFolderTarget(null);}
  function beginNewFolder(recordId=null){setOpenMoveId(null);setName('');setFolderMoveTargetId(recordId);setDialog('folder');}
  function create(event){
   event.preventDefault();
@@ -138,7 +152,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
   const date=Date.now();
   if(dialog==='space'){
    const id=crypto.randomUUID();
-   const created={id,ownerId:actor.id,name:title,goal:goal.trim(),members:[{...actor,role:'管理员'}],capabilityIds:[],folders:[],files:[]};
+   const created={id,ownerId:actor.id,name:title,goal:goal.trim(),members:[{...actor,role:'管理员'}],capabilityIds:[],folders:[DEFAULT_PROJECT_FOLDER],files:[]};
    onSpaces(current=>[...current,addSpaceLog(created,actor,'创建科研空间',title,date)]);
    closeDialog();
    onNavigate('/workspace/research-space/'+id);
@@ -155,19 +169,33 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
   }
  }
  useEffect(()=>{
-  if(!openMoveId&&!openMoreId)return;
+  if(!openMoveId&&!openMoreId&&!folderMenu&&!uploadOpen)return;
   function closeOnOutside(event){
    if(openMoveId&&!event.target.closest('.workRecordMove'))setOpenMoveId(null);
    if(openMoreId&&!event.target.closest('.workRecordMore'))setOpenMoreId(null);
+   if(folderMenu&&!folderMenuRef.current?.contains(event.target)&&!event.target.closest('.workGroupMore'))setFolderMenu(null);
+   if(uploadOpen&&!uploadRef.current?.contains(event.target))setUploadOpen(false);
   }
-  function closeOnEscape(event){if(event.key==='Escape'){setOpenMoveId(null);setOpenMoreId(null);}}
+  function closeOnEscape(event){
+   if(event.key!=='Escape')return;
+   setOpenMoveId(null);setOpenMoreId(null);setFolderMenu(null);setUploadOpen(false);
+   if(folderMenu)folderMenu.trigger.focus();
+   if(uploadOpen)uploadButton.current?.focus();
+  }
+  const closeFolderMenu=()=>setFolderMenu(null);
+  if(folderMenu){
+   window.addEventListener('resize',closeFolderMenu);
+   window.addEventListener('scroll',closeFolderMenu,true);
+  }
   document.addEventListener('pointerdown',closeOnOutside);
   document.addEventListener('keydown',closeOnEscape);
   return ()=>{
    document.removeEventListener('pointerdown',closeOnOutside);
    document.removeEventListener('keydown',closeOnEscape);
+   window.removeEventListener('resize',closeFolderMenu);
+   window.removeEventListener('scroll',closeFolderMenu,true);
   };
- },[openMoveId,openMoreId]);
+ },[openMoveId,openMoreId,folderMenu,uploadOpen]);
  if(!spaceId){return <div className="view ds-space-page">
   <div className="ds-space-heading"><div><h1>我的科研空间</h1><p>{visibleSpaces.length} 个科研空间 · 集中管理科研任务、共享能力与研究成果</p></div></div>
   <div className="ds-space-grid">
@@ -177,7 +205,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
     <p>集中查看科研交付文件和本地文件。</p>
     <span><FileText size={16}/>{fileCount} 个文件<ArrowRight className="ds-card-interaction-arrow" size={16}/></span>
    </button>
-   {visibleSpaces.map(item=><button type="button" className="ds-space-entry ds-card-interaction" key={item.id} onClick={()=>{setFolder('all');onNavigate('/workspace/research-space/'+item.id);}}><span className="ds-space-entry-icon" aria-hidden="true"><SpaceFolderMark/></span><h2 className="workSpaceTitle"><span>{item.name}</span>{item.isPrivate&&<PrivacyMark/>}</h2><p>{item.goal||'科研任务、共享成果与团队协作'}</p><span><Users size={16}/>{item.members.length} 位成员 · {(item.files?.length||0)+(item.folders?.length||0)} 个任务<ArrowRight className="ds-card-interaction-arrow" size={16}/></span></button>)}
+   {visibleSpaces.map(item=><button type="button" className="ds-space-entry ds-card-interaction" key={item.id} onClick={()=>onNavigate('/workspace/research-space/'+item.id)}><span className="ds-space-entry-icon" aria-hidden="true"><SpaceFolderMark/></span><h2 className="workSpaceTitle"><span>{item.name}</span>{item.isPrivate&&<PrivacyMark/>}</h2><p>{item.goal||'科研任务、共享成果与团队协作'}</p><span><Users size={16}/>{item.members.length} 位成员 · {(item.files?.length||0)+item.folders.filter(folder=>folder.id!==DEFAULT_PROJECT_FOLDER.id).length} 个任务<ArrowRight className="ds-card-interaction-arrow" size={16}/></span></button>)}
    {actor.id===spaceOwnerPreview.id&&<button type="button" className="ds-space-create-entry" onClick={()=>open('space')}><span className="ds-space-create-icon"><Plus size={24}/></span><strong>创建科研空间</strong></button>}
   </div>
   {dialog==='space'&&<Modal title="新建科研空间" onClose={()=>setDialog(null)}><form className="ds-space-dialog-form" onSubmit={create}><label className="sp-field"><span>空间名称</span><input autoFocus required value={name} onChange={e=>setName(e.target.value)} placeholder="例如：临床队列研究"/></label><label className="sp-field"><span>研究目标</span><input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="例如：制作风险预测模型"/></label><div className="sp-dialog-actions"><Button onClick={()=>setDialog(null)}>取消</Button><button type="submit" className="sp-button sp-button-primary"><Plus size={16}/>创建空间</button></div></form></Modal>}
@@ -189,6 +217,51 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
  const isOwner=actor.id===spaceOwnerId(space);
  const requiresApproval=space.isPrivate && !isOwner;
  const requestFor=file=>downloadRequestFor(requests,space.id,file.id,actor.id);
+ function toggleFolderMenu(group,trigger){
+  if(folderMenu?.group.id===group.id){setFolderMenu(null);return;}
+  const rect=trigger.getBoundingClientRect();
+  const maxMenuHeight=92;
+  const top=rect.bottom+4+maxMenuHeight<=window.innerHeight ? rect.bottom+4 : rect.top-maxMenuHeight-4;
+  setFolderMenu({group,trigger,left:Math.max(8,rect.right-145),top:Math.max(8,top)});
+ }
+ function beginFolderAction(type){
+  const {group,trigger}=folderMenu;
+  trigger.focus();
+  setFolderMenu(null);
+  setFolderTarget(group);
+  setName(group.name);
+  setDialog(type);
+ }
+ function renameFolder(event){
+  event.preventDefault();
+  const title=name.trim();
+  if(!isOwner||!title)return;
+  const date=Date.now();
+  onSpaces(current=>current.map(item=>item.id===space.id&&item.folders.some(group=>group.id===folderTarget.id)
+   ? addSpaceLog({...item,folders:item.folders.map(group=>group.id===folderTarget.id?{...group,name:title}:group)},actor,'重命名项目分组',title,date)
+   : item));
+  closeDialog();
+  onToast(`已重命名为「${title}」`);
+ }
+ function deleteFolder(){
+  if(!isOwner||folderTarget.id===DEFAULT_PROJECT_FOLDER.id)return;
+  const {id,name}=folderTarget;
+  const date=Date.now();
+  onSpaces(current=>current.map(item=>{
+   if(item.id!==space.id||!item.folders.some(group=>group.id===id))return item;
+   const destination=DEFAULT_PROJECT_FOLDER.id;
+   return addSpaceLog({
+    ...item,
+    folders:item.folders.filter(group=>group.id!==id),
+    deletedFolderIds:[...(item.deletedFolderIds||[]),id],
+    recordFolders:Object.fromEntries(Object.entries(item.recordFolders||{}).map(([recordId,folderId])=>[recordId,folderId===id?destination:folderId])),
+    files:(item.files||[]).map(file=>file.folderId===id?{...file,folderId:destination}:file),
+   },actor,'删除项目分组',name,date);
+  }));
+  if(folder===id){setFolder(DEFAULT_PROJECT_FOLDER.id);setFilter('全部');setPage(1);}
+  closeDialog();
+  onToast('分组已删除，内容已移入默认项目文件夹');
+ }
  function changePage(next){
   setPage(next);
   requestAnimationFrame(()=>recordsRef.current?.scrollIntoView({block:'start',behavior:'smooth'}));
@@ -247,7 +320,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
   }
   return {...record,name:renamed};
  }).filter(record=>!space.hiddenRecordIds?.includes(record.id)).sort((a,b)=>(Date.parse(b.date)||Number(b.date)||0)-(Date.parse(a.date)||Number(a.date)||0));
- const recordFolderId=record=>space.recordFolders?.[record.id]||record.folderId;
+ const recordFolderId=record=>researchRecordFolderId(space,record.id,record.folderId);
  const scoped=records.filter(r=>folder==='all'||recordFolderId(r)===folder);
  const wasUploaded=record=>record.kind==='文件' && ['upload','本地附件名称'].includes(record.file.originType || record.file.source);
  const byFilter={
@@ -262,22 +335,37 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
  const currentPage=Math.min(page,pageCount);
  const pagedRecords=visible.slice((currentPage-1)*RECORDS_PER_PAGE,currentPage*RECORDS_PER_PAGE);
  const capabilities=space.capabilityIds.map(capabilityById).filter(Boolean);
- function submitRecord(event){
-  event.preventDefault();
-  const data=new FormData(event.currentTarget),folderId=data.get('folder')||undefined;
-  if(dialog==='chat'){
-   const text=String(data.get('topic')||'').trim();
-   if(text)onStart({space:space.id,text,origin:{folderId}});
-  }else{
-   const additions=data.getAll('files').filter(f=>f.name).map(f=>({id:crypto.randomUUID(),name:f.name,type:f.name.split('.').pop().toUpperCase(),source:'本地附件名称',originType:'upload',uploaderId:actor.id,folderId,author:actor.name,date:Date.now()}));
-   if(!additions.length)return;
-   patch({files:[...space.files,...additions]},'添加本地文件记录',additions.map(file=>file.name).join('、'));setFilter('我上传的');setPage(1);onToast('已保存本地文件名称');
-  }
-  setDialog(null);
+ function addFiles(files,source){
+  if(!files.length)return;
+  const folderId=folder==='all'?DEFAULT_PROJECT_FOLDER.id:folder;
+  const date=Date.now();
+  const additions=files.map(file=>({
+   id:crypto.randomUUID(),name:file.name,type:file.type||(file.name.includes('.')?file.name.split('.').pop().toUpperCase():undefined),
+   content:file.content,byteSize:file.size,source,originType:'upload',uploaderId:actor.id,folderId,author:actor.name,date,
+  }));
+  onSpaces(current=>current.map(item=>item.id===space.id ? addSpaceLog({
+   ...item,
+   files:[...additions.map(file=>item.folders.some(group=>group.id===folderId)?file:{...file,folderId:DEFAULT_PROJECT_FOLDER.id}),...(item.files||[])],
+  },actor,source==='我的文件库'?'从我的文件库添加文件':'添加本地文件记录',files.map(file=>file.name).join('、'),date):item));
+  setFilter('我上传的');
+  setPage(1);
+  closeDialog();
+  onToast(source==='我的文件库' ? '已从我的文件库添加到空间' : '已保存本地文件名称');
  }
  return <article className="view ds-space-page integratedSpace">
   <aside className="workGroups" aria-label="项目分组"><header><h2>项目分组</h2><IconButton label="新建项目分组" onClick={()=>open('folder')}><Plus size={16}/></IconButton></header>
-  {[{id:'all',name:'全部项目'},...space.folders].map(g=><button key={g.id} aria-pressed={folder===g.id} onClick={()=>{setFolder(g.id);setPage(1);}}>{g.id==='all'?<Layers size={16}/>:<Folder size={16}/>}<span>{g.name}</span><small>{g.id==='all'?records.length:records.filter(r=>recordFolderId(r)===g.id).length}</small></button>)}</aside>
+  {[{id:'all',name:'全部项目'},...space.folders].map(group=>{
+   const isAll=group.id==='all';
+   const canManage=isOwner&&!isAll&&group.id!==DEFAULT_PROJECT_FOLDER.id;
+   const expanded=folderMenu?.group.id===group.id;
+   return <div key={group.id} className={'workGroupRow'+(canManage?' has-menu':'')+(expanded?' is-open':'')}>
+    <button type="button" className="workGroupLink" aria-pressed={folder===group.id} onClick={()=>{setFolder(group.id);setPage(1);}}>
+     {isAll?<Layers size={16} aria-hidden="true"/>:<Folder size={16} aria-hidden="true"/>}<span>{group.name}</span>
+     <small>{isAll?records.length:records.filter(record=>recordFolderId(record)===group.id).length}</small>
+    </button>
+    {canManage&&<IconButton className="workGroupMore" label={'管理项目分组 '+group.name} aria-haspopup="menu" aria-expanded={expanded} onClick={event=>toggleFolderMenu(group,event.currentTarget)}><MoreHorizontal size={16} aria-hidden="true"/></IconButton>}
+   </div>;
+  })}</aside>
   <div className="workSpaceBody"><section className="workSpaceOverview">
    <div className="workSpaceIdentity">
     <div className="workSpaceIdentityCopy">
@@ -300,7 +388,19 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
      {isOwner&&<Button variant="ghost" className="workSpaceMemberManage" onClick={()=>onSettings(space.id)}><Settings size={16} strokeWidth={1.65} aria-hidden="true"/>科研空间设置</Button>}
      <Button variant="ghost" className="workSpaceMemberManage" onClick={()=>open('capability')}><SkillGlyph size={16}/>科研能力管理</Button>
     </div>
-    <div><Button aria-disabled="true" tabIndex={-1}><Upload size={16} aria-hidden="true"/>上传文件</Button><Button variant="primary" aria-disabled="true" tabIndex={-1}><Plus size={16} aria-hidden="true"/>创建新任务</Button></div>
+    <div>
+     <div className="workUploadSource" ref={uploadRef}>
+      <Button ref={uploadButton} aria-haspopup="menu" aria-expanded={uploadOpen} onClick={()=>setUploadOpen(!uploadOpen)}><Upload size={16} aria-hidden="true"/>上传文件</Button>
+      {uploadOpen&&<AttachmentSourceMenu className="workUploadMenu" includeSpaces={false}
+       onLocal={()=>{setUploadOpen(false);uploadButton.current?.focus();localInput.current?.click();}}
+       onBrowse={()=>{uploadButton.current?.focus();setUploadOpen(false);setDialog('library');}}/>}
+      <input ref={localInput} type="file" hidden multiple aria-label="选择本地文件" onChange={event=>{
+       addFiles(Array.from(event.currentTarget.files,file=>({name:file.name,size:file.size})),'本地附件名称');
+       event.currentTarget.value='';
+      }}/>
+     </div>
+     <Button variant="primary" aria-disabled="true" tabIndex={-1}><Plus size={16} aria-hidden="true"/>创建新任务</Button>
+    </div>
    </div>
   </section>
   <div className="workLibraryBar"><nav className="sp-filter-chips" aria-label="项目内容筛选">{SPACE_FILTERS.map(t=><button key={t} className={'sp-filter'+(filter===t?' is-active':'')} aria-pressed={filter===t} onClick={()=>{setFilter(t);setPage(1);}}>{t}</button>)}</nav></div>
@@ -360,10 +460,25 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
     </EmptyState>
    : <Pagination page={currentPage} total={pageCount} onChange={changePage} label="科研空间记录分页"/>}
  </div>
- {(dialog==='chat'||dialog==='file')&&<Modal title={dialog==='chat'?'发起对话':'添加文件'} onClose={()=>setDialog(null)}><form onSubmit={submitRecord}>
-  <label className="sp-field"><span>归属项目</span><select name="folder" defaultValue={folder==='all'?'':folder}><option value="">空间（未分组）</option>{space.folders.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
-  {dialog==='chat'?<label className="sp-field"><span>对话主题</span><input name="topic" required autoFocus placeholder="输入研究问题"/></label>:<label className="sp-field"><span>本地文件</span><input type="file" required name="files" multiple/></label>}
-  <div className="sp-dialog-actions"><Button onClick={()=>setDialog(null)}>取消</Button><button className="sp-button sp-button-primary" type="submit">{dialog==='chat'?'开始对话':'添加文件'}</button></div></form></Modal>}
+ {folderMenu&&<div className="sp-history-menu workGroupMenu" ref={folderMenuRef} role="menu" aria-label={'项目分组操作 '+folderMenu.group.name} style={{left:folderMenu.left,top:folderMenu.top}}>
+  <button type="button" role="menuitem" autoFocus onClick={()=>beginFolderAction('rename-folder')}><Pencil size={14} aria-hidden="true"/>重命名</button>
+  <button type="button" role="menuitem" className="sp-danger-text" onClick={()=>beginFolderAction('delete-folder')}><Trash2 size={14} aria-hidden="true"/>删除</button>
+ </div>}
+ {dialog==='rename-folder'&&folderTarget&&<Modal title="重命名项目分组" onClose={closeDialog}>
+  <form onSubmit={renameFolder}><label className="sp-field"><span>分组名称</span><input autoFocus required value={name} onChange={event=>setName(event.target.value)}/></label>
+   <div className="sp-dialog-actions"><Button onClick={closeDialog}>取消</Button><Button type="submit" variant="primary" disabled={!name.trim()}>保存</Button></div>
+  </form>
+ </Modal>}
+ {dialog==='delete-folder'&&folderTarget&&<Modal title="删除项目分组" onClose={closeDialog}>
+  <p className="ds-prose">删除「{folderTarget.name}」后，当前文件夹中的内容不会删除，会移入「默认项目文件夹」。</p>
+  <div className="sp-dialog-actions"><Button onClick={closeDialog}>取消</Button><Button variant="danger" onClick={deleteFolder}>确认删除</Button></div>
+ </Modal>}
+ {dialog==='library'&&<Modal title="从我的文件库添加" onClose={closeDialog} wide placement="search">
+  <AttachmentFileList source="library" library={attachmentLibrary} onSelect={({reference})=>{
+   const file=attachmentLibrary.find(item=>item.id===reference.fileId);
+   if(file)addFiles([file],'我的文件库');
+  }}/>
+ </Modal>}
  {downloadTarget&&<DownloadRequestDialog file={downloadTarget} request={requestFor(downloadTarget)}
   onClose={()=>setDownloadTarget(null)}
   onView={()=>{setDownloadTarget(null);onNavigate('/workspace/approvals');}}
@@ -373,7 +488,7 @@ export function ResearchSpaces({spaces,onSpaces,sessions,onNavigate,onStart,spac
  {dialog==='rename'&&renameTarget&&<Modal title="重命名" onClose={()=>{setDialog(null);setRenameTarget(null);}}><form onSubmit={renameRecord}><label className="sp-field"><span>记录名称</span><input autoFocus required value={name} onChange={e=>setName(e.target.value)}/></label><div className="sp-dialog-actions"><Button onClick={()=>{setDialog(null);setRenameTarget(null);}}>取消</Button><button type="submit" className="sp-button sp-button-primary">保存</button></div></form></Modal>}
  {shareRecord&&<Modal title="分享" onClose={()=>setShareRecord(null)}><div className="ds-prose"><p>分享「{shareRecord.name}」</p><p>本地预览不会创建公开链接。真实产品中可生成仅空间成员可访问的分享入口。</p></div><div className="sp-dialog-actions"><Button onClick={()=>setShareRecord(null)}>完成</Button></div></Modal>}
  {(dialog==='folder'||dialog==='capability')&&<Modal title={{folder:'新建项目分组',capability:'管理科研能力'}[dialog]} wide={dialog==='capability'} onClose={closeDialog}>{dialog==='capability'?<CapabilityChoices selected={space.capabilityIds} onToggle={id=>patch({capabilityIds:space.capabilityIds.includes(id)?space.capabilityIds.filter(x=>x!==id):[...space.capabilityIds,id]})}/>:<form onSubmit={create}><label className="sp-field"><span>分组名称</span><input autoFocus required value={name} onChange={e=>setName(e.target.value)} placeholder="例如：文献调研"/></label><p className="ds-muted">项目分组用于归集相关对话和文件。{folderMoveTargetId?' 创建后将自动移动当前记录。':''}</p><div className="sp-dialog-actions"><Button onClick={closeDialog}>取消</Button><button type="submit" className="sp-button sp-button-primary">创建分组</button></div></form>}</Modal>}
- {preview&&<Modal title={preview.name||preview.title} wide onClose={()=>setPreview(null)}>{preview.messages?<div className="ds-prose">{preview.summary&&<p>{preview.summary}</p>}{preview.messages.map((message,index)=><p key={index}><b>{message.role==='user'?'提问':'回复'}：</b>{message.text}</p>)}<p className="ds-muted">本地模拟对话，未调用科研模型。</p></div>:preview.content?<><pre className="sp-file-preview">{preview.content}</pre><Button onClick={()=>downloadRecord(preview)}>下载文件</Button>{preview.sessionId&&<Button onClick={()=>{setPreview(null);onNavigate('/workspace/chats/'+preview.sessionId);}}>查看来源对话</Button>}</>:<div className="ds-prose"><p>{preview.source==='原克隆成果记录'?'这是原克隆空间保留的成果记录。当前未取得文件正文，因此仅展示文件元数据。':preview.source==='历史交付文件记录'?'已保存历史交付记录。原始文件未收录于本地样板。':'已在本机保留附件名称；未读取或上传文件正文。'}</p><p>文件名称：{preview.name}</p>{preview.date&&<p>来源记录时间：{preview.date}</p>}</div>}</Modal>}</article>;
+ {preview&&<Modal title={preview.name||preview.title} wide onClose={()=>setPreview(null)}>{preview.messages?<div className="ds-prose">{preview.summary&&<p>{preview.summary}</p>}{preview.messages.map((message,index)=><p key={index}><b>{message.role==='user'?'提问':'回复'}：</b>{message.text}</p>)}<p className="ds-muted">本地模拟对话，未调用科研模型。</p></div>:preview.content?<><pre className="sp-file-preview">{preview.content}</pre><Button onClick={()=>downloadRecord(preview)}>下载文件</Button>{preview.sessionId&&<Button onClick={()=>{setPreview(null);onNavigate('/workspace/chats/'+preview.sessionId);}}>查看来源对话</Button>}</>:<div className="ds-prose"><p>{preview.source==='原克隆成果记录'?'这是原克隆空间保留的成果记录。当前未取得文件正文，因此仅展示文件元数据。':preview.source==='历史交付文件记录'?'已保存历史交付记录。原始文件未收录于本地样板。':preview.source==='我的文件库'?'此文件来自「我的文件库」，本地预览仅收录文件记录。':'已在本机保留附件名称；未读取或上传文件正文。'}</p><p>文件名称：{preview.name}</p>{preview.date&&<p>来源记录时间：{preview.date}</p>}</div>}</Modal>}</article>;
 }
 import { CAPABILITIES } from '../content/catalog.js';
 function MemberAvatar({member,tone,decorative=false}){
@@ -478,7 +593,14 @@ function PrivacyMark(){
 
 function memberKey(member){ return member.id ?? member.name; }
 
-export function ResearchSpaceSettings({space,onSave,onClose,onToast}){
+export function DeleteResearchSpaceDialog({space,onClose,onDelete}){
+ return <Modal title="删除科研空间" onClose={onClose}>
+  <p className="ds-prose">删除「{space.name}」后，文件仍可在「我的文件库」中查看，历史对话仍可在对话列表中查看。</p>
+  <div className="sp-dialog-actions"><Button onClick={onClose}>取消</Button><Button variant="danger" onClick={onDelete}>确认删除</Button></div>
+ </Modal>;
+}
+
+export function ResearchSpaceSettings({space,onSave,onClose,onToast,onDelete}){
  const formId=useId();
  const privacyTitleId=useId();
  const descriptionId=useId();
@@ -486,6 +608,7 @@ export function ResearchSpaceSettings({space,onSave,onClose,onToast}){
  const [goal,setGoal]=useState(space.goal || '');
  const [isPrivate,setIsPrivate]=useState(Boolean(space.isPrivate));
  const [removed,setRemoved]=useState([]);
+ const [confirmDelete,setConfirmDelete]=useState(false);
  const members=spaceMembers(space).filter(member=>!removed.some(entry=>memberKey(entry)===memberKey(member)));
  const owner=space.members.find(member=>member.id===spaceOwnerId(space)) || space.members[0];
  async function copyInvite(){
@@ -502,10 +625,14 @@ export function ResearchSpaceSettings({space,onSave,onClose,onToast}){
   if(!name.trim())return;
   onSave({name:name.trim(),goal:goal.trim(),isPrivate},removed);
  }
+ if(confirmDelete)return <DeleteResearchSpaceDialog space={space} onClose={()=>setConfirmDelete(false)} onDelete={onDelete}/>;
  return <Modal title="科研空间设置" className="sp-modal-large-title workSettingsModal" onClose={onClose}
   footer={<div className="workSettingsActions">
-   <Button onClick={copyInvite}><UserPlus size={16} strokeWidth={1.65} aria-hidden="true"/>邀请新成员</Button>
-   <Button variant="primary" type="submit" form={formId} disabled={!name.trim()}><Save size={16} strokeWidth={1.65} aria-hidden="true"/>保存空间设置</Button>
+   <Button variant="ghost" className="workSettingsDelete" onClick={()=>setConfirmDelete(true)}><Trash2 size={16} strokeWidth={1.65} aria-hidden="true"/>删除空间</Button>
+   <div className="workSettingsSaveActions">
+    <Button onClick={copyInvite}><UserPlus size={16} strokeWidth={1.65} aria-hidden="true"/>邀请新成员</Button>
+    <Button variant="primary" type="submit" form={formId} disabled={!name.trim()}><Save size={16} strokeWidth={1.65} aria-hidden="true"/>保存空间设置</Button>
+   </div>
   </div>}>
   <form id={formId} className="workSettingsForm" onSubmit={submit}>
    <label className="sp-field"><span>空间名称</span><input required value={name} onChange={event=>setName(event.target.value)}/></label>

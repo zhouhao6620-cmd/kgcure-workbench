@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { WorkspaceNavigation, WorkspaceFloatingTools } from './WorkspaceNavigation.jsx';
 import { BillingInviteDialog } from "../pages/BillingUsage.jsx";
 import { Button, Modal, cx } from '../design-preview/components.jsx';
+import { DeleteResearchSpaceDialog } from './ResearchSpaces.jsx';
 import { spaceOwnerId } from './space-access.js';
 const SCENES={evidence:'/workspace/evidence-search',topic:'/workspace/topic-selection',grant:'/workspace/grant-application',drawing:'/workspace/scientific-drawing'};
 const SPACES=[{id:'db79430b945744a4aa9b3676d21f5fba',name:'神经发育障碍'}];
@@ -53,10 +54,8 @@ export function BusinessFrame({path,account,approvalCount,accountTier,accountQuo
   {historyDialog&&<Modal title={historyDialog.type==='rename'?'重命名对话':historyDialog.type==='share'?'分享对话':'移除'} onClose={()=>setHistoryDialog(null)}>
    {historyDialog.type==='rename'?<form onSubmit={event=>{event.preventDefault();if(!historyTitle.trim())return;onSessionAction?.('rename',historyDialog.item,historyTitle.trim());setHistoryDialog(null);}}><label className="sp-field"><span>对话名称</span><input autoFocus required aria-label="对话名称" value={historyTitle} onChange={event=>setHistoryTitle(event.target.value)}/></label><div className="sp-dialog-actions"><Button onClick={()=>setHistoryDialog(null)}>取消</Button><button type="submit" className="sp-button sp-button-primary">保存</button></div></form>:historyDialog.type==='share'?<><p className="ds-prose">本地预览未启用公开分享。你可以导出对话记录，检查并自行分享。</p><Button onClick={()=>onSessionAction?.('export',historyDialog.item)}>导出对话记录</Button></>:<><p className="ds-prose">从本地导航与搜索中隐藏此条目，保留会话数据与直接访问地址。</p><div className="sp-dialog-actions"><Button onClick={()=>setHistoryDialog(null)}>取消</Button><Button variant="danger" onClick={()=>{onSessionAction?.('hide',historyDialog.item);setHistoryDialog(null);}}>移除</Button></div></>}
   </Modal>}
-  {spaceDialog&&<Modal title="删除科研空间" onClose={()=>setSpaceDialog(null)}>
-   <p className="ds-prose">删除后，空间内文件仍可在「我的文件库」中查看，历史对话和文件不会丢失。</p>
-   <div className="sp-dialog-actions"><Button onClick={()=>setSpaceDialog(null)}>放弃</Button><Button variant="danger" onClick={()=>{onSpaceAction?.('delete',spaceDialog.item);setSpaceDialog(null);}}>确认删除</Button></div>
-  </Modal>}
+  {spaceDialog&&<DeleteResearchSpaceDialog space={spaceDialog.item} onClose={()=>setSpaceDialog(null)}
+   onDelete={()=>{onSpaceAction?.('delete',spaceDialog.item);setSpaceDialog(null);}}/>}
     {dialog==='invite'&&<BillingInviteDialog onClose={()=>setDialog(null)}/>}
 {dialog==='logout'&&<Modal title={dialog==='logout'?'退出登录':'邀请好友'} onClose={()=>setDialog(null)}><p className="sp-dialog-copy">{dialog==='logout'?'退出当前本地演示，返回欢迎页。':'邀请好友体验 KGcure 学术科研工作台。邀请链接将在接入账户服务后提供。'}</p><div className="sp-dialog-actions"><Button onClick={()=>setDialog(null)}>{dialog==='logout'?'取消':'知道了'}</Button>{dialog==='logout'&&<Button variant="danger" onClick={()=>{setDialog(null);onNavigate('/welcome');}}>退出登录</Button>}</div></Modal>}
  </div>;

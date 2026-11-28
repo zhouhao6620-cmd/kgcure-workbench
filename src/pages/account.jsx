@@ -90,7 +90,7 @@ export function libraryAttachmentFiles(sessions, libraryFiles) {
   return allRows.map(row => {
     const id = row[6];
     const file = fileLookup.get(id);
-    return { id, name: row[0], size: file?.byteSize ?? file?.size };
+    return { id, name: row[0], size: file?.byteSize ?? file?.size, type: file?.type, content: file?.content };
   });
 }
 

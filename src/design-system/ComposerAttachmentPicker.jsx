@@ -8,11 +8,12 @@ const sources = [
   { id: 'space', label: '我的科研空间', Icon: Folder },
 ];
 
-export function AttachmentSourceMenu({ style, onLocal, onBrowse }) {
-  return <div className="sp-popover sp-space-picker sp-attachment-picker" style={style} role="menu" aria-label="选择附件来源">
-    <div className="sp-space-directory-caption">选择附件来源</div>
+export function AttachmentSourceMenu({ style, onLocal, onBrowse, includeSpaces = true, className = '' }) {
+  const caption = includeSpaces ? '选择附件来源' : '选择附件源';
+  return <div className={'sp-popover sp-space-picker sp-attachment-picker ' + className} style={style} role="menu" aria-label={caption}>
+    <div className="sp-space-directory-caption">{caption}</div>
     <div className="sp-space-directory-list">
-      {sources.map(({ id, label, Icon }) =>
+      {(includeSpaces ? sources : sources.slice(0, 2)).map(({ id, label, Icon }) =>
         <button type="button" role="menuitem" className="sp-space-directory-option" key={id}
           onClick={() => id === 'local' ? onLocal() : onBrowse(id)}>
           <Icon size={17} strokeWidth={1.7} aria-hidden="true"/><span>{label}</span>
@@ -21,7 +22,7 @@ export function AttachmentSourceMenu({ style, onLocal, onBrowse }) {
   </div>;
 }
 
-export function AttachmentFileList({ source, library, spaces, filesBySpace, onSelect }) {
+export function AttachmentFileList({ source, library, spaces = [], filesBySpace = {}, onSelect }) {
   const [spaceId, setSpaceId] = useState('');
   const [folderId, setFolderId] = useState('');
   const [query, setQuery] = useState('');
