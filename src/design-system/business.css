@@ -145,7 +145,7 @@
  .ds-business-home-scroll .sp-home-intro { margin-bottom: 32px; }
 }
 .ds-home-shortcuts { min-width: 0; margin: 40px auto 0; container-type: inline-size; }
-.ds-home-shortcuts + .ds-home-cases { margin-top: 44px; }
+.ds-home-shortcuts + .case-section { margin-top: 44px; text-align: left; }
 .ds-home-shortcut-scroll {
  height: 104px;
  overflow-y: auto;

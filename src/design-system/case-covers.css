@@ -27,6 +27,5 @@
 .ds-image-case-cover > img.is-cover { object-fit: cover; object-position: center 62%; }
 .ds-image-case-cover > .ds-case-category { position: absolute; top: 8px; right: 10px; }
 .ds-image-case-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; color: var(--ds-secondary); font-size: 14px; font-weight: 500; line-height: 22px; }
-@media (min-width: 1024px) { .ds-image-case-grid.ds-home-case-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 1023px) { .ds-image-case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 539px) { .ds-image-case-grid { grid-template-columns: minmax(0, 1fr); } }

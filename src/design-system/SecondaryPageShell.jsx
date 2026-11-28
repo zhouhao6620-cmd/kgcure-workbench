@@ -18,6 +18,9 @@ export function PageActions({children}){
  if(target===undefined)return children;
  return target?createPortal(children,target):null;
 }
+export function PageBackButton({label='返回',onClick}){
+ return <button type="button" className="ds-secondary-back" aria-label={label} onClick={onClick}><ArrowLeft size={18} aria-hidden="true"/><span>{label}</span></button>;
+}
 export function secondaryParent(path){
  if(path.startsWith('/workspace/research-space/'))return '/workspace/research-space';
  if(path.startsWith('/workspace/cases/')){const item=capabilityById(path.split('/')[3]);return item?capabilityPath(item):'/workspace/skills';}
@@ -54,7 +57,7 @@ export function SecondaryPageShell({path,onNavigate,onToast,children,scrollRef,f
  }
  async function copy(){try{await navigator.clipboard.writeText(link);onToast('已复制本地预览链接');}catch{onToast('请选中并复制链接');}}
  return <ToolbarContext.Provider value={target}><NavigationContext.Provider value={navTarget}><section className="ds-secondary-shell">
-  <header className="ds-secondary-bar" aria-label="页面操作栏"><button type="button" className="ds-secondary-back" aria-label="返回" onClick={()=>onNavigate(parent)}><ArrowLeft size={18}/><span>返回</span></button><div className="ds-secondary-navigation" ref={setNavTarget}/><div className="ds-secondary-bar-actions">{path!=='/workspace/my-favorites'&&<IconButton label="分享当前页面" onClick={()=>setShare(true)}><Share2 size={18}/></IconButton>}<div className="ds-secondary-context-actions" ref={setTarget}/></div></header>
+  <header className="ds-secondary-bar" aria-label="页面操作栏"><PageBackButton onClick={()=>onNavigate(parent)}/><div className="ds-secondary-navigation" ref={setNavTarget}/><div className="ds-secondary-bar-actions">{path!=='/workspace/my-favorites'&&<IconButton label="分享当前页面" onClick={()=>setShare(true)}><Share2 size={18}/></IconButton>}<div className="ds-secondary-context-actions" ref={setTarget}/></div></header>
   <div className={'page-scroll ds-secondary-scroll'+(firstLevel?' ds-first-level ds-store-scroll':'')} ref={scrollRef}>{children}</div>
   {share&&<Modal title="分享页面" onClose={()=>setShare(false)}><p className="ds-prose">复制当前页面的本地预览链接。</p><label className="sp-field"><span>页面链接</span><input readOnly aria-label="页面分享链接" value={link} onFocus={e=>e.target.select()}/></label><p className="ds-muted">链接仅在可访问当前本地服务的环境中有效。</p><div className="sp-dialog-actions"><Button onClick={()=>setShare(false)}>关闭</Button><Button variant="primary" onClick={copy}>复制链接</Button></div></Modal>}
  </section></NavigationContext.Provider></ToolbarContext.Provider>;

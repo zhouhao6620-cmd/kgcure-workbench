@@ -458,7 +458,7 @@
 
 .demo-shell { display: flex; flex-direction: column; height: 100dvh; background: #f8fafc; }
 .demo-top { display: flex; align-items: center; gap: 20px; height: 64px; padding: 0 24px; border-bottom: 1px solid var(--border); background: #fff; }
-.demo-exit { border: 0; background: transparent; font-size: 14px; color: var(--secondary-foreground); }
+.demo-top .ds-secondary-back > span { display: inline; white-space: nowrap; }
 .demo-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .demo-label { padding: 2px 8px; border-radius: 4px; background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; }
 .demo-title strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
@@ -523,7 +523,8 @@
   .stage-foot { flex-wrap: wrap; }
   .pain-grid, .output-grid, .result-files { grid-template-columns: minmax(0, 1fr); }
   .field-table { display: block; overflow-x: auto; }
-  .demo-side { display: none; }
+  .demo-body { position: relative; }
+  .demo-side { position: absolute; inset: 0 0 0 auto; z-index: 1; width: min(292px, calc(100% - 32px)); box-shadow: -8px 0 24px rgb(28 39 60 / 8%); }
   .demo-top { flex-wrap: wrap; height: auto; padding: 10px 12px; gap: 8px; }
   .demo-status { margin-left: 0; }
   .demo-main { padding: 16px; }

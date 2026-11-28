@@ -1,6 +1,6 @@
 import { sitePath } from "../site-path.js";
 import { Badge } from "../components.jsx";
-import { useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import {
   ArrowUp,
   ChevronDown,
@@ -14,8 +14,8 @@ import { HighlightedTitle } from "../design-system/Typography.jsx";
 import { Pagination } from "../design-system/Pagination.jsx";
 import "../design-system/drawing.css";
 import { DrawingControls } from "../design-system/DrawingControls.jsx";
+import { BusinessCases, TaskCaseGallery } from "../design-system/BusinessCases.jsx";
 import { CaseCoverCard } from "../design-system/CaseCoverCard.jsx";
-import { CaseCategory } from "../design-preview/components.jsx";
 import { evidenceCases } from "../cases/evidence.js";
 import { topicCases } from "../cases/topic.js";
 import { grantCases } from "../cases/grant.js";
@@ -76,30 +76,12 @@ const SERVICES = {
   },
 };
 
-function caseThumbnail(svg, compact = false) {
-  const artwork = svg.replace(/<rect width="240" height="110"[^>]*><\/rect>/, '');
-  return compact ? artwork : artwork.replace('viewBox="0 0 240 110"', 'viewBox="0 -35 240 180"');
-}
-
-const SHORT_CASE_TYPES = {
-  论文查新与相似研究核验: '选题查新',
-  查找近期预印本: '前沿研究',
-  '临床指南 / 共识检索与总结': '指南共识',
-  研究版图绘制: '研究版图',
-  追踪研究趋势: '趋势追踪',
-  创新点发现: '创新发现',
-  研究问题深度澄清: '问题澄清',
-  明确研究假设: '研究假设',
-};
-
-export function ServicePage({ kind, onToast, onStart, showCaseType = false }) {
+export function ServicePage({ kind, onToast, onStart, onDemo, showCaseType = false }) {
   const config = SERVICES[kind];
   const [tab, setTab] = useState(config.tabs[0]);
   const [value, setValue] = useState("");
-  const textareaRef = useRef(null);
 
   const placeholder = config.placeholders[tab] || config.placeholders[config.tabs[0]];
-  const cases = useMemo(() => config.cases || [], [config]);
 
   return (
     <div className="view svc-view">
@@ -126,27 +108,8 @@ export function ServicePage({ kind, onToast, onStart, showCaseType = false }) {
         <p className="svc-disclaimer">内容由AI生成，仅供参考</p>
       </div>
 
-      <section className="case-section">
-        <h2 className="ds-case-gallery-title">{config.caseTitle}</h2>
-        <div className="case-grid">
-          {cases.map((item) => (
-            <article key={item.title} className="case-card">
-              {showCaseType ? (
-                <span className="case-thumb">
-                  <CaseCategory>{kind === 'grant' ? '基金申报' : SHORT_CASE_TYPES[item.tag] ?? item.tag}</CaseCategory>
-                  <span className="ds-case-art" aria-hidden="true" dangerouslySetInnerHTML={{ __html: caseThumbnail(item.svg, true) }} />
-                </span>
-              ) : <span className="case-thumb" dangerouslySetInnerHTML={{ __html: caseThumbnail(item.svg) }} />}
-              <span className="case-body">
-                {!showCaseType && <span className="case-tag">{item.tag}</span>}
-                <span className="case-title">{item.title}</span>
-              </span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-
+      {onDemo ? <TaskCaseGallery onOpenCase={onDemo}/> :
+        <BusinessCases title={config.caseTitle} cases={config.cases} kind={kind} showCaseType={showCaseType}/>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BusinessCases } from './BusinessCases.jsx';
+import { TaskCaseGallery } from './BusinessCases.jsx';
 import { BoundComposer } from './BoundComposer.jsx';
 import { HomeSurface } from './HomeSurface.jsx';
 import { useRouter } from '../router.jsx';
@@ -66,7 +66,7 @@ function HomeShortcuts({ onNavigate }) {
   </div>;
 }
 
-export function BusinessHome({ onNavigate, onToast, onStart, onRequireCapability }) {
+export function BusinessHome({ onNavigate, onToast, onStart, onRequireCapability, onDemo }) {
   const [landingPayload] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('kgcure-landing-payload') || 'null'); } catch { return null; }
   });
@@ -83,5 +83,6 @@ export function BusinessHome({ onNavigate, onToast, onStart, onRequireCapability
     composer={<BoundComposer key={selectedAbility?.id || 'home'} initialModel={landingPayload?.model || 'pro'} initialAttachments={landingPayload?.attachments || []}
       initialAbility={selectedAbility} initialSpace={router.get('space') || null} initialFolder={router.get('folder') || null}
       value={value} onChange={setValue} onSubmit={onStart} onToast={onToast} onNavigate={onNavigate} onRequireCapability={onRequireCapability}/>}
-    shortcuts={<HomeShortcuts onNavigate={onNavigate}/>} footer={<BusinessCases onNavigate={onNavigate} imageCards/>}/>;
+    shortcuts={<HomeShortcuts onNavigate={onNavigate}/>}
+    footer={<TaskCaseGallery onOpenCase={onDemo}/>}/>;
 }

@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { BoundComposer } from "../design-system/BoundComposer.jsx";
+import { PageBackButton } from "../design-system/SecondaryPageShell.jsx";
 import { ConversationPrompt, FollowUpQuestions } from "../design-system/ConversationPrompt.jsx";
 import { ThinkingSummary, DeliveryCard, FilePanelToggle } from "../design-preview/ConversationPatterns.jsx";
 import { IconButton, SkillCard } from "../design-preview/components.jsx";
@@ -48,7 +49,7 @@ function StepList({ items }) {
   );
 }
 
-export function ChatFrame({ title, children, side, sideOpen, onToggleSide, model, onModelChange, placeholder, onToast, composer, scrollRef, onScroll, onShare }) {
+export function ChatFrame({ title, children, side, sideOpen, onToggleSide, model, onModelChange, placeholder, onToast, composer, scrollRef, onScroll, onShare, onExit }) {
   const isReplay = Boolean(composer);
   const [localMessages,setLocalMessages]=useState(()=>{
     if (isReplay) return [];
@@ -62,7 +63,8 @@ export function ChatFrame({ title, children, side, sideOpen, onToggleSide, model
       <div className="chat-main">
         <header className="chat-head">
           <div className="chat-head-left">
-            <h1>{title}</h1>
+            {onExit && <PageBackButton label="退出演示" onClick={onExit}/>}
+            <h1 className={onExit ? 'sp-visually-hidden' : undefined}>{title}</h1>
           </div>
           <div className="chat-head-actions"><IconButton label="分享当前示例对话" onClick={onShare ?? (() => onToast?.('分享对话（原型演示）'))}/><FilePanelToggle open={sideOpen} onToggle={onToggleSide}/>
           </div>
@@ -87,7 +89,7 @@ export function ChatFrame({ title, children, side, sideOpen, onToggleSide, model
 
 export function DrawingChat({ onToast, delivery }) {
   const [model, setModel] = useState("SHUYU Image");
-  const [side, setSide] = useState(() => window.innerWidth > 767);
+  const [side, setSide] = useState(false);
   const [summary, setSummary] = useState(false);
 
   return (
@@ -133,7 +135,7 @@ export function DrawingChat({ onToast, delivery }) {
 
 export function MultiStepChat({ title, onToast, delivery }) {
   const [model, setModel] = useState("SHUYU Pro");
-  const [side, setSide] = useState(() => window.innerWidth > 767);
+  const [side, setSide] = useState(false);
   const [steps1, setSteps1] = useState(false);
   const [steps2, setSteps2] = useState(false);
   const [steps3, setSteps3] = useState(false);
@@ -283,7 +285,7 @@ const TODOS = [
 
 export function WorkflowAssistantChat({ onOpenWorkflow, onToast }) {
   const [model, setModel] = useState("SHUYU Flash");
-  const [side, setSide] = useState(() => window.innerWidth > 767);
+  const [side, setSide] = useState(false);
   const [steps, setSteps] = useState(false);
   const [summary, setSummary] = useState(false);
 

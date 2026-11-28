@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { Loader2, RotateCcw } from 'lucide-react';
 import { capabilityDemoTitle } from '../content/capability-demos.js';
 import { downloadText } from '../content/catalog.js';
 import { DeliveryCard, ThinkingSummary } from '../design-preview/ConversationPatterns.jsx';
@@ -7,10 +7,10 @@ import { AgentGlyph, Button, Modal, SkillGlyph, StatusTag } from '../design-prev
 import { ChatFrame } from './chats.jsx';
 import './capability-demo.css';
 
-export function CapabilityDemo({ item, demo, delivery, onRun, onToast }) {
+export function CapabilityDemo({ item, demo, delivery, onExit, onRun, onToast }) {
   const [phase, setPhase] = useState(0);
   const [replay, setReplay] = useState(0);
-  const [sideOpen, setSideOpen] = useState(() => window.innerWidth >= 1024);
+  const [sideOpen, setSideOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const scroll = useRef(null);
   const followLatest = useRef(true);
@@ -19,7 +19,8 @@ export function CapabilityDemo({ item, demo, delivery, onRun, onToast }) {
   const type = item.kind === 'skill' ? 'Skill' : 'Agent';
   const Glyph = item.kind === 'skill' ? SkillGlyph : AgentGlyph;
   const shareLink = new URL(window.location.pathname, window.location.origin).href;
-  const file = {
+  const hasDelivery = Boolean(demo.file);
+  const file = hasDelivery ? {
     id: item.id + '-demo',
     name: demo.file + '（演示样例）.md',
     description: '任务演示交付',
@@ -32,14 +33,18 @@ export function CapabilityDemo({ item, demo, delivery, onRun, onToast }) {
       '## 执行过程\n\n' + demo.steps.map(([label, detail]) => '- ' + label + '：' + detail).join('\n'),
       '## 交付摘要\n\n' + demo.result,
     ].join('\n\n'),
-  };
+  } : null;
 
   useEffect(() => {
     if (completed) return;
     const delay = phase === 1 ? 1800 : 950;
-    const timer = window.setTimeout(() => setPhase(phase + 1), delay);
+    const timer = window.setTimeout(() => {
+      const nextPhase = phase + 1;
+      setPhase(nextPhase);
+      if (nextPhase === finalPhase && hasDelivery) setSideOpen(true);
+    }, delay);
     return () => window.clearTimeout(timer);
-  }, [completed, phase, replay]);
+  }, [completed, finalPhase, hasDelivery, phase, replay]);
 
   useLayoutEffect(() => {
     const panel = scroll.current;
@@ -48,6 +53,7 @@ export function CapabilityDemo({ item, demo, delivery, onRun, onToast }) {
 
   function restart() {
     followLatest.current = true;
+    setSideOpen(false);
     setPhase(0);
     setReplay(count => count + 1);
   }
@@ -66,25 +72,34 @@ export function CapabilityDemo({ item, demo, delivery, onRun, onToast }) {
     }
   }
 
-  const deliveryCard = <DeliveryCard file={file} delivery={delivery} onDownload={() => downloadText(file.name, file.content)}/>;
+  const deliveryCard = completed && file && <DeliveryCard file={file} delivery={delivery} onDownload={() => downloadText(file.name, file.content)}/>;
 
   return <><ChatFrame
     title={capabilityDemoTitle}
+    onExit={onExit}
     scrollRef={scroll}
     onScroll={trackScroll}
     onShare={() => setShareOpen(true)}
     sideOpen={sideOpen}
     onToggleSide={() => setSideOpen(open => !open)}
     side={{
-      title: completed ? '文件 · 1' : '文件',
-      content: <div className="side-files">{completed ? deliveryCard : <p className="ds-muted">交付文件将在演示结束后显示。</p>}</div>,
+      title: deliveryCard ? '交付文件' : '文件',
+      content: <div className="side-files capability-demo-file-preview">
+        {deliveryCard ? <>{deliveryCard}<pre className="sp-file-preview" aria-label="交付文件正文" tabIndex={0}>{file.content}</pre></>
+          : <p className="ds-muted">{completed || !hasDelivery ? '本次演示没有交付文件。' : '交付文件将在演示结束后显示。'}</p>}
+      </div>,
     }}
     composer={<div className="chat-composer-wrap">
       <section className="sp-compose-block sp-compose-chat" aria-label="演示控制">
         <div className="sp-composer capability-demo-dock">
-          <p role="status">{completed ? '任务对话演示已完成' : '正在真实任务对话动态'}</p>
+          <p className="capability-demo-status" data-playing={!completed} role="status">
+            {completed ? '实例已完成，马上开始你的任务吧～' : '正在为你回放，真实的实例任务对话动态'}
+          </p>
           <div className="capability-demo-actions">
-            <button type="button" className="sp-button" onClick={restart}><RotateCcw size={16} aria-hidden="true"/>重新演示</button>
+            <button type="button" className="sp-button capability-demo-replay" disabled={!completed} onClick={restart}>
+              {completed ? <><RotateCcw size={16} aria-hidden="true"/>重新演示</>
+                : <><Loader2 className="sp-spin" size={16} aria-hidden="true"/>任务回放中</>}
+            </button>
             <button type="button" className="sp-button sp-button-primary" data-kind={item.kind} onClick={onRun}><Glyph size={18} aria-hidden="true"/>使用{type}开始任务</button>
           </div>
         </div>
@@ -112,9 +127,9 @@ export function CapabilityDemo({ item, demo, delivery, onRun, onToast }) {
         </ol>
       </div>}
       {completed && <div className="msg is-assistant">
-        <p><strong>任务交付</strong></p>
+        {deliveryCard && <p><strong>任务交付</strong></p>}
         <p>{demo.result}</p>
-        <div className="file-grid one">{deliveryCard}</div>
+        {deliveryCard && <div className="file-grid one">{deliveryCard}</div>}
       </div>}
     </div>
   </ChatFrame>

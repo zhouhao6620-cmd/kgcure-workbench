@@ -1,5 +1,7 @@
 import { AgentCard, IconButton } from "../design-preview/components.jsx";
+import { FilePanelToggle } from "../design-preview/ConversationPatterns.jsx";
 import { HighlightedTitle } from "../design-system/Typography.jsx";
+import { PageBackButton } from "../design-system/SecondaryPageShell.jsx";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -321,17 +323,19 @@ export function WorkflowDetail({ onBack, onRun, onCase, onToast }) {
 
 export function WorkflowCase({ onExit, onRun, onToast }) {
   const [stepsOpen, setStepsOpen] = useState(true);
+  const [filesOpen, setFilesOpen] = useState(false);
 
   return (
     <div className="demo-shell">
       <div className="demo-top">
-        <button type="button" className="demo-exit" onClick={onExit}>← 退出演示</button>
+        <PageBackButton label="退出演示" onClick={onExit}/>
         <div className="demo-title">
           <span className="demo-label">案例展示</span>
           <strong>基于SEER的宫颈癌肝转移预后研究：创新点挖掘</strong>
         </div>
         <span className="demo-status"><span className="live-dot" /> 正在回放中...</span>
         <div className="demo-actions">
+          <FilePanelToggle open={filesOpen} controls="workflow-case-files" onToggle={() => setFilesOpen(open => !open)}/>
           <Btn kind="ghost" size="sm" onClick={() => onToast("已跳过，直接查看结果")}>跳过并查看结果</Btn>
           <Btn kind="primary" size="sm" onClick={onRun}>运行工作流</Btn>
         </div>
@@ -395,12 +399,12 @@ export function WorkflowCase({ onExit, onRun, onToast }) {
           </div>
         </div>
 
-        <aside className="demo-side">
+        {filesOpen && <aside className="demo-side" id="workflow-case-files">
           <div className="demo-side-head">
             <h2>文件 <span className="section-count">0</span></h2>
           </div>
           <div className="demo-empty">未选择文件<p>选择文件以查看详情</p></div>
-        </aside>
+        </aside>}
       </div>
     </div>
   );

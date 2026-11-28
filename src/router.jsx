@@ -40,8 +40,9 @@ export function RouterProvider({ children }) {
       setLocation(readLocation());
       return;
     }
-    if (options.replace) window.history.replaceState({}, "", url);
-    else window.history.pushState({}, "", url);
+    const state = options.state ?? {};
+    if (options.replace) window.history.replaceState(state, "", url);
+    else window.history.pushState(state, "", url);
     setLocation(readLocation());
   }, []);
 

@@ -1,7 +1,7 @@
 .kg-portal{
   --portal-header-height:52px;
   --portal-ink:#101319;--portal-body:#5b6472;--portal-line:#e2e5eb;
-  --portal-blue:var(--ds-primary,#3964fe);--portal-gold:#8d642e;--portal-purple:#8053bd;
+  --portal-blue:var(--ds-primary,#3964fe);--portal-gold:var(--ds-brand-gold);--portal-purple:var(--ds-brand-purple);
   background:#fff;color:var(--portal-ink);font:15px/1.65 "PingFang SC","Microsoft YaHei",system-ui,sans-serif;
 }
 .kg-portal :is(h1,h2,h3,h4,p,figure,dl,dd,ul){margin:0}

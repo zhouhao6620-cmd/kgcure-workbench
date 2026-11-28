@@ -630,7 +630,7 @@ export function App() {
     showToast((hasContent ? '文件已保存到「' : '文件记录已保存到「') + destination + '」');
   }
 
-  function navigate(target) {
+  function navigate(target, options) {
     if (target === "/welcome") {
       setVerificationPreview(null);
       router.navigate("/");
@@ -644,7 +644,7 @@ export function App() {
     }
     if (memberPreview && url.pathname.startsWith('/workspace')) url.searchParams.set('space-preview', 'member');
     if (approvalPreview && url.pathname === '/workspace/approvals') url.searchParams.set('approval-preview', '1');
-    router.navigate(url.href);
+    router.navigate(url.href, options);
     setRestrictedAgent(null);
     setMobileOpen(false);
     setAccountOpen(false);
@@ -783,10 +783,21 @@ export function App() {
     }
   }
   function runCapability(item){startTask({ability:item,space:router.get('space')||null,origin:router.get('folder')?{folderId:router.get('folder')}:undefined,text:'使用「'+item.name+'」，请协助我完成科研任务。'});}
+  function openCapabilityDemo(id, search = '') {
+    navigate(capabilityDemoPath(id) + search, { state: { capabilityDemoEntry: true } });
+  }
+  function openTaskCaseDemo() {
+    openCapabilityDemo('sci-paper-evidence-review');
+  }
+  function exitCapabilityDemo() {
+    if (window.history.state?.capabilityDemoEntry) window.history.back();
+    else navigate('/workspace/chats/new', { replace: true });
+  }
   const hasBillingMembership = tier !== 'free';
 
   function renderStandard() {
-    if (isHome) return <BusinessHome key={router.search} onStart={startTask} onNavigate={navigate} onToast={showToast} onRequireCapability={requireCapabilityAccess}/>;
+    if (isHome) return <BusinessHome key={router.search} onStart={startTask} onNavigate={navigate} onToast={showToast} onRequireCapability={requireCapabilityAccess}
+      onDemo={openTaskCaseDemo}/>;
     if (path === "/workspace/skills" || path === "/workspace/agents") return <CapabilityStore onRecommend={task=>startTask({text:'我希望'+task.name+'，请先帮我推荐合适的科研能力。',origin:{category:task.category}})} key={path} kind={path.endsWith('skills')?'skill':'agent'} onNavigate={navigate} onToast={showToast}/>;
     if (path === '/workspace/contribute') {
       const kind = router.get('kind') === 'agent' ? 'agent' : 'skill';
@@ -808,7 +819,7 @@ export function App() {
       const unrated = isSkill && router.get('assessment') === 'unrated';
       return <ReviewDocument key={item.id + ':' + unrated} kind={item.kind} title={item.name} item={item} unrated={unrated}
         canLaunch={canUseCapability(item, tier)} onRun={runCapability} favorite={favoriteIds.has(item.id)} onFavorite={updateFavorite}
-        onDemo={capabilityDemos[item.id] ? ability => navigate(capabilityDemoPath(ability.id) + router.search) : undefined}
+        onDemo={capabilityDemos[item.id] ? ability => openCapabilityDemo(ability.id, router.search) : undefined}
         onCase={(ability, entry) => {
           if (typeof entry === 'string') {
             startTask({ ability, space: router.get('space') || null,
@@ -819,9 +830,9 @@ export function App() {
           }
         }}/>;
     }
-    if (path === "/workspace/evidence-search") return <ServicePage showCaseType key="evidence" onStart={startTask} kind="evidence" onToast={showToast} />;
-    if (path === "/workspace/topic-selection") return <ServicePage showCaseType key="topic" onStart={startTask} kind="topic" onToast={showToast} />;
-    if (path === "/workspace/grant-application") return <ServicePage showCaseType key="grant" onStart={startTask} kind="grant" onToast={showToast} />;
+    if (path === "/workspace/evidence-search") return <ServicePage key="evidence" kind="evidence" onDemo={openTaskCaseDemo} onStart={startTask} onToast={showToast} />;
+    if (path === "/workspace/topic-selection") return <ServicePage key="topic" kind="topic" onDemo={openTaskCaseDemo} onStart={startTask} onToast={showToast} />;
+    if (path === "/workspace/grant-application") return <ServicePage key="grant" kind="grant" onDemo={openTaskCaseDemo} onStart={startTask} onToast={showToast} />;
     if (path === "/workspace/scientific-drawing") return <DrawingPage onStart={startTask} onOpenChat={() => navigate("/workspace/chats/e9dd87e0-b232-479d-b0a9-5ba249a76a78")} onToast={showToast} />;
     if (path === "/workspace/research-space") return <ResearchSpaces spaces={accessibleSpaces} actor={spaceActor} onSpaces={setSpaces} sessions={localSessions} onNavigate={navigate} onToast={showToast} fileCount={libraryFileCount}/>;
     if (path.startsWith("/workspace/research-space/")) return <ResearchSpaces key={path} spaces={accessibleSpaces} actor={spaceActor} onSettings={setSpaceSettingsId} requests={downloadRequests} onRequestDownload={requestSpaceDownload} onSpaces={setSpaces} sessions={localSessions} attachmentLibrary={attachmentLibrary} onNavigate={navigate} spaceId={path.split('/').at(-1)} onToast={showToast}/>;
@@ -907,7 +918,7 @@ export function App() {
         showToast('请在科研空间页新建空间');
       },
     };
-    if (demo) return <CapabilityDemo key={id} item={demoItem} demo={demo} delivery={delivery}
+    if (demo) return <CapabilityDemo key={id} item={demoItem} demo={demo} delivery={delivery} onExit={exitCapabilityDemo}
       onToast={showToast} onRun={() => runCapability(demoItem)}/>;
     if(session)return <ResearchConversation key={id} session={session} tier={tier} onRequireCapability={requireCapabilityAccess} onUpdate={next=>setLocalSessions(items=>items.map(x=>x.id===next.id?{...next,updatedAt:Date.now()}:x))} onNavigate={navigate} delivery={delivery}/>;
     if (id === "e9dd87e0-b232-479d-b0a9-5ba249a76a78") return <DrawingChat onToast={showToast} delivery={delivery} />;
@@ -915,7 +926,7 @@ export function App() {
       return <WorkflowAssistantChat onOpenWorkflow={() => navigate("/workspace/workflows/template/35a3e188211447888f499c11d0b90345")} onToast={showToast} />;
     }
     if(!["d6afecac-2d0c-49e5-952f-ea432738f373","d6c2cf5e-73a8-4ec2-999e-07ff5c2f2943"].includes(id))return <div className="ds-page-empty"><h1>当前没有此对话的本地记录</h1><p>请从历史列表打开已有会话，或创建新任务。</p><button className="sp-button" onClick={()=>navigate("/workspace/chats/new")}>创建新任务</button></div>;
-    return <MultiStepChat title={id === "d6afecac-2d0c-49e5-952f-ea432738f373" ? "工作流全流程展示" : undefined} onToast={showToast} delivery={delivery} />;
+    return <MultiStepChat key={id} title={id === "d6afecac-2d0c-49e5-952f-ea432738f373" ? "工作流全流程展示" : undefined} onToast={showToast} delivery={delivery} />;
   }
 
   if (path === "/design-system") return <ComposerSources.Provider value={composerSources}><DesignPreview delivery={{
